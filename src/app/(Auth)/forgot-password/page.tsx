@@ -17,7 +17,6 @@ const ForgotPassword = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     try {
       const res = await forgotPassword({ email }).unwrap();
       toast.success(res.message);

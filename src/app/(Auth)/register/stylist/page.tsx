@@ -15,7 +15,7 @@ const StylistRegister = () => {
   const [formData, setFormData] = useState({
     firstName: "",
     surname: "",
-    company: "",
+    companyName: "",
     email: "",
     phone: "",
     password: "",
@@ -111,7 +111,7 @@ const StylistRegister = () => {
               name="company"
               type="text"
               required
-              value={formData.company}
+              value={formData.companyName}
               onChange={handleChange}
               className="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500"
               placeholder="Your Fashion House"

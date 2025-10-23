@@ -8,6 +8,7 @@ import { transactionApi } from "./services/TransactionApiSlice";
 import { orderApi } from "./services/OrderApiSlice";
 import { wishlistApi } from "./services/WishlistApiSlice";
 import { cartApi } from "./services/CartApiSlice";
+import { stylistApi } from "./services/StylistApiSlice";
 
 export const store = configureStore({
   reducer: {
@@ -20,6 +21,7 @@ export const store = configureStore({
     [orderApi.reducerPath]: orderApi.reducer,
     [wishlistApi.reducerPath]: wishlistApi.reducer,
     [cartApi.reducerPath]: cartApi.reducer,
+    [stylistApi.reducerPath]: stylistApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware()
@@ -29,7 +31,8 @@ export const store = configureStore({
       .concat(transactionApi.middleware)
       .concat(orderApi.middleware)
       .concat(wishlistApi.middleware)
-      .concat(cartApi.middleware),
+      .concat(cartApi.middleware)
+      .concat(stylistApi.middleware),
 });
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
