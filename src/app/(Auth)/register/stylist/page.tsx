@@ -28,6 +28,7 @@ const StylistRegister = () => {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
+    console.log(formData);
     e.preventDefault();
 
     try {
@@ -107,8 +108,8 @@ const StylistRegister = () => {
               <FiBriefcase className="text-gray-400" />
             </div>
             <input
-              id="company"
-              name="company"
+              id="companyName"
+              name="companyName"
               type="text"
               required
               value={formData.companyName}

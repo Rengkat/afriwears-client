@@ -17,7 +17,6 @@ const Profile = () => {
   const [logout, { isLoading }] = useLogoutMutation();
   const { user: localUser, isAuthenticated } = useSelector((state: RootState) => state.authSlice);
   const user = data?.user || localUser;
-
   const handleLogOut = async () => {
     await logout().unwrap();
     if (typeof window !== "undefined") {
@@ -68,7 +67,7 @@ const Profile = () => {
                     <span className="text-sm">My Account</span>
                   </div>
                 </Link>
-                {!user?.company && (
+                {!user?.role === "user" && (
                   <>
                     <Link href="/account/user/orders">
                       <div className="flex gap-3 items-center px-4 py-2 hover:bg-blue-50 text-gray-700 transition-colors">

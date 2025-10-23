@@ -134,7 +134,7 @@ const NavBar = () => {
               {/* Cart/Orders Icon - Conditionally rendered based on user role */}
               {user?.role ? (
                 <>
-                  {user?.role === "stylist" ? (
+                  {user?.role === "stylist" || user?.role === "admin" ? (
                     <Link
                       href="/orders"
                       className="p-2 rounded-full hover:bg-gray-100 transition-colors relative">
