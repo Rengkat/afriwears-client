@@ -37,7 +37,7 @@ const AdminAccountLayout = ({ children }: { children: React.ReactNode }) => {
       id: "users",
       label: "User Management",
       icon: <FiUsers size={20} />,
-      path: "/admin/users",
+      path: "/account/admin/users",
     },
     {
       id: "stylists",
@@ -49,7 +49,7 @@ const AdminAccountLayout = ({ children }: { children: React.ReactNode }) => {
       id: "products",
       label: "Product Approval",
       icon: <FiPackage size={20} />,
-      path: "/admin/products",
+      path: "/account/admin/products",
     },
     {
       id: "orders",
@@ -73,7 +73,7 @@ const AdminAccountLayout = ({ children }: { children: React.ReactNode }) => {
       id: "settings",
       label: "Settings",
       icon: <FiSettings size={20} />,
-      path: "/admin/settings",
+      path: "/account/admin/settings",
     },
   ];
 
