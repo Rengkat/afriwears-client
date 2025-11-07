@@ -43,7 +43,7 @@ const AdminAccountLayout = ({ children }: { children: React.ReactNode }) => {
       id: "stylists",
       label: "Stylist Management",
       icon: <FiBriefcase size={20} />,
-      path: "/admin/stylists",
+      path: "/account/admin/stylists",
     },
     {
       id: "products",
@@ -55,19 +55,19 @@ const AdminAccountLayout = ({ children }: { children: React.ReactNode }) => {
       id: "orders",
       label: "All Orders",
       icon: <RiShoppingBagLine size={20} />,
-      path: "/admin/orders",
+      path: "/account/admin/orders",
     },
     {
       id: "transactions",
       label: "Transactions",
       icon: <FiDollarSign size={20} />,
-      path: "/admin/transactions",
+      path: "/account/admin/transactions",
     },
     {
       id: "profile",
       label: "Profile",
       icon: <FiUser size={20} />,
-      path: "/admin/profile",
+      path: "/account/admin/profile",
     },
     {
       id: "settings",

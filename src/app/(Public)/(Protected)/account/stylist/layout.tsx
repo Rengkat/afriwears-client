@@ -6,6 +6,7 @@ import { RiShoppingBagLine } from "react-icons/ri";
 import { HiOutlineShoppingBag } from "react-icons/hi";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
+import { stylistNavItems } from "@/utils";
 
 // Mock stylist data
 const mockStylist = {
@@ -19,35 +20,6 @@ const StylistAccountLayout = ({ children }: { children: React.ReactNode }) => {
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("dashboard");
   const router = useRouter();
-
-  // Navigation items specific to stylists
-  const navItems = [
-    { id: "dashboard", label: "Dashboard", icon: <FiBriefcase size={20} />, path: "/stylist" },
-    {
-      id: "products",
-      label: "My Products",
-      icon: <FiPackage size={20} />,
-      path: "/account/stylist/products",
-    },
-    {
-      id: "orders",
-      label: "Orders",
-      icon: <RiShoppingBagLine size={20} />,
-      path: "/stylist/orders",
-    },
-    {
-      id: "profile",
-      label: "Profile",
-      icon: <FiUser size={20} />,
-      path: "/account/stylist/profile",
-    },
-    {
-      id: "settings",
-      label: "Settings",
-      icon: <FiSettings size={20} />,
-      path: "/account/stylist/settings",
-    },
-  ];
 
   const handleLogout = () => {
     // In a real app, you would call your logout function here
@@ -95,7 +67,7 @@ const StylistAccountLayout = ({ children }: { children: React.ReactNode }) => {
               {/* Navigation */}
               <nav className="p-2">
                 <ul className="space-y-1">
-                  {navItems.map((item) => (
+                  {stylistNavItems.map((item) => (
                     <li key={item.id}>
                       <button
                         onClick={() => {
@@ -174,7 +146,7 @@ const StylistAccountLayout = ({ children }: { children: React.ReactNode }) => {
                     {/* Navigation */}
                     <nav className="flex-1 overflow-y-auto p-2">
                       <ul className="space-y-1">
-                        {navItems.map((item) => (
+                        {stylistNavItems.map((item) => (
                           <li key={item.id}>
                             <button
                               onClick={() => {

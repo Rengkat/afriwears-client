@@ -67,7 +67,7 @@ const Profile = () => {
                     <span className="text-sm">My Account</span>
                   </div>
                 </Link>
-                {!user?.role === "user" && (
+                {user?.role === "user" && (
                   <>
                     <Link href="/account/user/orders">
                       <div className="flex gap-3 items-center px-4 py-2 hover:bg-blue-50 text-gray-700 transition-colors">
