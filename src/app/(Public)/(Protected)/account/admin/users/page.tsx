@@ -141,7 +141,7 @@ const UserManagementPage = () => {
       </div>
 
       {/* Stats Cards */}
-      <StatCard />
+      <StatCard users={users} />
       {/* Filters and Search */}
       <FilterAndSearch
         searchTerm={searchTerm}

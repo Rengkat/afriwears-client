@@ -3,43 +3,12 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { FiPlus, FiEdit, FiTrash2, FiEye, FiClock } from "react-icons/fi";
+import { stylistmockProducts } from "@/mockData";
 
 // Mock data for stylist products
-const mockProducts = [
-  {
-    id: "prod-7892",
-    name: "Premium Ankara Jumpsuit",
-    image: "/product-1.jpg",
-    price: 25000,
-    stock: 15,
-    status: "approved",
-    views: 124,
-    orders: 18,
-  },
-  {
-    id: "prod-6541",
-    name: "Kente Agbada Set",
-    image: "/product-2.jpg",
-    price: 35000,
-    stock: 8,
-    status: "approved",
-    views: 89,
-    orders: 12,
-  },
-  {
-    id: "prod-3214",
-    name: "Adire Wrap Dress",
-    image: "/product-3.jpg",
-    price: 22000,
-    stock: 0,
-    status: "pending",
-    views: 45,
-    orders: 0,
-  },
-];
 
 const StylistProductsPage = () => {
-  const [products, setProducts] = useState(mockProducts);
+  const [products, setProducts] = useState(stylistmockProducts);
   const [filter, setFilter] = useState("all");
 
   const filteredProducts =

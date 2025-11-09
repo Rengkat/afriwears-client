@@ -52,7 +52,11 @@ const AddAddress = () => {
     if (!address.state.trim()) newErrors.state = "State is required";
     if (!address.city.trim()) newErrors.city = "City is required";
     if (!address.street.trim()) newErrors.street = "Street is required";
-    if (!address.postalCode.trim()) newErrors.postalCode = "Postal code is required";
+    if (!address.postalCode.trim()) {
+      newErrors.postalCode = "Postal code is required";
+    } else if (!/^[A-Za-z0-9\s-]+$/.test(address.postalCode)) {
+      newErrors.postalCode = "Please enter a valid postal code";
+    }
     if (!address.addressLine1.trim()) newErrors.addressLine1 = "Address line is required";
 
     setErrors(newErrors);
