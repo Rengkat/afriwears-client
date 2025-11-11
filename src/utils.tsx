@@ -167,6 +167,16 @@ export const getCategoryColor = (category: string) => {
       return "bg-gray-100 text-gray-800";
   }
 };
+export const formatDateTime = (dateString: string) => {
+  return new Date(dateString).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
+
 export const getPaymentStatusColor = (status: string) => {
   switch (status) {
     case "completed":

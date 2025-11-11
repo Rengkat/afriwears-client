@@ -2,7 +2,7 @@ import { formatCurrency, formatDate, getPaymentStatusColor, getStatusColor } fro
 import React from "react";
 import { FiMapPin, FiPackage, FiXCircle } from "react-icons/fi";
 
-const DetailOrder = ({ setShowOrderModal, selectedOrder, handleUpdateStatus }) => {
+const DetailOrder = ({ setShowOrderModal, selectedOrder, handleUpdateStatus }: any) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-xl shadow-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
@@ -10,6 +10,7 @@ const DetailOrder = ({ setShowOrderModal, selectedOrder, handleUpdateStatus }) =
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-xl font-semibold text-gray-900">Order Details</h3>
             <button
+              title="showModel"
               onClick={() => setShowOrderModal(false)}
               className="text-gray-400 hover:text-gray-600 transition-colors">
               <FiXCircle size={24} />

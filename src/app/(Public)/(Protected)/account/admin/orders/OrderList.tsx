@@ -19,6 +19,7 @@ const OrderList = ({
     <tr key={order._id} className="hover:bg-gray-50">
       <td className="px-6 py-4 whitespace-nowrap">
         <input
+          title="selectOrder"
           type="checkbox"
           checked={selectedOrders.includes(order._id)}
           onChange={(e) => handleSelectOrder(order._id, e.target.checked)}

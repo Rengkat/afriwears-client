@@ -528,6 +528,7 @@ const TransactionsPage = () => {
           {/* Filters */}
           <div className="flex flex-col sm:flex-row gap-4 flex-1">
             <select
+              title="statusFilter"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
@@ -539,6 +540,7 @@ const TransactionsPage = () => {
             </select>
 
             <select
+              title="typeFilter"
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
@@ -548,6 +550,7 @@ const TransactionsPage = () => {
             </select>
 
             <select
+              title="purposeFilter"
               value={purposeFilter}
               onChange={(e) => setPurposeFilter(e.target.value)}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
@@ -603,6 +606,7 @@ const TransactionsPage = () => {
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   <input
+                    title="handleSelectAll"
                     type="checkbox"
                     onChange={handleSelectAll}
                     checked={
@@ -643,6 +647,7 @@ const TransactionsPage = () => {
                 <tr key={transaction._id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <input
+                      title="selectedTransactions"
                       type="checkbox"
                       checked={selectedTransactions.includes(transaction._id)}
                       onChange={(e) => handleSelectTransaction(transaction._id, e.target.checked)}
@@ -809,6 +814,7 @@ const TransactionsPage = () => {
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-semibold text-gray-900">Transaction Details</h3>
                 <button
+                  title="setShowTransactionModal"
                   onClick={() => setShowTransactionModal(false)}
                   className="text-gray-400 hover:text-gray-600 transition-colors">
                   <FiXCircle size={24} />

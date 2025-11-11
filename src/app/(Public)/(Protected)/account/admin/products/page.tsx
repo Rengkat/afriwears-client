@@ -29,6 +29,7 @@ import Pagination from "./Pagination";
 import ProductList from "./ProductList";
 import FilterAndSearch from "./FilterAndSearch";
 import { mockProducts } from "@/mockData";
+import StatCard from "./StatCard";
 
 const ProductApprovalPage = () => {
   const { user } = useSelector((store: RootState) => store.authSlice);
@@ -195,56 +196,12 @@ const ProductApprovalPage = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-500">Total Products</p>
-              <p className="text-2xl font-bold text-gray-900">{totalProductsCount}</p>
-            </div>
-            <div className="bg-blue-50 p-3 rounded-full">
-              <FiPackage className="text-blue-600" size={24} />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-500">Pending Review</p>
-              <p className="text-2xl font-bold text-gray-900">{pendingCount}</p>
-            </div>
-            <div className="bg-amber-50 p-3 rounded-full">
-              <FiClock className="text-amber-600" size={24} />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-500">Approved</p>
-              <p className="text-2xl font-bold text-gray-900">{approvedCount}</p>
-            </div>
-            <div className="bg-green-50 p-3 rounded-full">
-              <FiCheckCircle className="text-green-600" size={24} />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-500">Rejected</p>
-              <p className="text-2xl font-bold text-gray-900">{rejectedCount}</p>
-            </div>
-            <div className="bg-red-50 p-3 rounded-full">
-              <FiXCircle className="text-red-600" size={24} />
-            </div>
-          </div>
-        </div>
-      </div>
-
+      <StatCard
+        totalProductsCount={totalProductsCount}
+        pendingCount={pendingCount}
+        approvedCount={approvedCount}
+        rejectedCount={rejectedCount}
+      />
       {/* Filters and Search */}
       <FilterAndSearch
         handleBulkAction={handleBulkAction}
@@ -266,6 +223,7 @@ const ProductApprovalPage = () => {
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   <input
+                    title="selectAllProducts"
                     type="checkbox"
                     onChange={handleSelectAll}
                     checked={
