@@ -66,6 +66,56 @@ export const stylistNavItems = [
     path: "/account/stylist/settings",
   },
 ];
+export const adminNavItems = [
+  {
+    id: "dashboard",
+    label: "Dashboard",
+    icon: <FiTrendingUp size={20} />,
+    path: "/account/admin",
+  },
+  {
+    id: "users",
+    label: "User Management",
+    icon: <FiUsers size={20} />,
+    path: "/account/admin/users",
+  },
+  {
+    id: "stylists",
+    label: "Stylist Management",
+    icon: <FiBriefcase size={20} />,
+    path: "/account/admin/stylists",
+  },
+  {
+    id: "products",
+    label: "Product Approval",
+    icon: <FiPackage size={20} />,
+    path: "/account/admin/products",
+  },
+  {
+    id: "orders",
+    label: "All Orders",
+    icon: <RiShoppingBagLine size={20} />,
+    path: "/account/admin/orders",
+  },
+  {
+    id: "transactions",
+    label: "Transactions",
+    icon: <FiDollarSign size={20} />,
+    path: "/account/admin/transactions",
+  },
+  {
+    id: "profile",
+    label: "Profile",
+    icon: <FiUser size={20} />,
+    path: "/account/admin/profile",
+  },
+  {
+    id: "settings",
+    label: "Settings",
+    icon: <FiSettings size={20} />,
+    path: "/account/admin/settings",
+  },
+];
 export const getStatusColor = (status: string) => {
   switch (status) {
     case "active":
@@ -113,6 +163,22 @@ export const getCategoryColor = (category: string) => {
       return "bg-pink-100 text-pink-800";
     case "unisex":
       return "bg-purple-100 text-purple-800";
+    default:
+      return "bg-gray-100 text-gray-800";
+  }
+};
+export const getPaymentStatusColor = (status: string) => {
+  switch (status) {
+    case "completed":
+      return "bg-green-100 text-green-800";
+    case "partially_paid":
+      return "bg-amber-100 text-amber-800";
+    case "pending":
+      return "bg-blue-100 text-blue-800";
+    case "failed":
+      return "bg-red-100 text-red-800";
+    case "refunded":
+      return "bg-gray-100 text-gray-800";
     default:
       return "bg-gray-100 text-gray-800";
   }

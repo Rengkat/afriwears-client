@@ -16,6 +16,7 @@ import {
 import { RiShoppingBagLine } from "react-icons/ri";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
+import { adminNavItems } from "@/utils";
 
 // Mock admin data
 const mockAdmin = {
@@ -31,51 +32,6 @@ const AdminAccountLayout = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
 
   // Navigation items specific to admin
-  const navItems = [
-    { id: "dashboard", label: "Dashboard", icon: <FiTrendingUp size={20} />, path: "/admin" },
-    {
-      id: "users",
-      label: "User Management",
-      icon: <FiUsers size={20} />,
-      path: "/account/admin/users",
-    },
-    {
-      id: "stylists",
-      label: "Stylist Management",
-      icon: <FiBriefcase size={20} />,
-      path: "/account/admin/stylists",
-    },
-    {
-      id: "products",
-      label: "Product Approval",
-      icon: <FiPackage size={20} />,
-      path: "/account/admin/products",
-    },
-    {
-      id: "orders",
-      label: "All Orders",
-      icon: <RiShoppingBagLine size={20} />,
-      path: "/account/admin/orders",
-    },
-    {
-      id: "transactions",
-      label: "Transactions",
-      icon: <FiDollarSign size={20} />,
-      path: "/account/admin/transactions",
-    },
-    {
-      id: "profile",
-      label: "Profile",
-      icon: <FiUser size={20} />,
-      path: "/account/admin/profile",
-    },
-    {
-      id: "settings",
-      label: "Settings",
-      icon: <FiSettings size={20} />,
-      path: "/account/admin/settings",
-    },
-  ];
 
   const handleLogout = () => {
     // In a real app, you would call your logout function here
@@ -93,7 +49,7 @@ const AdminAccountLayout = ({ children }: { children: React.ReactNode }) => {
           <FiMenu size={24} />
         </button>
         <h1 className="text-xl font-bold text-gray-800">Admin Dashboard</h1>
-        <div className="w-6"></div> {/* Spacer for alignment */}
+        <div className="w-6"></div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -118,7 +74,7 @@ const AdminAccountLayout = ({ children }: { children: React.ReactNode }) => {
               {/* Navigation */}
               <nav className="p-2">
                 <ul className="space-y-1">
-                  {navItems.map((item) => (
+                  {adminNavItems.map((item) => (
                     <li key={item.id}>
                       <button
                         onClick={() => {
@@ -193,7 +149,7 @@ const AdminAccountLayout = ({ children }: { children: React.ReactNode }) => {
                     {/* Navigation */}
                     <nav className="flex-1 overflow-y-auto p-2">
                       <ul className="space-y-1">
-                        {navItems.map((item) => (
+                        {adminNavItems.map((item) => (
                           <li key={item.id}>
                             <button
                               onClick={() => {
