@@ -117,7 +117,7 @@ const AdminDashboard = () => {
             </div>
           </div>
           <Link
-            href="/admin/users"
+            href="/account/admin/users"
             className="mt-4 inline-block text-sm font-medium text-blue-600 hover:text-blue-700">
             Manage users
           </Link>
@@ -134,7 +134,7 @@ const AdminDashboard = () => {
             </div>
           </div>
           <Link
-            href="/admin/stylists"
+            href="/account/admin/stylists"
             className="mt-4 inline-block text-sm font-medium text-purple-600 hover:text-purple-700">
             View stylists
           </Link>
@@ -151,7 +151,7 @@ const AdminDashboard = () => {
             </div>
           </div>
           <Link
-            href="/admin/products?status=pending"
+            href="/account/admin/products?status=pending"
             className="mt-4 inline-block text-sm font-medium text-amber-600 hover:text-amber-700">
             Review approvals
           </Link>
@@ -170,7 +170,7 @@ const AdminDashboard = () => {
             </div>
           </div>
           <Link
-            href="/admin/transactions"
+            href="/account/admin/transactions"
             className="mt-4 inline-block text-sm font-medium text-green-600 hover:text-green-700">
             View transactions
           </Link>
@@ -273,7 +273,7 @@ const AdminDashboard = () => {
         <div className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Link
-              href="/admin/products?status=pending"
+              href="/account/admin/products?status=pending"
               className="p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors text-center">
               <FiPackage className="mx-auto text-blue-600 mb-2" size={24} />
               <p className="font-medium text-gray-900">Review Products</p>
@@ -281,7 +281,7 @@ const AdminDashboard = () => {
             </Link>
 
             <Link
-              href="/admin/orders"
+              href="/account/admin/orders"
               className="p-4 border border-gray-200 rounded-lg hover:border-green-300 hover:bg-green-50 transition-colors text-center">
               <FiShoppingBag className="mx-auto text-green-600 mb-2" size={24} />
               <p className="font-medium text-gray-900">Manage Orders</p>
@@ -289,7 +289,7 @@ const AdminDashboard = () => {
             </Link>
 
             <Link
-              href="/admin/stylists?status=pending"
+              href="/account/admin/stylists?status=pending"
               className="p-4 border border-gray-200 rounded-lg hover:border-purple-300 hover:bg-purple-50 transition-colors text-center">
               <FiBriefcase className="mx-auto text-purple-600 mb-2" size={24} />
               <p className="font-medium text-gray-900">Verify Stylists</p>
@@ -297,7 +297,7 @@ const AdminDashboard = () => {
             </Link>
 
             <Link
-              href="/admin/transactions"
+              href="/account/admin/transactions"
               className="p-4 border border-gray-200 rounded-lg hover:border-amber-300 hover:bg-amber-50 transition-colors text-center">
               <FiDollarSign className="mx-auto text-amber-600 mb-2" size={24} />
               <p className="font-medium text-gray-900">View Transactions</p>

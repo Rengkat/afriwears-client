@@ -44,6 +44,7 @@ const AdminAccountLayout = ({ children }: { children: React.ReactNode }) => {
       {/* Mobile Header */}
       <div className="lg:hidden bg-white shadow-sm p-4 flex items-center justify-between">
         <button
+          title="setIsMobileNavOpen"
           onClick={() => setIsMobileNavOpen(true)}
           className="text-gray-600 hover:text-gray-900">
           <FiMenu size={24} />

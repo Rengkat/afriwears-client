@@ -33,6 +33,7 @@ const FilterSearch = ({
         {/* Filters */}
         <div className="flex flex-col sm:flex-row gap-4">
           <select
+            title="statusFilter"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
@@ -43,6 +44,7 @@ const FilterSearch = ({
           </select>
 
           <select
+            title="verificationFilter"
             value={verificationFilter}
             onChange={(e) => setVerificationFilter(e.target.value)}
             className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
@@ -64,22 +66,22 @@ const FilterSearch = ({
             <button
               onClick={() => handleBulkAction("verify")}
               className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded transition-colors">
-              Verify
+              Verify All
             </button>
             <button
               onClick={() => handleBulkAction("activate")}
               className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded transition-colors">
-              Activate
+              Activate All
             </button>
             <button
               onClick={() => handleBulkAction("suspend")}
               className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded transition-colors">
-              Suspend
+              Suspend All
             </button>
             <button
               onClick={() => handleBulkAction("delete")}
               className="px-3 py-1 bg-gray-600 hover:bg-gray-700 text-white text-sm font-medium rounded transition-colors">
-              Delete
+              Delete All
             </button>
           </div>
         </div>

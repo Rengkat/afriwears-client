@@ -1,4 +1,4 @@
-import { FiTruck } from "react-icons/fi";
+import { FiArrowDown, FiArrowUp, FiCreditCard, FiRefreshCw, FiTruck } from "react-icons/fi";
 import { RiHeartLine, RiShoppingBagLine } from "react-icons/ri";
 import {
   FiLogOut,
@@ -129,6 +129,32 @@ export const getStatusColor = (status: string) => {
   }
 };
 
+export const getTransactionTypeColor = (type: string) => {
+  switch (type) {
+    case "credit":
+      return "bg-green-100 text-green-800";
+    case "debit":
+      return "bg-red-100 text-red-800";
+    default:
+      return "bg-gray-100 text-gray-800";
+  }
+};
+
+export const getTransactionStatusColor = (status: string) => {
+  switch (status) {
+    case "completed":
+      return "bg-green-100 text-green-800";
+    case "pending":
+      return "bg-amber-100 text-amber-800";
+    case "failed":
+      return "bg-red-100 text-red-800";
+    case "reversed":
+      return "bg-gray-100 text-gray-800";
+    default:
+      return "bg-gray-100 text-gray-800";
+  }
+};
+
 export const getVerificationColor = (status: string) => {
   switch (status) {
     case "verified":
@@ -154,7 +180,20 @@ export const getStatusIcon = (status: string) => {
       return <FiPackage className="text-gray-500" size={16} />;
   }
 };
-
+export const getTransactionStatusIcon = (status: string) => {
+  switch (status) {
+    case "completed":
+      return <FiCheckCircle className="text-green-500" size={16} />;
+    case "pending":
+      return <FiClock className="text-amber-500" size={16} />;
+    case "failed":
+      return <FiXCircle className="text-red-500" size={16} />;
+    case "reversed":
+      return <FiRefreshCw className="text-gray-500" size={16} />;
+    default:
+      return <FiCreditCard className="text-gray-500" size={16} />;
+  }
+};
 export const getCategoryColor = (category: string) => {
   switch (category) {
     case "men":
@@ -166,6 +205,13 @@ export const getCategoryColor = (category: string) => {
     default:
       return "bg-gray-100 text-gray-800";
   }
+};
+export const getTypeIcon = (type: string) => {
+  return type === "credit" ? (
+    <FiArrowUp className="text-green-500" size={16} />
+  ) : (
+    <FiArrowDown className="text-red-500" size={16} />
+  );
 };
 export const formatDateTime = (dateString: string) => {
   return new Date(dateString).toLocaleDateString("en-US", {
