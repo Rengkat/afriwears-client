@@ -3,6 +3,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { FiArrowLeft, FiTruck, FiCheckCircle, FiClock, FiPrinter } from "react-icons/fi";
 import Image from "next/image";
+import OrderSummary from "./OrderSummary";
+import OrderAction from "./OrderAction";
 
 // Mock order data
 const mockOrder = {
@@ -104,7 +106,9 @@ const OrderDetailPage = ({ params }) => {
             {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
           </span>
 
-          <button className="p-2 border border-gray-300 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-50">
+          <button
+            title="print"
+            className="p-2 border border-gray-300 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-50">
             <FiPrinter size={18} />
           </button>
         </div>
@@ -112,104 +116,7 @@ const OrderDetailPage = ({ params }) => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Order Summary */}
-        <div className="lg:col-span-2">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="bg-gray-50 px-6 py-4 border-b border-gray-100">
-              <h2 className="font-semibold text-lg text-gray-800">Order Summary</h2>
-            </div>
-
-            <div className="p-6">
-              <div className="space-y-6">
-                {order.items.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex flex-col sm:flex-row gap-4 py-4 border-b border-gray-100 last:border-0">
-                    <div className="flex-shrink-0">
-                      <div className="h-24 w-24 rounded-md overflow-hidden relative">
-                        <Image src={item.image} alt={item.name} fill className="object-cover" />
-                      </div>
-                    </div>
-
-                    <div className="flex-1">
-                      <h3 className="font-medium text-gray-900">{item.name}</h3>
-                      <p className="text-sm text-gray-500 mt-1">Quantity: {item.quantity}</p>
-                    </div>
-
-                    <div className="text-right">
-                      <p className="font-medium">₦{item.price.toLocaleString()}</p>
-                      <p className="text-sm text-gray-500">
-                        Subtotal: ₦{item.subtotal.toLocaleString()}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-6 pt-4 border-t border-gray-100">
-                <div className="flex justify-between py-2">
-                  <span className="text-gray-600">Subtotal</span>
-                  <span className="font-medium">
-                    ₦{(order.total - order.shipping).toLocaleString()}
-                  </span>
-                </div>
-
-                <div className="flex justify-between py-2">
-                  <span className="text-gray-600">Shipping</span>
-                  <span className="font-medium">₦{order.shipping.toLocaleString()}</span>
-                </div>
-
-                <div className="flex justify-between py-2 text-lg font-bold">
-                  <span>Total</span>
-                  <span>₦{order.total.toLocaleString()}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Customer Information */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mt-6">
-            <div className="bg-gray-50 px-6 py-4 border-b border-gray-100">
-              <h2 className="font-semibold text-lg text-gray-800">Customer Information</h2>
-            </div>
-
-            <div className="p-6">
-              <div className="space-y-4">
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500 mb-1">Customer Name</h3>
-                  <p className="text-gray-900">{order.customer.name}</p>
-                </div>
-
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500 mb-1">Email Address</h3>
-                  <p className="text-gray-900">{order.customer.email}</p>
-                </div>
-
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500 mb-1">Phone Number</h3>
-                  <p className="text-gray-900">{order.customer.phone}</p>
-                </div>
-
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500 mb-1">Shipping Address</h3>
-                  <p className="text-gray-900">{order.customer.address}</p>
-                </div>
-
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500 mb-1">Payment Method</h3>
-                  <p className="text-gray-900">{order.paymentMethod}</p>
-                </div>
-
-                {order.notes && (
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-500 mb-1">Order Notes</h3>
-                    <p className="text-gray-900 italic">"{order.notes}"</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-
+        <OrderSummary order={order} />
         {/* Order Actions */}
         <div className="space-y-6">
           {/* Shipping Information */}
@@ -244,94 +151,11 @@ const OrderDetailPage = ({ params }) => {
           </div>
 
           {/* Order Actions */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="bg-gray-50 px-6 py-4 border-b border-gray-100">
-              <h2 className="font-semibold text-lg text-gray-800">Order Actions</h2>
-            </div>
-
-            <div className="p-6">
-              {order.status === "processing" && (
-                <button
-                  onClick={() => updateOrderStatus("shipped")}
-                  disabled={isUpdating}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed">
-                  {isUpdating ? (
-                    <>
-                      <svg
-                        className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24">
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"></circle>
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Updating...
-                    </>
-                  ) : (
-                    <>
-                      <FiTruck size={16} />
-                      Mark as Shipped
-                    </>
-                  )}
-                </button>
-              )}
-
-              {order.status === "shipped" && (
-                <button
-                  onClick={() => updateOrderStatus("delivered")}
-                  disabled={isUpdating}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 disabled:bg-green-400 disabled:cursor-not-allowed">
-                  {isUpdating ? (
-                    <>
-                      <svg
-                        className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24">
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"></circle>
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Updating...
-                    </>
-                  ) : (
-                    <>
-                      <FiCheckCircle size={16} />
-                      Mark as Delivered
-                    </>
-                  )}
-                </button>
-              )}
-
-              {order.status === "delivered" && (
-                <div className="text-center py-2">
-                  <p className="text-green-600 font-medium">This order has been delivered</p>
-                  <p className="text-sm text-gray-500 mt-1">Delivered on May 18, 2023</p>
-                </div>
-              )}
-
-              <button className="w-full mt-3 flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50">
-                Contact Customer
-              </button>
-            </div>
-          </div>
+          <OrderAction
+            order={order}
+            updateOrderStatus={updateOrderStatus}
+            isUpdating={isUpdating}
+          />
         </div>
       </div>
     </div>

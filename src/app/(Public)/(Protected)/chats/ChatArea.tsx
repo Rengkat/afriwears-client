@@ -3,7 +3,7 @@ import React from "react";
 import { BsCheck2All, BsEmojiSmile, BsSendFill } from "react-icons/bs";
 import { FiMic, FiMoreVertical, FiPaperclip } from "react-icons/fi";
 
-export const ChatArea = ({ activeChat, mockMessages, sendMessage, message, setMessage }) => {
+export const ChatArea = ({ activeChat, mockMessages, sendMessage, message, setMessage }: any) => {
   return (
     <div className="hidden md:flex md:flex-col w-2/3">
       {activeChat ? (
