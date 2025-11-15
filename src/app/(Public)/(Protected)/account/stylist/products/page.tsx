@@ -2,10 +2,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { FiPlus, FiEdit, FiTrash2, FiEye, FiClock } from "react-icons/fi";
+import { FiPlus, FiEdit, FiTrash2, FiEye, FiClock, FiBox } from "react-icons/fi";
 import { stylistmockProducts } from "@/mockData";
-
-// Mock data for stylist products
 
 const StylistProductsPage = () => {
   const [products, setProducts] = useState(stylistmockProducts);
@@ -18,7 +16,7 @@ const StylistProductsPage = () => {
           filter === "approved" ? product.status === "approved" : product.status === "pending"
         );
 
-  const handleDelete = (id) => {
+  const handleDelete = (id: string) => {
     // In a real app, you would call an API to delete the product
     setProducts(products.filter((product) => product.id !== id));
   };
@@ -38,6 +36,7 @@ const StylistProductsPage = () => {
         <div className="flex gap-3">
           <div className="relative">
             <select
+              title="filter"
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
               className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500">
