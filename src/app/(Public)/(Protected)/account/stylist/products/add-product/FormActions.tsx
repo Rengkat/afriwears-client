@@ -1,15 +1,20 @@
+// Update FormActions component
 import { useRouter } from "next/navigation";
+
 interface Props {
   isSubmitting: boolean;
 }
+
 const FormActions = ({ isSubmitting }: Props) => {
-  const Router = useRouter();
+  const router = useRouter();
+
   return (
     <div className="mt-8 flex justify-end gap-3">
       <button
         type="button"
-        onClick={() => Router.push("/stylist/products")}
-        className="px-6 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg shadow-sm hover:bg-gray-50 transition-colors">
+        onClick={() => router.push("/stylist/products")}
+        disabled={isSubmitting}
+        className="px-6 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg shadow-sm hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
         Cancel
       </button>
       <button
@@ -35,10 +40,10 @@ const FormActions = ({ isSubmitting }: Props) => {
                 fill="currentColor"
                 d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            Saving...
+            Creating Product...
           </>
         ) : (
-          "Save Product"
+          "Create Product"
         )}
       </button>
     </div>

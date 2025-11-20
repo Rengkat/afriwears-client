@@ -1,9 +1,8 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { FiUser, FiLogOut, FiMenu, FiBriefcase, FiSettings, FiPackage } from "react-icons/fi";
-import { RiShoppingBagLine } from "react-icons/ri";
-import { HiOutlineShoppingBag } from "react-icons/hi";
+import { FiMenu } from "react-icons/fi";
+
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { stylistNavItems } from "@/utils";
@@ -13,14 +12,6 @@ import { RootState } from "@/redux/Store";
 import DesktopNav from "./DesktopNav";
 import StylistNav from "./StylistNav";
 import Logout from "./Logout";
-
-// Mock stylist data
-const mockStylist = {
-  name: "Amina Couture",
-  email: "amina@couture.com",
-  avatar: "/stylist-avatar.jpg",
-  company: "Amina Couture Designs",
-};
 
 const StylistAccountLayout = ({ children }: { children: React.ReactNode }) => {
   const { user: localUser } = useSelector((store: RootState) => store.authSlice);
@@ -75,15 +66,17 @@ const StylistAccountLayout = ({ children }: { children: React.ReactNode }) => {
                       <div className="flex items-center gap-4">
                         <div className="relative h-12 w-12 rounded-full overflow-hidden">
                           <Image
-                            src={mockStylist.avatar}
-                            alt={mockStylist.name}
+                            src={user?.avatar}
+                            alt={user?.name}
                             fill
                             className="object-cover"
                           />
                         </div>
                         <div>
-                          <h3 className="font-medium text-gray-900">{mockStylist.name}</h3>
-                          <p className="text-sm text-gray-500">{mockStylist.company}</p>
+                          <h3 className="font-medium text-gray-900">
+                            {user?.firstName} {user?.surname}
+                          </h3>
+                          <p className="text-sm text-gray-500">{user?.company?.companyName}</p>
                         </div>
                       </div>
                     </div>
