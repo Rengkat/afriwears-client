@@ -40,7 +40,12 @@ export const navItems = [
   },
 ];
 export const stylistNavItems = [
-  { id: "dashboard", label: "Dashboard", icon: <FiBriefcase size={20} />, path: "/stylist" },
+  {
+    id: "dashboard",
+    label: "Dashboard",
+    icon: <FiBriefcase size={20} />,
+    path: "/account/stylist",
+  },
   {
     id: "products",
     label: "My Products",

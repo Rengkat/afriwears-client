@@ -11,7 +11,6 @@ import { navItems } from "@/utils";
 
 const UserAccountLayout = ({ children }: { children: React.ReactNode }) => {
   const { user: localUser } = useSelector((store: RootState) => store.authSlice);
-
   const { data, isLoading, isError } = useGetCurrentUserQuery(null);
   const [logout, { isLoading: loginOut }] = useLogoutMutation();
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
@@ -41,6 +40,7 @@ const UserAccountLayout = ({ children }: { children: React.ReactNode }) => {
       {/* Mobile Header */}
       <div className="lg:hidden bg-white shadow-sm p-4 flex items-center justify-between">
         <button
+          title="mobileNav"
           onClick={() => setIsMobileNavOpen(true)}
           className="text-gray-600 hover:text-gray-900">
           <FiMenu size={24} />

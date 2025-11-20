@@ -22,6 +22,7 @@ const filters = [
       { value: "men", label: "Men's Wear" },
       { value: "women", label: "Women's Wear" },
       { value: "unisex", label: "Unisex" },
+      { value: "materials", label: "Materials" },
     ],
   },
   {
@@ -168,6 +169,7 @@ const ShopPage = () => {
           showSortOptions={showSortOptions}
           setSortOption={setSortOption}
           sortOption={sortOption}
+          removeFilter={removeFilter}
         />
         {/* Mobile filter dialog */}
         {mobileFiltersOpen && (
