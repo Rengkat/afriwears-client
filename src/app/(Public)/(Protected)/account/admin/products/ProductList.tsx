@@ -4,7 +4,7 @@ import {
   getCategoryColor,
   getStatusColor,
   getStatusIcon,
-} from "@/utils";
+} from "@/Utils/utils";
 import {
   FiSearch,
   FiFilter,

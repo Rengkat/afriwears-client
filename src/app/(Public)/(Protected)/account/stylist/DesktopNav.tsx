@@ -1,4 +1,4 @@
-import { stylistNavItems } from "@/utils";
+import { stylistNavItems } from "@/Utils/utils";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import React from "react";

@@ -1,4 +1,9 @@
-import { formatCurrency, getStatusColor, getVerificationColor, getVerificationIcon } from "@/utils";
+import {
+  formatCurrency,
+  getStatusColor,
+  getVerificationColor,
+  getVerificationIcon,
+} from "@/Utils/utils";
 import {
   FiSearch,
   FiEdit,

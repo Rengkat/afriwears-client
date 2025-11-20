@@ -1,4 +1,4 @@
-import { formatCurrency, formatDate, getStatusColor, getVerificationColor } from "@/utils";
+import { formatCurrency, formatDate, getStatusColor, getVerificationColor } from "@/Utils/utils";
 import { FiAlertCircle, FiAward, FiMapPin, FiUserCheck, FiUserX, FiXCircle } from "react-icons/fi";
 const StylistDetailModel = ({
   handleVerifyStylist,

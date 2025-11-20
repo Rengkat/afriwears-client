@@ -6,7 +6,7 @@ import {
   getTransactionStatusIcon,
   getTransactionTypeColor,
   getTypeIcon,
-} from "@/utils";
+} from "@/Utils/utils";
 import React from "react";
 import { FiArrowUp, FiCreditCard, FiEye, FiRefreshCw, FiUser } from "react-icons/fi";
 

@@ -13,6 +13,9 @@ import {
   useCreateProductMutation,
   useUploadProductImageMutation,
 } from "@/redux/services/ProductApi";
+import { CreateProductRequest } from "@/Utils/Types";
+import CareAndInstruction from "./CareAndInstruction";
+import AdditionalDetails from "./AdditionalDetails";
 
 const AddProductPage = () => {
   const [createProduct, { isLoading }] = useCreateProductMutation();
@@ -43,7 +46,6 @@ const AddProductPage = () => {
   const [subImagePreviews, setSubImagePreviews] = useState<string[]>([]);
   const [uploadProgress, setUploadProgress] = useState(0);
 
-  // Update categories and types to match backend
   const categories = [
     { value: "men", label: "Men" },
     { value: "women", label: "Women" },
@@ -207,7 +209,7 @@ const AddProductPage = () => {
       setUploadProgress(100);
 
       toast.success("Product created successfully! Awaiting admin approval.");
-      router.push("/stylist/products");
+      router.push("/account/stylist/products");
     } catch (error: any) {
       console.error("Product creation failed:", error);
 
@@ -291,75 +293,9 @@ const AddProductPage = () => {
         </div>
 
         {/* Additional Details */}
-        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label
-              htmlFor="productDetails"
-              className="block text-sm font-medium text-gray-700 mb-1">
-              Product Details
-            </label>
-            <textarea
-              id="productDetails"
-              name="productDetails"
-              value={formData.productDetails}
-              onChange={handleInputChange}
-              rows={3}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500"
-              placeholder="Additional product specifications..."
-            />
-          </div>
-
-          <div>
-            <label htmlFor="materials" className="block text-sm font-medium text-gray-700 mb-1">
-              Materials
-            </label>
-            <input
-              type="text"
-              id="materials"
-              name="materials"
-              value={formData.materials}
-              onChange={handleInputChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500"
-              placeholder="e.g., 100% Cotton, Silk blend"
-            />
-          </div>
-        </div>
-
+        <AdditionalDetails formData={formData} handleInputChange={handleInputChange} />
         {/* Care Instructions & Delivery Info */}
-        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label
-              htmlFor="careInstructions"
-              className="block text-sm font-medium text-gray-700 mb-1">
-              Care Instructions
-            </label>
-            <textarea
-              id="careInstructions"
-              name="careInstructions"
-              value={formData.careInstructions}
-              onChange={handleInputChange}
-              rows={2}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500"
-              placeholder="How to care for this product..."
-            />
-          </div>
-
-          <div>
-            <label htmlFor="deliveryInfo" className="block text-sm font-medium text-gray-700 mb-1">
-              Delivery Information
-            </label>
-            <textarea
-              id="deliveryInfo"
-              name="deliveryInfo"
-              value={formData.deliveryInfo}
-              onChange={handleInputChange}
-              rows={2}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500"
-              placeholder="Delivery timelines and information..."
-            />
-          </div>
-        </div>
-
+        <CareAndInstruction formData={formData} handleInputChange={handleInputChange} />
         {/* Attributes */}
         <Attributes formData={formData} handleAttributeChange={handleAttributeChange} />
 

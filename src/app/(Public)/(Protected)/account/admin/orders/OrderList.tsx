@@ -4,7 +4,7 @@ import {
   getPaymentStatusColor,
   getStatusColor,
   getStatusIcon,
-} from "@/utils";
+} from "@/Utils/utils";
 import React from "react";
 import { FiCreditCard, FiEdit, FiEye, FiUser } from "react-icons/fi";
 

@@ -343,7 +343,7 @@ import StylistTable from "./StylistTable";
 import FilterSearch from "./FilterSearch";
 import StatCard from "./StatCard";
 import VerificationModel from "./VerificationModel";
-import { mockStylists } from "@/mockData";
+import { mockStylists } from "@/Utils/mockData";
 
 // Mock stylist data based on your schema
 

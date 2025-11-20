@@ -5,7 +5,7 @@ import { FiMenu } from "react-icons/fi";
 
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
-import { stylistNavItems } from "@/utils";
+import { stylistNavItems } from "@/Utils/utils";
 import { useSelector } from "react-redux";
 import { useGetCurrentUserQuery } from "@/redux/services/AuthApiSlice";
 import { RootState } from "@/redux/Store";

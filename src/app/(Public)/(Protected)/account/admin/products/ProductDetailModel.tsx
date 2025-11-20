@@ -1,4 +1,4 @@
-import { formatCurrency, getCategoryColor, getStatusColor } from "@/utils";
+import { formatCurrency, getCategoryColor, getStatusColor } from "@/Utils/utils";
 import { FiXCircle, FiPackage, FiUser, FiAlertCircle } from "react-icons/fi";
 
 const ProductDetailModel = ({

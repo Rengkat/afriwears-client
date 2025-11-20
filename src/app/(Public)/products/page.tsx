@@ -5,7 +5,7 @@ import Link from "next/link";
 import { FiFilter, FiX, FiChevronDown, FiChevronUp } from "react-icons/fi";
 import ProductCard from "@/components/ProductCard";
 import ShopBanner from "./ShopBanner";
-import { products } from "@/mockData";
+import { products } from "@/Utils/mockData";
 import NavigationCategory from "./NavigationCategory";
 import FilterAndSort from "./FilterAndSort";
 import MobileFilterDialog from "./MobileFilterDialog";

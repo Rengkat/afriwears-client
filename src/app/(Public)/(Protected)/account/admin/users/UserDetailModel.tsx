@@ -1,4 +1,4 @@
-import { getStatusColor } from "@/utils";
+import { getStatusColor } from "@/Utils/utils";
 import React from "react";
 import { FiUserCheck, FiUserX } from "react-icons/fi";
 

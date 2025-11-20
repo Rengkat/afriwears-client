@@ -1,4 +1,4 @@
-import { formatDateTime } from "@/utils";
+import { formatDateTime } from "@/Utils/utils";
 import React from "react";
 
 const Security = ({

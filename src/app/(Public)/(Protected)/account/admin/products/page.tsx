@@ -24,11 +24,11 @@ import {
   getCategoryColor,
   getStatusColor,
   getStatusIcon,
-} from "@/utils";
+} from "@/Utils/utils";
 import Pagination from "./Pagination";
 import ProductList from "./ProductList";
 import FilterAndSearch from "./FilterAndSearch";
-import { mockProducts } from "@/mockData";
+import { mockProducts } from "@/Utils/mockData";
 import StatCard from "./StatCard";
 
 const ProductApprovalPage = () => {

@@ -16,7 +16,7 @@ import {
 import { RiShoppingBagLine } from "react-icons/ri";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
-import { adminNavItems } from "@/utils";
+import { adminNavItems } from "@/Utils/utils";
 
 // Mock admin data
 const mockAdmin = {

@@ -3,7 +3,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { FiPlus, FiEdit, FiTrash2, FiEye, FiClock, FiBox } from "react-icons/fi";
-import { stylistmockProducts } from "@/mockData";
+import { stylistmockProducts } from "@/Utils/mockData";
 
 const StylistProductsPage = () => {
   const [products, setProducts] = useState(stylistmockProducts);

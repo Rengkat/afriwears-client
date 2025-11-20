@@ -3,7 +3,7 @@ import {
   formatDate,
   getTransactionStatusColor,
   getTransactionTypeColor,
-} from "@/utils";
+} from "@/Utils/utils";
 import React from "react";
 import { FiAlertCircle, FiUser, FiXCircle } from "react-icons/fi";
 

@@ -7,7 +7,7 @@ import Image from "next/image";
 import { useSelector } from "react-redux";
 import { useGetCurrentUserQuery, useLogoutMutation } from "@/redux/services/AuthApiSlice";
 import { RootState } from "@/redux/Store";
-import { navItems } from "@/utils";
+import { navItems } from "@/Utils/utils";
 
 const UserAccountLayout = ({ children }: { children: React.ReactNode }) => {
   const { user: localUser } = useSelector((store: RootState) => store.authSlice);

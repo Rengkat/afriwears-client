@@ -1,5 +1,5 @@
 "use client";
-import { settingsDatat } from "@/utils";
+import { settingsDatat } from "@/Utils/utils";
 import { useState } from "react";
 import Navigation from "./Navigation";
 import Security from "./Security";

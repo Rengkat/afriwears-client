@@ -1,4 +1,4 @@
-import { formatCurrency, formatDate, getPaymentStatusColor, getStatusColor } from "@/utils";
+import { formatCurrency, formatDate, getPaymentStatusColor, getStatusColor } from "@/Utils/utils";
 import React from "react";
 import { FiMapPin, FiPackage, FiXCircle } from "react-icons/fi";
 

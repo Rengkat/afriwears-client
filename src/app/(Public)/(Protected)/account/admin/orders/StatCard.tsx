@@ -1,4 +1,4 @@
-import { formatCurrency } from "@/utils";
+import { formatCurrency } from "@/Utils/utils";
 import React from "react";
 import { FiClock, FiDollarSign, FiPackage, FiShoppingBag } from "react-icons/fi";
 

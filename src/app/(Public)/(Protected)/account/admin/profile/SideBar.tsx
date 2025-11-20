@@ -1,4 +1,4 @@
-import { formatDate, formatDateTime } from "@/utils";
+import { formatDate, formatDateTime } from "@/Utils/utils";
 import Image from "next/image";
 import React from "react";
 import { FiBell, FiCamera, FiShield, FiUser } from "react-icons/fi";

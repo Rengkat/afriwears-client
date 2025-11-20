@@ -1,4 +1,4 @@
-import { formatDate, getStatusColor } from "@/utils";
+import { formatDate, getStatusColor } from "@/Utils/utils";
 import {
   FiSearch,
   FiFilter,
