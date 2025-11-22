@@ -4,7 +4,7 @@ import { baseQueryWithReauth } from "../BaseUrl";
 export const productApi = createApi({
   reducerPath: "productApi",
   baseQuery: baseQueryWithReauth,
-  tagTypes: ["Products", "Product"],
+  tagTypes: ["Products", "Product", "MyProducts"],
   endpoints: (build) => ({
     getProducts: build.query({
       query: ({ stylist, page = 1, name, limit = 10, category, type, featured, status }) => ({
@@ -12,6 +12,13 @@ export const productApi = createApi({
         params: { stylist, page, name, limit, category, type, featured, status },
       }),
       providesTags: ["Products"],
+    }),
+    getMyProducts: build.query({
+      query: ({ page = 1, limit = 10, status, category, type, featured }) => ({
+        url: `products/my-products`,
+        params: { page, limit, status, category, type, featured },
+      }),
+      providesTags: ["MyProducts"],
     }),
     getFeaturedProducts: build.query({
       query: () => ({
@@ -59,6 +66,16 @@ export const productApi = createApi({
         };
       },
     }),
+    // Delete product image from Sanity
+    deleteProductImage: build.mutation({
+      query: (imageUrl) => ({
+        url: `products/delete-product-image`,
+        method: "DELETE",
+        body: { imageUrl },
+      }),
+      // Invalidate relevant product caches since images are part of product data
+      invalidatesTags: ["Products", "MyProducts"],
+    }),
     addReview: build.mutation({
       query: ({ productId, ...data }) => ({
         url: `products/${productId}/review`,
@@ -88,12 +105,14 @@ export const productApi = createApi({
 
 export const {
   useGetProductsQuery,
+  useGetMyProductsQuery,
   useGetFeaturedProductsQuery,
   useGetProductDetailQuery,
   useCreateProductMutation,
   useUpdateProductMutation,
   useDeleteProductMutation,
   useUploadProductImageMutation,
+  useDeleteProductImageMutation,
   useAddReviewMutation,
   useUpdateReviewMutation,
   useVerifyProductMutation,

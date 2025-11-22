@@ -301,3 +301,16 @@ export const settingsDatat = {
     payoutSchedule: "weekly",
   },
 };
+export const categories = [
+  { value: "men", label: "Men" },
+  { value: "women", label: "Women" },
+  { value: "unisex", label: "Unisex" },
+  { value: "material", label: "Material" },
+];
+
+export const types = {
+  men: ["native", "corporate", "casual", "traditional"],
+  women: ["native", "corporate", "casual", "traditional"],
+  unisex: ["native", "corporate", "casual", "traditional"],
+  material: ["native", "corporate", "casual", "traditional"],
+};

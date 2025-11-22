@@ -1,4 +1,3 @@
-// Update your AddProductPage component
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -16,10 +15,12 @@ import {
 import { CreateProductRequest } from "@/Utils/Types";
 import CareAndInstruction from "./CareAndInstruction";
 import AdditionalDetails from "./AdditionalDetails";
+import { categories, types } from "@/Utils/utils";
 
 const AddProductPage = () => {
   const [createProduct, { isLoading }] = useCreateProductMutation();
-  const [uploadProductImage] = useUploadProductImageMutation();
+  const [uploadProductImage, { isLoading: isUploading }] = useUploadProductImageMutation();
+
   const router = useRouter();
 
   const [formData, setFormData] = useState({
@@ -46,20 +47,6 @@ const AddProductPage = () => {
   const [subImagePreviews, setSubImagePreviews] = useState<string[]>([]);
   const [uploadProgress, setUploadProgress] = useState(0);
 
-  const categories = [
-    { value: "men", label: "Men" },
-    { value: "women", label: "Women" },
-    { value: "unisex", label: "Unisex" },
-    { value: "material", label: "Material" },
-  ];
-
-  const types = {
-    men: ["native", "corporate", "casual", "traditional"],
-    women: ["native", "corporate", "casual", "traditional"],
-    unisex: ["native", "corporate", "casual", "traditional"],
-    material: ["native", "corporate", "casual", "traditional"],
-  };
-
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
@@ -80,7 +67,7 @@ const AddProductPage = () => {
     }));
   };
 
-  const handleMainImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleMainImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       // Validate file size (5MB)
@@ -95,6 +82,8 @@ const AddProductPage = () => {
         setImagePreview(reader.result as string);
       };
       reader.readAsDataURL(file);
+      const { imageUrl } = await uploadProductImage(file).unwrap();
+      console.log(imageUrl);
     }
   };
 
