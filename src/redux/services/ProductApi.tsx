@@ -56,9 +56,10 @@ export const productApi = createApi({
       invalidatesTags: ["Products"],
     }),
     uploadProductImage: build.mutation({
-      query: (imageFile) => {
+      query: (file) => {
         const formData = new FormData();
-        formData.append("image", imageFile);
+        formData.append("image", file);
+
         return {
           url: `products/upload-product-image`,
           method: "POST",

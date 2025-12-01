@@ -29,7 +29,6 @@ const LeftColumn = ({ formData, handleInputChange, categories, types }: LeftColu
           placeholder="Enter product name"
         />
       </div>
-
       {/* Price */}
       <div>
         <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-1">
@@ -48,7 +47,40 @@ const LeftColumn = ({ formData, handleInputChange, categories, types }: LeftColu
           placeholder="0.00"
         />
       </div>
-
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label htmlFor="minPrice" className="block text-sm font-medium text-gray-700 mb-1">
+            Minimum Price (₦)
+          </label>
+          <input
+            type="number"
+            id="minPrice"
+            name="minPrice"
+            value={formData.minPrice || formData.price}
+            onChange={handleInputChange}
+            min="0"
+            step="0.01"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500"
+            placeholder="0.00"
+          />
+        </div>
+        <div>
+          <label htmlFor="maxPrice" className="block text-sm font-medium text-gray-700 mb-1">
+            Maximum Price (₦)
+          </label>
+          <input
+            type="number"
+            id="maxPrice"
+            name="maxPrice"
+            value={formData.maxPrice || formData.price}
+            onChange={handleInputChange}
+            min="0"
+            step="0.01"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500"
+            placeholder="0.00"
+          />
+        </div>
+      </div>
       {/* Category */}
       <div>
         <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
@@ -74,7 +106,6 @@ const LeftColumn = ({ formData, handleInputChange, categories, types }: LeftColu
           </div>
         </div>
       </div>
-
       {/* Type */}
       {formData.category && (
         <div>
@@ -102,7 +133,6 @@ const LeftColumn = ({ formData, handleInputChange, categories, types }: LeftColu
           </div>
         </div>
       )}
-
       {/* Stock */}
       <div>
         <label htmlFor="stock" className="block text-sm font-medium text-gray-700 mb-1">

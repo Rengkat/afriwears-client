@@ -11,21 +11,28 @@ import { toast } from "react-hot-toast";
 import {
   useCreateProductMutation,
   useUploadProductImageMutation,
+  useDeleteProductImageMutation,
 } from "@/redux/services/ProductApi";
 import { CreateProductRequest } from "@/Utils/Types";
 import CareAndInstruction from "./CareAndInstruction";
 import AdditionalDetails from "./AdditionalDetails";
 import { categories, types } from "@/Utils/utils";
+import { useSelector } from "react-redux";
 
 const AddProductPage = () => {
   const [createProduct, { isLoading }] = useCreateProductMutation();
   const [uploadProductImage, { isLoading: isUploading }] = useUploadProductImageMutation();
+  const [deleteProductImage] = useDeleteProductImageMutation();
+  const { user: localUser } = useSelector((store: RootState) => store.authSlice);
+  // console.log(localUser);
 
   const router = useRouter();
 
   const [formData, setFormData] = useState({
     name: "",
     price: "",
+    minPrice: "",
+    maxPrice: "",
     category: "" as "men" | "women" | "unisex" | "material" | "",
     type: "" as "native" | "corporate" | "casual" | "traditional" | "",
     description: "",
@@ -39,13 +46,12 @@ const AddProductPage = () => {
     materials: "",
     careInstructions: "",
     deliveryInfo: "",
-    mainImage: null as File | null,
-    subImages: [] as File[],
+    mainImage: "",
+    subImages: [] as string[],
   });
-
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [subImagePreviews, setSubImagePreviews] = useState<string[]>([]);
-  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadingImages, setUploadingImages] = useState<string[]>([]); // Track uploading images
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -67,6 +73,17 @@ const AddProductPage = () => {
     }));
   };
 
+  const uploadImage = async (file: File): Promise<string> => {
+    try {
+      const response = await uploadProductImage(file).unwrap();
+
+      return response.imageUrl;
+    } catch (error: any) {
+      console.error("Image upload failed:", error);
+      throw new Error(error?.data?.message || "Failed to upload image");
+    }
+  };
+
   const handleMainImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -76,18 +93,31 @@ const AddProductPage = () => {
         return;
       }
 
-      setFormData((prev) => ({ ...prev, mainImage: file }));
+      // Create preview
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result as string);
       };
       reader.readAsDataURL(file);
-      const { imageUrl } = await uploadProductImage(file).unwrap();
-      console.log(imageUrl);
+
+      // Upload image immediately
+      try {
+        setUploadingImages((prev) => [...prev, "mainImage"]);
+        const imageUrl = await uploadImage(file);
+
+        // Update formData with the URL
+        setFormData((prev) => ({ ...prev, mainImage: imageUrl }));
+        toast.success("Main image uploaded successfully");
+      } catch (error) {
+        toast.error("Failed to upload main image");
+        setImagePreview(null);
+      } finally {
+        setUploadingImages((prev) => prev.filter((img) => img !== "mainImage"));
+      }
     }
   };
 
-  const handleSubImagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSubImagesChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
 
     // Validate total files (max 6 including existing)
@@ -104,39 +134,81 @@ const AddProductPage = () => {
     }
 
     if (files.length > 0) {
-      const newSubImages = [...formData.subImages, ...files];
-      setFormData((prev) => ({ ...prev, subImages: newSubImages }));
-
+      // Create previews first
+      const newPreviews: string[] = [];
       files.forEach((file) => {
         const reader = new FileReader();
         reader.onloadend = () => {
-          setSubImagePreviews((prev) => [...prev, reader.result as string]);
+          newPreviews.push(reader.result as string);
+          setSubImagePreviews((prev) => [...prev, ...newPreviews]);
         };
         reader.readAsDataURL(file);
       });
+
+      // Upload all images
+      try {
+        setUploadingImages((prev) => [...prev, ...files.map((_, index) => `subImage-${index}`)]);
+
+        const uploadPromises = files.map((file) => uploadImage(file));
+        const uploadedUrls = await Promise.all(uploadPromises);
+
+        // Update formData with all URLs
+        setFormData((prev) => ({
+          ...prev,
+          subImages: [...prev.subImages, ...uploadedUrls],
+        }));
+
+        toast.success(`${files.length} images uploaded successfully`);
+      } catch (error) {
+        toast.error("Failed to upload some images");
+        // Remove the previews if upload failed
+        setSubImagePreviews((prev) => prev.slice(0, -files.length));
+      } finally {
+        setUploadingImages((prev) => prev.filter((img) => !img.startsWith("subImage-")));
+      }
     }
   };
 
-  const removeSubImage = (index: number) => {
+  const removeSubImage = async (index: number) => {
+    const imageUrlToDelete = formData.subImages[index];
+
+    // Remove from previews immediately
+    const newPreviews = [...subImagePreviews];
+    newPreviews.splice(index, 1);
+    setSubImagePreviews(newPreviews);
+
+    // Remove from formData immediately
     const newSubImages = [...formData.subImages];
     newSubImages.splice(index, 1);
     setFormData((prev) => ({ ...prev, subImages: newSubImages }));
 
-    const newPreviews = [...subImagePreviews];
-    newPreviews.splice(index, 1);
-    setSubImagePreviews(newPreviews);
+    // Delete from Sanity in background
+    if (imageUrlToDelete && imageUrlToDelete.includes("cdn.sanity.io")) {
+      try {
+        await deleteProductImage(imageUrlToDelete).unwrap();
+        console.log("Image deleted from Sanity:", imageUrlToDelete);
+      } catch (error) {
+        console.error("Failed to delete image from Sanity:", error);
+        // Don't show error to user since we've already removed it locally
+      }
+    }
   };
 
-  const uploadImage = async (file: File): Promise<string> => {
-    const formData = new FormData();
-    formData.append("image", file);
+  const removeMainImage = async () => {
+    const imageUrlToDelete = formData.mainImage;
 
-    try {
-      const response = await uploadProductImage(formData).unwrap();
-      return response.imageUrl;
-    } catch (error) {
-      console.error("Image upload failed:", error);
-      throw new Error("Failed to upload image");
+    // Remove immediately
+    setImagePreview(null);
+    setFormData((prev) => ({ ...prev, mainImage: "" }));
+
+    // Delete from Sanity in background
+    if (imageUrlToDelete && imageUrlToDelete.includes("cdn.sanity.io")) {
+      try {
+        await deleteProductImage(imageUrlToDelete).unwrap();
+        console.log("Main image deleted from Sanity:", imageUrlToDelete);
+      } catch (error) {
+        console.error("Failed to delete main image from Sanity:", error);
+      }
     }
   };
 
@@ -157,33 +229,25 @@ const AddProductPage = () => {
       return;
     }
 
+    // Check if any images are still uploading
+    if (uploadingImages.length > 0) {
+      toast.error("Please wait for all images to finish uploading");
+      return;
+    }
+
     try {
-      setUploadProgress(10);
-
-      // Upload main image
-      const mainImageUrl = await uploadImage(formData.mainImage);
-      setUploadProgress(40);
-
-      // Upload sub images
-      const subImageUrls: string[] = [];
-      for (let i = 0; i < formData.subImages.length; i++) {
-        const url = await uploadImage(formData.subImages[i]);
-        subImageUrls.push(url);
-        setUploadProgress(40 + (i / formData.subImages.length) * 30);
-      }
-
-      setUploadProgress(80);
-
-      // Prepare product data
+      // Prepare product data - images are already URLs
       const productData: CreateProductRequest = {
         name: formData.name,
         price: Number(formData.price),
+        minPrice: Number(formData.price),
+        maxPrice: Number(formData.price),
         category: formData.category,
         type: formData.type,
         description: formData.description,
         stock: Number(formData.stock),
-        mainImage: mainImageUrl,
-        subImages: subImageUrls,
+        mainImage: formData.mainImage,
+        subImages: formData.subImages,
         attributes: Object.fromEntries(
           Object.entries(formData.attributes).filter(([_, value]) => value.trim() !== "")
         ),
@@ -191,11 +255,20 @@ const AddProductPage = () => {
         materials: formData.materials || undefined,
         careInstructions: formData.careInstructions || undefined,
         deliveryInfo: formData.deliveryInfo || undefined,
-      };
+        status: "draft",
 
-      // Create product
+        ...(localUser?.company?.id && { stylist: localUser.company.id }),
+        ...(localUser?.company?.companyName && { stylistName: localUser.company.companyName }),
+      };
+      // Remove empty optional fields
+      Object.keys(productData).forEach((key) => {
+        if (productData[key as keyof CreateProductRequest] === undefined) {
+          delete productData[key as keyof CreateProductRequest];
+        }
+      });
+
+      // console.log("Submitting product:", productData);
       await createProduct(productData).unwrap();
-      setUploadProgress(100);
 
       toast.success("Product created successfully! Awaiting admin approval.");
       router.push("/account/stylist/products");
@@ -210,8 +283,6 @@ const AddProductPage = () => {
       }
 
       toast.error(errorMessage);
-    } finally {
-      setUploadProgress(0);
     }
   };
 
@@ -225,17 +296,12 @@ const AddProductPage = () => {
         <p className="text-gray-600 mt-1">Fill in the details of your new product</p>
       </div>
 
-      {/* Upload Progress Bar */}
-      {uploadProgress > 0 && (
+      {/* Uploading Status */}
+      {uploadingImages.length > 0 && (
         <div className="mb-6 bg-white rounded-lg shadow-sm border border-gray-100 p-4">
-          <div className="flex justify-between text-sm text-gray-600 mb-2">
-            <span>Uploading images...</span>
-            <span>{Math.round(uploadProgress)}%</span>
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div
-              className="bg-amber-600 h-2 rounded-full transition-all duration-300"
-              style={{ width: `${uploadProgress}%` }}></div>
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-amber-600"></div>
+            <span>Uploading {uploadingImages.length} image(s)...</span>
           </div>
         </div>
       )}
@@ -261,6 +327,8 @@ const AddProductPage = () => {
             setFormData={setFormData}
             subImagePreviews={subImagePreviews}
             removeSubImage={removeSubImage}
+            removeMainImage={removeMainImage}
+            isUploading={uploadingImages.length > 0}
           />
         </div>
 
@@ -289,7 +357,10 @@ const AddProductPage = () => {
         <Attributes formData={formData} handleAttributeChange={handleAttributeChange} />
 
         {/* Form Actions */}
-        <FormActions isSubmitting={isLoading || uploadProgress > 0} />
+        <FormActions
+          isSubmitting={isLoading || uploadingImages.length > 0}
+          submitText={uploadingImages.length > 0 ? "Uploading Images..." : "Create Product"}
+        />
       </form>
     </div>
   );
