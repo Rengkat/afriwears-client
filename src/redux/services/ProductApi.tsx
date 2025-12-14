@@ -53,7 +53,7 @@ export const productApi = createApi({
         url: `products/${id}`,
         method: "DELETE",
       }),
-      invalidatesTags: ["Products"],
+      invalidatesTags: ["Products", "MyProducts"],
     }),
     uploadProductImage: build.mutation({
       query: (file) => {

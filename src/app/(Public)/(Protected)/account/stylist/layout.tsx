@@ -20,6 +20,7 @@ const StylistAccountLayout = ({ children }: { children: React.ReactNode }) => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const router = useRouter();
   const user = data?.user || localUser;
+  // console.log(user);
 
   return (
     <div className="min-h-screen bg-gray-50">

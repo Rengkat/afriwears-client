@@ -8,6 +8,7 @@ import Logout from "./Logout";
 
 const DesktopNav = ({ stylist, setActiveTab, activeTab, handleLogout }: any) => {
   const router = useRouter();
+  // console.log(stylist);
   return (
     <aside className="hidden lg:block w-full lg:w-80">
       <div className="bg-white rounded-xl shadow-sm overflow-hidden">
@@ -16,8 +17,8 @@ const DesktopNav = ({ stylist, setActiveTab, activeTab, handleLogout }: any) => 
           <div className="flex items-center gap-4">
             <div className="relative h-12 w-12 rounded-full overflow-hidden">
               <Image
-                src={stylist.avatar}
-                alt={stylist.firstName}
+                src={stylist?.avatar}
+                alt={stylist?.firstName}
                 width={300}
                 height={300}
                 className="object-cover"
@@ -25,7 +26,7 @@ const DesktopNav = ({ stylist, setActiveTab, activeTab, handleLogout }: any) => 
             </div>
             <div>
               <h3 className="font-medium text-gray-900">
-                {stylist.firstName} {stylist.surname}
+                {stylist?.firstName} {stylist?.surname}
               </h3>
               <p className="text-sm text-gray-500">{stylist?.company?.companyName}</p>
             </div>
