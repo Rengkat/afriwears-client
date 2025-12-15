@@ -1,8 +1,9 @@
 "use client";
 
+import Loading from "@/app/(Public)/(Protected)/account/stylist/products/Loading";
+
+import ProductCard from "./ProductCard";
 import { useGetProductsQuery } from "@/redux/services/ProductApi";
-import ProductCard from "@/components/ProductCard";
-import Loading from "@/components/Loading";
 
 interface RelatedProductsProps {
   category: string;

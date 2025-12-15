@@ -6,19 +6,20 @@ import { FiStar, FiShare2, FiHeart, FiTruck, FiShield, FiArrowLeft } from "react
 import Image from "next/image";
 import Link from "next/link";
 import { useGetProductDetailQuery } from "@/redux/services/ProductApi";
-import Loading from "@/components/Loading";
-import Error from "@/components/Error";
-import ProductGallery from "@/components/products/ProductGallery";
-import ProductInfo from "@/components/products/ProductInfo";
-import ProductActions from "@/components/products/ProductActions";
-import ProductTabs from "@/components/products/ProductTabs";
-import RelatedProducts from "@/components/products/RelatedProducts";
-import StylistCard from "@/components/products/StylistCard";
+import ProductInfo from "@/components/ProductInfo";
+import ProductActions from "@/components/ProductActions";
+import StylistCard from "@/components/StylistCard";
+import ProductTabs from "@/components/ProductTabs";
+import RelatedProducts from "@/components/RelatedProducts";
+// import Loading from "../Loading";
+// import Error from "../Error";
+import ProductGallery from "@/components/ProductGallery";
+// import Loading from "@/components/Loading";
 
 const ProductDetailPage = () => {
   const params = useParams();
   const productId = params.id as string;
-
+  console.log(productId);
   const {
     data: productData,
     isLoading,
@@ -33,18 +34,22 @@ const ProductDetailPage = () => {
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
 
   const product = productData?.product;
-
+  console.log(product);
   // Handle loading and error states
   if (isLoading) {
-    return <Loading />;
+    // return <Loading />;
+    <h1>Loading...</h1>;
   }
 
   if (isError || !product) {
-    return <Error refetch={refetch} />;
+    // return <Error refetch={refetch} />;
+    <h1>error...</h1>;
   }
 
   const images = [product.mainImage, ...(product.subImages || [])];
-  const isOutOfStock = product.stock === 0;
+  //   console.log(images);
+  //   const isOutOfStock = product.stock === 0;
+  const isOutOfStock = true;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -61,12 +66,12 @@ const ProductDetailPage = () => {
             </Link>
             <span className="mx-2">/</span>
             <Link
-              href={`/products?category=${product.category}`}
+              href={`/products?category=${product?.category}`}
               className="hover:text-amber-600 transition-colors capitalize">
-              {product.category}
+              {product?.category}
             </Link>
             <span className="mx-2">/</span>
-            <span className="text-gray-900 font-medium truncate max-w-xs">{product.name}</span>
+            <span className="text-gray-900 font-medium truncate max-w-xs">{product?.name}</span>
           </div>
         </div>
       </div>
@@ -99,12 +104,12 @@ const ProductDetailPage = () => {
             {/* Product Header */}
             <div className="mb-6">
               <div className="flex items-center justify-between mb-2">
-                <h1 className="text-2xl md:text-3xl font-bold text-gray-900">{product.name}</h1>
+                <h1 className="text-2xl md:text-3xl font-bold text-gray-900">{product?.name}</h1>
                 <div className="flex items-center gap-2">
-                  <button className="p-2 text-gray-400 hover:text-gray-600">
+                  <button title="share" className="p-2 text-gray-400 hover:text-gray-600">
                     <FiShare2 size={20} />
                   </button>
-                  <button className="p-2 text-gray-400 hover:text-red-500">
+                  <button title="like" className="p-2 text-gray-400 hover:text-red-500">
                     <FiHeart size={20} />
                   </button>
                 </div>
@@ -114,9 +119,9 @@ const ProductDetailPage = () => {
               <div className="flex items-center gap-2 mb-4">
                 <span className="text-sm text-gray-500">By</span>
                 <Link
-                  href={`/stylists/${product.stylist?._id}`}
+                  href={`/stylists/${product?.stylist?._id}`}
                   className="text-sm font-medium text-amber-600 hover:text-amber-700">
-                  {product.stylistName || product.stylist?.name || "Unknown Stylist"}
+                  {product?.stylistName || product?.stylist?.name || "Unknown Stylist"}
                 </Link>
               </div>
 
@@ -127,25 +132,25 @@ const ProductDetailPage = () => {
                     <FiStar
                       key={star}
                       className={`w-5 h-5 ${
-                        star <= Math.floor(product.rating || 0)
+                        star <= Math.floor(product?.rating || 0)
                           ? "text-amber-500 fill-amber-500"
                           : "text-gray-300"
                       }`}
                     />
                   ))}
                   <span className="ml-2 text-sm font-medium text-gray-900">
-                    {product.rating?.toFixed(1) || "0.0"}
+                    {product?.rating?.toFixed(1) || "0.0"}
                   </span>
                 </div>
                 <Link href="#reviews" className="text-sm text-gray-500 hover:text-amber-600">
-                  ({product.reviewCount || product.reviews?.length || 0} reviews)
+                  ({product?.reviewCount || product?.reviews?.length || 0} reviews)
                 </Link>
-                {product.isBestSeller && (
+                {product?.isBestSeller && (
                   <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
                     Best Seller
                   </span>
                 )}
-                {product.isNewProduct && (
+                {product?.isNewProduct && (
                   <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
                     New
                   </span>
@@ -156,16 +161,16 @@ const ProductDetailPage = () => {
               <div className="mb-6">
                 <div className="flex items-center gap-3">
                   <span className="text-3xl font-bold text-gray-900">
-                    ₦{product.price?.toLocaleString()}
+                    ₦{product?.price?.toLocaleString()}
                   </span>
-                  {product.minPrice && (
+                  {product?.minPrice && (
                     <span className="text-lg text-gray-500 line-through">
-                      ₦{product.maxPrice?.toLocaleString()}
+                      ₦{product?.maxPrice?.toLocaleString()}
                     </span>
                   )}
-                  {product.maxPrice && product.maxPrice > product.price && (
+                  {product?.maxPrice && product?.maxPrice > product?.price && (
                     <span className="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded">
-                      Save ₦{(product.maxPrice - product.price).toLocaleString()}
+                      Save ₦{(product?.maxPrice - product?.price).toLocaleString()}
                     </span>
                   )}
                 </div>
@@ -174,7 +179,7 @@ const ProductDetailPage = () => {
             </div>
 
             {/* Variants */}
-            <ProductInfo
+            {/* <ProductInfo
               product={product}
               selectedSize={selectedSize}
               setSelectedSize={setSelectedSize}
@@ -182,7 +187,7 @@ const ProductDetailPage = () => {
               setSelectedColor={setSelectedColor}
               quantity={quantity}
               setQuantity={setQuantity}
-            />
+            /> */}
 
             {/* Stock Status */}
             <div className="mb-6">
@@ -202,13 +207,13 @@ const ProductDetailPage = () => {
             </div>
 
             {/* Actions */}
-            <ProductActions
+            {/* <ProductActions
               product={product}
               quantity={quantity}
               selectedSize={selectedSize}
               selectedColor={selectedColor}
               isOutOfStock={isOutOfStock}
-            />
+            /> */}
 
             {/* Trust Badges */}
             <div className="mt-8 pt-6 border-t border-gray-200">
@@ -240,21 +245,19 @@ const ProductDetailPage = () => {
             </div>
 
             {/* Stylist Card */}
-            <StylistCard stylist={product.stylist} />
+            {/* <StylistCard stylist={product?.stylist} /> */}
           </div>
         </div>
 
         {/* Product Tabs */}
-        <div className="mt-12">
-          <ProductTabs product={product} />
-        </div>
+        <div className="mt-12">{/* <ProductTabs product={product} /> */}</div>
 
         {/* Related Products */}
         <div className="mt-12">
           <RelatedProducts
-            category={product.category}
-            currentProductId={product._id}
-            stylistId={product.stylist?._id}
+            category={product?.category}
+            currentProductId={product?._id}
+            stylistId={product?.stylist?._id}
           />
         </div>
       </div>

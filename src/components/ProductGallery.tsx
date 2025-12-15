@@ -75,11 +75,13 @@ const ProductGallery = ({
         {images.length > 1 && (
           <>
             <button
+              title="prev image"
               onClick={prevImage}
               className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white p-2 rounded-full shadow-lg transition-all">
               <FiChevronLeft size={24} />
             </button>
             <button
+              title="next image"
               onClick={nextImage}
               className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white p-2 rounded-full shadow-lg transition-all">
               <FiChevronRight size={24} />
@@ -93,6 +95,7 @@ const ProductGallery = ({
         <div className="flex gap-2 overflow-x-auto pb-2">
           {images.map((image, index) => (
             <button
+              title="on select image"
               key={index}
               onClick={() => onSelectImage(index)}
               className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${

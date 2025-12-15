@@ -6,7 +6,7 @@ import React, { useState, useEffect } from "react";
 import { FiClock, FiEdit, FiEye, FiTrash2 } from "react-icons/fi";
 import toast from "react-hot-toast";
 import ConfirmModal from "./ConfirmationModel";
-import { createPortal } from "react-dom"; 
+import { createPortal } from "react-dom";
 
 const ProductList = ({ product }: any) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -125,7 +125,7 @@ const ProductList = ({ product }: any) => {
         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
           <div className="flex justify-end gap-2">
             <Link
-              href={`/products/${product?._id}`}
+              href={`/account/stylist/products/${product?._id}`}
               className="text-gray-600 hover:text-gray-900 p-1"
               title="View">
               <FiEye size={16} />
@@ -156,20 +156,22 @@ const ProductList = ({ product }: any) => {
       </tr>
 
       {/* Modal rendered OUTSIDE the table using portal */}
-      {mounted && isModalOpen && createPortal(
-  <ConfirmModal
-    isOpen={isModalOpen}
-    onClose={closeDeleteModal}
-    onConfirm={handleDelete}
-    title="Delete Product"
-    message={`Are you sure you want to delete "${product?.name}"? This action cannot be undone.`}
-    confirmText="Delete Product"
-    cancelText="Cancel"
-    isLoading={isLoading}
-    isDanger={true}
-  />,
-  document.getElementById('modal-root')! 
-)}
+      {mounted &&
+        isModalOpen &&
+        createPortal(
+          <ConfirmModal
+            isOpen={isModalOpen}
+            onClose={closeDeleteModal}
+            onConfirm={handleDelete}
+            title="Delete Product"
+            message={`Are you sure you want to delete "${product?.name}"? This action cannot be undone.`}
+            confirmText="Delete Product"
+            cancelText="Cancel"
+            isLoading={isLoading}
+            isDanger={true}
+          />,
+          document.getElementById("modal-root")!
+        )}
     </>
   );
 };
