@@ -37,7 +37,7 @@ const StylistProductsPage = () => {
   const total = apiData?.total || 0;
   const totalPages = apiData?.pages || 1;
   const count = apiData?.count || 0;
-
+  // console.log(apiData);
   // Handle filter changes
   const handleStatusChange = (value: string) => {
     if (value === "all") {
@@ -70,10 +70,9 @@ const StylistProductsPage = () => {
 
   const handleDelete = async (id: string) => {
     // Note: You'll need to implement deleteProduct mutation in your API
-    console.log("Delete product:", id);
-    // In a real implementation:
-    // await deleteProduct(id).unwrap();
-    // refetch();
+
+    await deleteProduct(id).unwrap();
+    refetch();
   };
 
   // Loading state
@@ -208,6 +207,7 @@ const StylistProductsPage = () => {
                         key={product._id}
                         product={product}
                         handleDelete={handleDelete}
+                        refetch={refetch}
                       />
                     );
                   })}

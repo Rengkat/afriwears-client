@@ -103,6 +103,7 @@ const StylistAccountLayout = ({ children }: { children: React.ReactNode }) => {
           <main className="flex-1 bg-white rounded-xl shadow-sm overflow-hidden">{children}</main>
         </div>
       </div>
+      <div id="modal-root"></div>
     </div>
   );
 };
