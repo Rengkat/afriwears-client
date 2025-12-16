@@ -1,15 +1,25 @@
-// components/ProductTabs.tsx
+// components/ProductTabs.tsx - Updated for stylist view
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { FiInfo, FiPackage, FiTruck, FiMessageSquare } from "react-icons/fi";
+import {
+  FiInfo,
+  FiPackage,
+  FiTruck,
+  FiMessageSquare,
+  FiSettings,
+  FiBarChart,
+} from "react-icons/fi";
 
 interface ProductTabsProps {
   product: any;
+  isOwner?: boolean;
 }
 
-const ProductTabs = ({ product }: ProductTabsProps) => {
+const ProductTabs = ({ product, isOwner = true }: ProductTabsProps) => {
   const [activeTab, setActiveTab] = useState("description");
+  const router = useRouter();
 
   const tabs = [
     { id: "description", label: "Description", icon: <FiInfo /> },
@@ -17,6 +27,14 @@ const ProductTabs = ({ product }: ProductTabsProps) => {
     { id: "shipping", label: "Shipping & Returns", icon: <FiTruck /> },
     { id: "reviews", label: "Reviews", icon: <FiMessageSquare /> },
   ];
+
+  // Add management tabs for owner
+  if (isOwner) {
+    tabs.push(
+      { id: "management", label: "Management", icon: <FiSettings /> },
+      { id: "performance", label: "Performance", icon: <FiBarChart /> }
+    );
+  }
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100">
@@ -26,6 +44,7 @@ const ProductTabs = ({ product }: ProductTabsProps) => {
           {tabs.map((tab) => (
             <button
               key={tab.id}
+              type="button"
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-2 px-6 py-3 font-medium transition-colors ${
                 activeTab === tab.id
@@ -136,12 +155,6 @@ const ProductTabs = ({ product }: ProductTabsProps) => {
                   <h4 className="font-medium text-green-900 mb-1">Express Shipping</h4>
                   <p className="text-green-700">Delivery within 1-3 business days</p>
                 </div>
-                <div className="p-4 bg-amber-50 rounded-lg">
-                  <h4 className="font-medium text-amber-900 mb-1">Returns Policy</h4>
-                  <p className="text-amber-700">
-                    30-day return policy. Items must be in original condition.
-                  </p>
-                </div>
               </div>
             )}
           </div>
@@ -179,10 +192,136 @@ const ProductTabs = ({ product }: ProductTabsProps) => {
                 ))}
               </div>
             ) : (
-              <p className="text-gray-500 text-center py-8">
-                No reviews yet. Be the first to review this product!
-              </p>
+              <p className="text-gray-500 text-center py-8">No reviews yet.</p>
             )}
+          </div>
+        )}
+
+        {activeTab === "management" && isOwner && (
+          <div className="space-y-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-3">Product Management</h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Product Information */}
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <h4 className="font-medium text-gray-900 mb-3">Product Information</h4>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Created:</span>
+                    <span className="font-medium">
+                      {new Date(product.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Last Updated:</span>
+                    <span className="font-medium">
+                      {new Date(product.updatedAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">SKU:</span>
+                    <span className="font-medium">{product.sku}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Status:</span>
+                    <span className="font-medium capitalize">{product.status}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Inventory Management */}
+
+              <div className="p-4 bg-amber-50 rounded-lg">
+                <h4 className="font-medium text-amber-900 mb-3">Inventory</h4>
+                <div className="space-y-3">
+                  <div>
+                    <div className="flex justify-between mb-1">
+                      <span className="text-sm text-amber-700">Current Stock</span>
+                      <span className="font-medium">{product.stock} units</span>
+                    </div>
+                    <div className="w-full bg-amber-200 rounded-full h-2">
+                      <div
+                        className="bg-amber-600 h-2 rounded-full"
+                        style={{ width: `${Math.min((product.stock / 100) * 100, 100)}%` }}></div>
+                    </div>
+                  </div>
+                  {product.stock < 10 && (
+                    <div className="text-sm text-amber-700">⚠️ Low stock alert</div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Actions */}
+            <div className="p-4 bg-blue-50 rounded-lg">
+              <h4 className="font-medium text-blue-900 mb-3">Quick Actions</h4>
+              <div className="flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={() =>
+                    (window.location.href = `/account/stylist/products/edit/${product._id}`)
+                  }
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium">
+                  Edit Product
+                </button>
+                {product.status === "pending" && (
+                  <button
+                    type="button"
+                    // onClick={() => setShowDeleteConfirm(true)}
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm font-medium">
+                    Delete Product
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => router.push(`/account/stylist/products?duplicate=${product._id}`)}
+                  className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 text-sm font-medium">
+                  Duplicate Product
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === "performance" && isOwner && (
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-3">Product Performance</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-gray-50 p-4 rounded-lg text-center">
+                <div className="text-2xl font-bold text-gray-900">
+                  {product.rating?.toFixed(1) || "0.0"}
+                </div>
+                <div className="text-sm text-gray-600">Average Rating</div>
+              </div>
+              <div className="bg-gray-50 p-4 rounded-lg text-center">
+                <div className="text-2xl font-bold text-gray-900">{product.reviewCount || 0}</div>
+                <div className="text-sm text-gray-600">Total Reviews</div>
+              </div>
+              <div className="bg-gray-50 p-4 rounded-lg text-center">
+                <div className="text-2xl font-bold text-gray-900">{product.stock}</div>
+                <div className="text-sm text-gray-600">Units in Stock</div>
+              </div>
+              <div className="bg-gray-50 p-4 rounded-lg text-center">
+                <div className="text-2xl font-bold text-gray-900">
+                  ₦{product.price?.toLocaleString()}
+                </div>
+                <div className="text-sm text-gray-600">Price</div>
+              </div>
+            </div>
+
+            <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+              <h4 className="font-medium text-gray-900 mb-3">Performance Insights</h4>
+              <ul className="text-sm text-gray-600 space-y-2">
+                <li>• Product was created on {new Date(product.createdAt).toLocaleDateString()}</li>
+                <li>• Last updated on {new Date(product.updatedAt).toLocaleDateString()}</li>
+                {product.status === "approved" && (
+                  <li>• Product is live and visible to customers</li>
+                )}
+                {product.status === "pending" && <li>• Product is awaiting admin approval</li>}
+                {product.featured && <li>• This product is marked as Featured</li>}
+                {product.isBestSeller && <li>• This product is marked as Best Seller</li>}
+              </ul>
+            </div>
           </div>
         )}
       </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { FiMinus, FiPlus } from "react-icons/fi";
 
 interface ProductInfoProps {
@@ -21,10 +22,10 @@ const ProductInfo = ({
   quantity,
   setQuantity,
 }: ProductInfoProps) => {
-  // Extract variants from attributes
-  const sizes = product.attributes?.size ? product.attributes.size.split(",") : [];
-  const colors = product.attributes?.color ? product.attributes.color.split(",") : [];
-  const materials = product.attributes?.material ? [product.attributes.material] : [];
+  // Extract variants from new attributes structure
+  const sizes = product.attributes?.sizes || [];
+  const colors = product.attributes?.colors || [];
+  const material = product.attributes?.material || product.materials || "";
 
   return (
     <div className="space-y-6 mb-8">
@@ -33,7 +34,7 @@ const ProductInfo = ({
         <div>
           <div className="flex items-center justify-between mb-3">
             <label className="font-medium text-gray-900">Size</label>
-            <button className="text-sm text-amber-600 hover:text-amber-700">Size Guide</button>
+            {/* <button className="text-sm text-amber-600 hover:text-amber-700">Size Guide</button> */}
           </div>
           <div className="flex flex-wrap gap-2">
             {sizes.map((size: string) => (
@@ -45,7 +46,7 @@ const ProductInfo = ({
                     ? "border-amber-500 bg-amber-50 text-amber-700"
                     : "border-gray-200 hover:border-gray-300 text-gray-700"
                 }`}>
-                {size.trim()}
+                {size}
               </button>
             ))}
           </div>
@@ -57,54 +58,58 @@ const ProductInfo = ({
         <div>
           <label className="font-medium text-gray-900 mb-3 block">Color</label>
           <div className="flex flex-wrap gap-3">
-            {colors.map((color: string) => (
-              <button
-                key={color}
-                onClick={() => setSelectedColor(color === selectedColor ? null : color)}
-                className={`relative p-1 rounded-full border-2 transition-all ${
-                  selectedColor === color
-                    ? "border-amber-500"
-                    : "border-gray-200 hover:border-gray-300"
-                }`}
-                title={color.trim()}>
-                <div
-                  className="w-10 h-10 rounded-full"
-                  style={{
-                    backgroundColor: color.trim().toLowerCase(),
-                    border: color.trim().toLowerCase() === "white" ? "1px solid #e5e7eb" : "none",
-                  }}
-                />
-                {selectedColor === color && (
-                  <div className="absolute inset-0 border-2 border-amber-500 rounded-full" />
-                )}
-              </button>
-            ))}
+            {colors.map((color: any) => {
+              const colorName = color.name || color;
+              const colorHex = color.hexCode || color;
+              const isSelected = selectedColor === colorName;
+
+              return (
+                <button
+                  key={colorName}
+                  onClick={() => setSelectedColor(colorName === selectedColor ? null : colorName)}
+                  className={`relative p-1 rounded-full border-2 transition-all ${
+                    isSelected ? "border-amber-500" : "border-gray-200 hover:border-gray-300"
+                  }`}
+                  title={colorName}>
+                  <div
+                    className="w-10 h-10 rounded-full"
+                    style={{
+                      backgroundColor: colorHex,
+                      border:
+                        colorHex === "#FFFFFF" || colorHex === "#fff" || colorHex === "white"
+                          ? "1px solid #e5e7eb"
+                          : "none",
+                    }}
+                  />
+                  {isSelected && (
+                    <div className="absolute inset-0 border-2 border-amber-500 rounded-full" />
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
       )}
 
       {/* Material */}
-      {materials.length > 0 && (
+      {material && (
         <div>
           <label className="font-medium text-gray-900 mb-2 block">Material</label>
           <div className="flex flex-wrap gap-2">
-            {materials.map((material: string) => (
-              <span
-                key={material}
-                className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">
-                {material.trim()}
-              </span>
-            ))}
+            <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">
+              {material}
+            </span>
           </div>
         </div>
       )}
 
       {/* Quantity Selector */}
-      <div>
+      {/* <div>
         <label className="font-medium text-gray-900 mb-3 block">Quantity</label>
         <div className="flex items-center gap-4">
           <div className="flex items-center border border-gray-300 rounded-lg">
             <button
+              title="quantity"
               onClick={() => setQuantity(Math.max(1, quantity - 1))}
               disabled={quantity <= 1}
               className="p-3 text-gray-600 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed">
@@ -112,6 +117,7 @@ const ProductInfo = ({
             </button>
             <span className="w-12 text-center font-medium text-gray-900">{quantity}</span>
             <button
+              title="quanity"
               onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
               disabled={quantity >= product.stock}
               className="p-3 text-gray-600 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed">
@@ -120,7 +126,7 @@ const ProductInfo = ({
           </div>
           <span className="text-sm text-gray-500">Max: {product.stock} units</span>
         </div>
-      </div>
+      </div> */}
 
       {/* Tags */}
       {product.tags && product.tags.length > 0 && (

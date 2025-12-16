@@ -28,6 +28,17 @@ const ProductActions = ({
       return;
     }
 
+    if (product.attributes?.sizes?.length > 0 && !selectedSize) {
+      toast.error("Please select a size");
+      return;
+    }
+
+    // Validate color selection if product has colors
+    if (product.attributes?.colors?.length > 0 && !selectedColor) {
+      toast.error("Please select a color");
+      return;
+    }
+
     setIsAddingToCart(true);
 
     // Simulate API call
@@ -56,6 +67,18 @@ const ProductActions = ({
       return;
     }
 
+    // Validate size selection if product has sizes
+    if (product.attributes?.sizes?.length > 0 && !selectedSize) {
+      toast.error("Please select a size");
+      return;
+    }
+
+    // Validate color selection if product has colors
+    if (product.attributes?.colors?.length > 0 && !selectedColor) {
+      toast.error("Please select a color");
+      return;
+    }
+
     setIsBuyingNow(true);
 
     // Simulate API call
@@ -73,6 +96,7 @@ const ProductActions = ({
       {/* Action Buttons */}
       <div className="flex flex-col sm:flex-row gap-3">
         <button
+          type="button"
           onClick={handleAddToCart}
           disabled={isOutOfStock || isAddingToCart}
           className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium transition-all ${
@@ -94,6 +118,7 @@ const ProductActions = ({
         </button>
 
         <button
+          type="button"
           onClick={handleBuyNow}
           disabled={isOutOfStock || isBuyingNow}
           className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium transition-all ${
