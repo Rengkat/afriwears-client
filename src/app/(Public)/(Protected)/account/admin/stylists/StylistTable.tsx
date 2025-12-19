@@ -34,6 +34,7 @@ const StylistTable = ({
   handleApproveStylist,
   handleRejectStylist,
   handleActivateStylist,
+  isLoading = false,
 }: any) => {
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
@@ -49,7 +50,8 @@ const StylistTable = ({
                   checked={
                     selectedStylists.length === currentStylists.length && currentStylists.length > 0
                   }
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  disabled={isLoading}
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50"
                 />
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -76,7 +78,7 @@ const StylistTable = ({
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {currentStylists.map((stylist) => (
+            {currentStylists.map((stylist: any) => (
               <tr key={stylist._id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap">
                   <input
@@ -84,7 +86,8 @@ const StylistTable = ({
                     type="checkbox"
                     checked={selectedStylists.includes(stylist._id)}
                     onChange={(e) => handleSelectStylist(stylist._id, e.target.checked)}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    disabled={isLoading}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50"
                   />
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
@@ -94,22 +97,17 @@ const StylistTable = ({
                         <img
                           className="h-10 w-10 rounded-full"
                           src={stylist.avatar}
-                          alt={stylist.name}
+                          alt={stylist.companyName}
                         />
                       ) : (
                         <FiUserCheck className="h-5 w-5 text-gray-400" />
                       )}
                     </div>
                     <div className="ml-4">
-                      <div className="text-sm font-medium text-gray-900">
-                        {stylist.name}
-                        {stylist.isEmailVerified && (
-                          <span className="ml-1 text-green-500" title="Email Verified">
-                            ✓
-                          </span>
-                        )}
+                      <div className="text-sm font-medium text-gray-900">{stylist.companyName}</div>
+                      <div className="text-sm text-gray-500">
+                        {stylist.owner?.name || "No Owner"}
                       </div>
-                      <div className="text-sm text-gray-500">{stylist.company}</div>
                       <div className="text-xs text-gray-400">{stylist.email}</div>
                     </div>
                   </div>
@@ -135,9 +133,9 @@ const StylistTable = ({
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span
                     className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
-                      stylist.status
+                      stylist.status || "active"
                     )}`}>
-                    {stylist.status}
+                    {stylist.status || "active"}
                   </span>
                   {stylist.suspensionReason && (
                     <div
@@ -148,37 +146,37 @@ const StylistTable = ({
                   )}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{stylist.totalProducts}</div>
+                  <div className="text-sm text-gray-900">{stylist.totalProducts || 0}</div>
                   <div className="text-xs text-gray-500">
-                    {stylist.pendingApproval > 0 && (
-                      <span className="text-amber-600">{stylist.pendingApproval} pending</span>
-                    )}
+                    {/* Add pending approval if needed */}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-medium text-gray-900">
-                    {formatCurrency(stylist.totalRevenue)}
+                    {formatCurrency(stylist.totalRevenue || 0)}
                   </div>
-                  <div className="text-xs text-gray-500">{stylist.totalOrders} orders</div>
+                  <div className="text-xs text-gray-500">{stylist.totalOrders || 0} orders</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center gap-1">
-                    <span className="text-sm font-medium text-gray-900">{stylist.rating}</span>
+                    <span className="text-sm font-medium text-gray-900">{stylist.rating || 0}</span>
                     <div className="text-amber-500">★</div>
-                    <div className="text-xs text-gray-500">({stylist.reviewCount})</div>
+                    <div className="text-xs text-gray-500">({stylist.reviews || 0})</div>
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => handleViewStylist(stylist)}
-                      className="text-blue-600 hover:text-blue-900 transition-colors"
+                      disabled={isLoading}
+                      className="text-blue-600 hover:text-blue-900 transition-colors disabled:opacity-50"
                       title="View Details">
                       <FiEye size={16} />
                     </button>
                     <button
                       onClick={() => handleEditStylist(stylist)}
-                      className="text-green-600 hover:text-green-900 transition-colors"
+                      disabled={isLoading}
+                      className="text-green-600 hover:text-green-900 transition-colors disabled:opacity-50"
                       title="Edit Stylist">
                       <FiEdit size={16} />
                     </button>
@@ -186,36 +184,41 @@ const StylistTable = ({
                       <>
                         <button
                           onClick={() => handleApproveStylist(stylist._id)}
-                          className="text-green-600 hover:text-green-900 transition-colors"
+                          disabled={isLoading}
+                          className="text-green-600 hover:text-green-900 transition-colors disabled:opacity-50"
                           title="Approve Stylist">
                           <FiCheckCircle size={16} />
                         </button>
                         <button
                           onClick={() => handleRejectStylist(stylist)}
-                          className="text-red-600 hover:text-red-900 transition-colors"
+                          disabled={isLoading}
+                          className="text-red-600 hover:text-red-900 transition-colors disabled:opacity-50"
                           title="Reject Stylist">
                           <FiXCircle size={16} />
                         </button>
                       </>
                     )}
-                    {stylist.status === "active" ? (
+                    {stylist.status === "active" || !stylist.status ? (
                       <button
                         onClick={() => handleSuspendStylist(stylist)}
-                        className="text-red-600 hover:text-red-900 transition-colors"
+                        disabled={isLoading}
+                        className="text-red-600 hover:text-red-900 transition-colors disabled:opacity-50"
                         title="Suspend Stylist">
                         <FiUserX size={16} />
                       </button>
                     ) : (
                       <button
                         onClick={() => handleActivateStylist(stylist._id)}
-                        className="text-green-600 hover:text-green-900 transition-colors"
+                        disabled={isLoading}
+                        className="text-green-600 hover:text-green-900 transition-colors disabled:opacity-50"
                         title="Activate Stylist">
                         <FiUserCheck size={16} />
                       </button>
                     )}
                     <button
                       onClick={() => handleDeleteStylist(stylist._id)}
-                      className="text-gray-600 hover:text-gray-900 transition-colors"
+                      disabled={isLoading}
+                      className="text-gray-600 hover:text-gray-900 transition-colors disabled:opacity-50"
                       title="Delete Stylist">
                       <FiTrash2 size={16} />
                     </button>
@@ -227,8 +230,16 @@ const StylistTable = ({
         </table>
       </div>
 
+      {/* Loading State */}
+      {isLoading && currentStylists.length === 0 && (
+        <div className="text-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading stylists...</p>
+        </div>
+      )}
+
       {/* Empty State */}
-      {currentStylists.length === 0 && (
+      {!isLoading && currentStylists.length === 0 && (
         <div className="text-center py-12">
           <FiUserCheck className="mx-auto h-12 w-12 text-gray-400" />
           <h3 className="mt-2 text-sm font-medium text-gray-900">No stylists found</h3>
