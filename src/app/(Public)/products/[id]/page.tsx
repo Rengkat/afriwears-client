@@ -33,7 +33,7 @@ const mockProduct = {
   colors: ["#B83227", "#2C3E50", "#F39C12", "#1E8449"],
 };
 
-const ProductPage = ({ params }) => {
+const ProductPage = () => {
   const [selectedImage, setSelectedImage] = useState(0);
   const [showMeasurements, setShowMeasurements] = useState(false);
   const [selectedSize, setSelectedSize] = useState("");

@@ -4,20 +4,29 @@ import { baseQueryWithReauth } from "../BaseUrl";
 export const stylistApi = createApi({
   reducerPath: "stylistApi",
   baseQuery: baseQueryWithReauth,
-  tagTypes: ["Stylist"],
+  tagTypes: ["Stylist", "MyStylist"],
   endpoints: (build) => ({
     // ==================== QUERIES ====================
     getStylists: build.query({
       query: ({ company, specialty, page = 1, limit = 10 }) => ({
-        url: `stylist`,
+        url: `stylists`,
         params: { company, specialty, page, limit },
       }),
       providesTags: ["Stylist"],
     }),
 
+    // Get logged-in stylist's own profile
+    getMyStylistProfile: build.query({
+      query: () => ({
+        url: "stylists/my/profile",
+      }),
+      providesTags: ["MyStylist"],
+    }),
+
+    // Get any stylist by ID
     getStylistDetail: build.query({
       query: (id) => ({
-        url: `stylist/${id}`,
+        url: `stylists/${id}`,
       }),
       providesTags: (result, error, id) => [{ type: "Stylist", id }],
     }),
@@ -26,7 +35,7 @@ export const stylistApi = createApi({
     // Admin-only: Create stylist company
     createStylist: build.mutation({
       query: (data) => ({
-        url: "stylist",
+        url: "stylists",
         method: "POST",
         body: data,
       }),
@@ -36,79 +45,83 @@ export const stylistApi = createApi({
     // Admin-only: Delete stylist
     deleteStylist: build.mutation({
       query: (id) => ({
-        url: `stylist/${id}`,
+        url: `stylists/${id}`,
         method: "DELETE",
       }),
       invalidatesTags: ["Stylist"],
+    }),
+
+    // Admin-only: Update any stylist
+    updateStylist: build.mutation({
+      query: ({ id, data }) => ({
+        url: `stylists/${id}`,
+        method: "PATCH",
+        body: data,
+      }),
+      invalidatesTags: (result, error, { id }) => [{ type: "Stylist", id }, "Stylist", "MyStylist"],
     }),
 
     // Admin-only: Verify/Reject stylist
     verifyStylist: build.mutation({
       query: ({ id, action, rejectionReason }) => ({
-        url: `stylist/verify/${id}`,
+        url: `stylists/verify/${id}`,
         method: "PATCH",
         body: { action, rejectionReason },
       }),
-      invalidatesTags: ["Stylist"],
+      invalidatesTags: (result, error, { id }) => [{ type: "Stylist", id }, "Stylist", "MyStylist"],
     }),
 
-    // Update stylist (admin or owner)
-    updateStylist: build.mutation({
-      query: ({ id, data }) => ({
-        url: `stylist/${id}`,
+    // Stylist-only: Update own profile via /my/profile
+    updateMyStylistProfile: build.mutation({
+      query: (data) => ({
+        url: `stylists/my/profile`,
         method: "PATCH",
         body: data,
       }),
-      invalidatesTags: (result, error, { id }) => [{ type: "Stylist", id }, "Stylist"],
-    }),
-
-    // Update stylist profile (stylist only)
-    updateStylistProfile: build.mutation({
-      query: ({ id, data }) => ({
-        url: `stylist/${id}/profile`,
-        method: "PATCH",
-        body: data,
-      }),
-      invalidatesTags: (result, error, { id }) => [{ type: "Stylist", id }, "Stylist"],
+      invalidatesTags: ["MyStylist", "Stylist"],
     }),
 
     // ==================== IMAGE UPLOADS ====================
     uploadStylistAvatar: build.mutation({
       query: ({ id, formData }) => ({
-        url: `stylist/${id}/upload-avatar`,
+        url: `stylists/${id}/upload-avatar`,
         method: "POST",
         body: formData,
-        headers: {
-          // Let the browser set content-type for FormData
-        },
       }),
-      invalidatesTags: (result, error, { id }) => [{ type: "Stylist", id }, "Stylist"],
+      invalidatesTags: (result, error, { id }) => [{ type: "Stylist", id }, "Stylist", "MyStylist"],
     }),
 
     uploadStylistBanner: build.mutation({
       query: ({ id, formData }) => ({
-        url: `stylist/${id}/upload-banner`,
+        url: `stylists/${id}/upload-banner`,
         method: "POST",
         body: formData,
       }),
-      invalidatesTags: (result, error, { id }) => [{ type: "Stylist", id }, "Stylist"],
+      invalidatesTags: (result, error, { id }) => [{ type: "Stylist", id }, "Stylist", "MyStylist"],
     }),
 
     addPortfolioImage: build.mutation({
       query: ({ id, formData }) => ({
-        url: `stylist/${id}/portfolio`,
+        url: `stylists/${id}/portfolio`,
         method: "POST",
         body: formData,
       }),
-      invalidatesTags: (result, error, { id }) => [{ type: "Stylist", id }, "Stylist"],
+      invalidatesTags: (result, error, { id }) => [{ type: "Stylist", id }, "Stylist", "MyStylist"],
     }),
-
+    uploadStylistDocument: build.mutation({
+      query: ({ id, formData }) => ({
+        url: `stylists/${id}/upload-document`,
+        method: "POST",
+        body: formData,
+      }),
+      invalidatesTags: (result, error, { id }) => [{ type: "Stylist", id }, "Stylist", "MyStylist"],
+    }),
     removePortfolioImage: build.mutation({
       query: ({ id, imageId }) => ({
-        url: `stylist/${id}/portfolio/${imageId}`,
+        url: `stylists/${id}/portfolio/${imageId}`,
         method: "DELETE",
       }),
-      invalidatesTags: (result, error, { id }) => [{ type: "Stylist", id }, "Stylist"],
+      invalidatesTags: (result, error, { id }) => [{ type: "Stylist", id }, "Stylist", "MyStylist"],
     }),
   }),
 });
@@ -116,13 +129,15 @@ export const stylistApi = createApi({
 export const {
   useGetStylistDetailQuery,
   useGetStylistsQuery,
+  useGetMyStylistProfileQuery,
   useUpdateStylistMutation,
   useCreateStylistMutation,
   useDeleteStylistMutation,
   useVerifyStylistMutation,
-  useUpdateStylistProfileMutation,
+  useUpdateMyStylistProfileMutation,
   useUploadStylistAvatarMutation,
   useUploadStylistBannerMutation,
   useAddPortfolioImageMutation,
   useRemovePortfolioImageMutation,
+  useUploadStylistDocumentMutation,
 } = stylistApi;

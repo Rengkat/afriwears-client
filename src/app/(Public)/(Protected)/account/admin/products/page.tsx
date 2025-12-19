@@ -2,29 +2,10 @@
 import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "@/redux/Store";
-import {
-  FiSearch,
-  FiFilter,
-  FiEye,
-  FiCheckCircle,
-  FiXCircle,
-  FiClock,
-  FiPackage,
-  FiUser,
-  FiDollarSign,
-  FiTag,
-  FiShoppingBag,
-  FiAlertCircle,
-} from "react-icons/fi";
+import { FiPackage } from "react-icons/fi";
 import RejectionModel from "./RejectionModel";
 import ProductDetailModel from "./ProductDetailModel";
-import {
-  formatCurrency,
-  formatDate,
-  getCategoryColor,
-  getStatusColor,
-  getStatusIcon,
-} from "@/Utils/utils";
+
 import Pagination from "./Pagination";
 import ProductList from "./ProductList";
 import FilterAndSearch from "./FilterAndSearch";

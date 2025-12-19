@@ -1,4 +1,3 @@
-// Update your ProductDetailPage component for stylist view
 "use client";
 
 import { useEffect, useState } from "react";
@@ -20,12 +19,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { useGetProductDetailQuery, useDeleteProductMutation } from "@/redux/services/ProductApi";
 import ProductInfo from "@/components/ProductInfo";
-import StylistCard from "@/components/StylistCard";
+// import StylistCard from "@/components/StylistCard";
 // import ProductTabs from "@/components/ProductTabs";
 import ProductGallery from "@/components/ProductGallery";
 import { toast } from "react-hot-toast";
 import { useSelector } from "react-redux";
 import ProductTabs from "./ProductTabs";
+import { RootState } from "@/redux/Store";
 
 const ProductDetailPage = () => {
   const params = useParams();
@@ -84,7 +84,7 @@ const ProductDetailPage = () => {
 
   // Check if current user owns this product
   const isOwner = localUser?.company?.id === product.stylist?.toString();
-
+  console.log(localUser?.company?.id, product.stylist?.toString());
   const handleEdit = () => {
     router.push(`/account/stylist/products/edit/${productId}`);
   };
