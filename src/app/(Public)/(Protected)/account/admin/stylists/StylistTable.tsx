@@ -15,6 +15,7 @@ import {
   FiXCircle,
 } from "react-icons/fi";
 import Pagination from "./Pagination";
+import Image from "next/image";
 
 const StylistTable = ({
   handleSelectAll,
@@ -36,6 +37,7 @@ const StylistTable = ({
   handleActivateStylist,
   isLoading = false,
 }: any) => {
+  console.log(currentStylists);
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
       <div className="overflow-x-auto">
@@ -94,7 +96,9 @@ const StylistTable = ({
                   <div className="flex items-center">
                     <div className="h-10 w-10 flex-shrink-0 bg-gray-200 rounded-full flex items-center justify-center">
                       {stylist.avatar ? (
-                        <img
+                        <Image
+                          width={500}
+                          height={500}
                           className="h-10 w-10 rounded-full"
                           src={stylist.avatar}
                           alt={stylist.companyName}
@@ -106,7 +110,7 @@ const StylistTable = ({
                     <div className="ml-4">
                       <div className="text-sm font-medium text-gray-900">{stylist.companyName}</div>
                       <div className="text-sm text-gray-500">
-                        {stylist.owner?.name || "No Owner"}
+                        {`${stylist.owner?.firstName} ${stylist.owner?.surname}` || "No Owner"}
                       </div>
                       <div className="text-xs text-gray-400">{stylist.email}</div>
                     </div>

@@ -5,7 +5,7 @@ import { toast } from "react-hot-toast";
 interface SuspensionModelProps {
   setShowSuspensionModal: (show: boolean) => void;
   selectedStylist: any;
-  updateStylist: any;
+  suspendStylist: any;
   refetch: any;
   suspensionReason: string;
   setSuspensionReason: (reason: string) => void;
@@ -15,7 +15,7 @@ interface SuspensionModelProps {
 const SuspensionModel = ({
   setShowSuspensionModal,
   selectedStylist,
-  updateStylist,
+  suspendStylist,
   refetch,
   suspensionReason,
   setSuspensionReason,
@@ -31,12 +31,11 @@ const SuspensionModel = ({
 
     setIsSubmitting(true);
     try {
-      await updateStylist({
+      // Use suspendStylist mutation instead of updateStylist
+      await suspendStylist({
         id: selectedStylist._id,
-        data: {
-          status: "suspended",
-          suspensionReason: suspensionReason.trim(),
-        },
+        action: "suspend",
+        suspensionReason: suspensionReason.trim(),
       }).unwrap();
 
       toast.success("Stylist suspended successfully");

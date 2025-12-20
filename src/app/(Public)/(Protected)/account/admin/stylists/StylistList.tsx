@@ -4,6 +4,7 @@ import {
   getVerificationColor,
   getVerificationIcon,
 } from "@/Utils/utils";
+import Image from "next/image";
 import {
   FiSearch,
   FiEdit,
@@ -30,6 +31,7 @@ const StylistList = ({
     <tr key={stylist._id} className="hover:bg-gray-50">
       <td className="px-6 py-4 whitespace-nowrap">
         <input
+          title="Select Stylist"
           type="checkbox"
           checked={selectedStylists.includes(stylist._id)}
           onChange={(e) => handleSelectStylist(stylist._id, e.target.checked)}
@@ -40,7 +42,13 @@ const StylistList = ({
         <div className="flex items-center">
           <div className="h-10 w-10 flex-shrink-0 bg-gray-200 rounded-full flex items-center justify-center">
             {stylist.avatar ? (
-              <img className="h-10 w-10 rounded-full" src={stylist.avatar} alt={stylist.name} />
+              <Image
+                className="h-10 w-10 rounded-full"
+                width={500}
+                height={500}
+                src={stylist.avatar}
+                alt={stylist.name}
+              />
             ) : (
               <FiUserCheck className="h-5 w-5 text-gray-400" />
             )}
@@ -137,15 +145,17 @@ const StylistList = ({
           )}
           {stylist.status === "active" ? (
             <button
-              onClick={() => handleSuspendStylist(stylist)}
-              className="text-red-600 hover:text-red-900 transition-colors"
+              onClick={() => handleSuspendStylist(stylist)} // Only pass stylist
+              // disabled={isLoading}
+              className="text-red-600 hover:text-red-900 transition-colors disabled:opacity-50"
               title="Suspend Stylist">
               <FiUserX size={16} />
             </button>
           ) : (
             <button
               onClick={() => handleActivateStylist(stylist._id)}
-              className="text-green-600 hover:text-green-900 transition-colors"
+              // disabled={isLoading}
+              className="text-green-600 hover:text-green-900 transition-colors disabled:opacity-50"
               title="Activate Stylist">
               <FiUserCheck size={16} />
             </button>

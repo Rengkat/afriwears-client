@@ -14,6 +14,7 @@ import {
   useVerifyStylistMutation,
   useDeleteStylistMutation,
   useUpdateStylistMutation,
+  useSuspendStylistMutation,
 } from "@/redux/services/StylistApiSlice";
 
 const StylistManagementPage = () => {
@@ -44,7 +45,7 @@ const StylistManagementPage = () => {
   const [verifyStylist, { isLoading: isVerifying }] = useVerifyStylistMutation();
   const [deleteStylist, { isLoading: isDeleting }] = useDeleteStylistMutation();
   const [updateStylist, { isLoading: isUpdating }] = useUpdateStylistMutation();
-
+  const [suspendStylist, { isLoading: isSuspending }] = useSuspendStylistMutation();
   const stylists = stylistsData?.stylists || [];
   const totalStylists = stylistsData?.total || 0;
   const totalPages = Math.ceil(totalStylists / stylistsPerPage);
@@ -119,11 +120,13 @@ const StylistManagementPage = () => {
     setShowSuspensionModal(true);
   };
 
+  // Update handleActivateStylist function
   const handleActivateStylist = async (stylistId: string) => {
     try {
-      await updateStylist({
+      await suspendStylist({
         id: stylistId,
-        data: { status: "active", suspensionReason: "" },
+        action: "activate",
+        suspensionReason: "",
       }).unwrap();
       toast.success("Stylist activated successfully");
       refetch();
@@ -322,6 +325,7 @@ const StylistManagementPage = () => {
           handleSuspendStylist={handleSuspendStylist}
           handleActivateStylist={handleActivateStylist}
           handleApproveStylist={() => handleApproveStylist(selectedStylist._id)}
+          handleRejectStylist={handleRejectStylist}
         />
       )}
 
@@ -330,7 +334,7 @@ const StylistManagementPage = () => {
         <SuspensionModel
           setShowSuspensionModal={setShowSuspensionModal}
           selectedStylist={selectedStylist}
-          updateStylist={updateStylist}
+          suspendStylist={suspendStylist}
           refetch={refetch}
           suspensionReason={suspensionReason}
           setSuspensionReason={setSuspensionReason}

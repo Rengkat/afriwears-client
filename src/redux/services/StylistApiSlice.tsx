@@ -70,7 +70,15 @@ export const stylistApi = createApi({
       }),
       invalidatesTags: (result, error, { id }) => [{ type: "Stylist", id }, "Stylist", "MyStylist"],
     }),
-
+    // Add to your stylistApi endpoints
+    suspendStylist: build.mutation({
+      query: ({ id, action, suspensionReason }) => ({
+        url: `stylists/suspend/${id}`,
+        method: "PATCH",
+        body: { action, suspensionReason },
+      }),
+      invalidatesTags: (result, error, { id }) => [{ type: "Stylist", id }, "Stylist"],
+    }),
     // Stylist-only: Update own profile via /my/profile
     updateMyStylistProfile: build.mutation({
       query: (data) => ({
@@ -140,4 +148,5 @@ export const {
   useAddPortfolioImageMutation,
   useRemovePortfolioImageMutation,
   useUploadStylistDocumentMutation,
+  useSuspendStylistMutation,
 } = stylistApi;
