@@ -37,7 +37,7 @@ const StylistTable = ({
   handleActivateStylist,
   isLoading = false,
 }: any) => {
-  console.log(currentStylists);
+  // console.log(currentStylists);
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
       <div className="overflow-x-auto">
