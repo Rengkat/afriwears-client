@@ -1,4 +1,3 @@
-// BulkDeleteConfirmationModal.jsx
 "use client";
 
 import React from "react";
@@ -19,10 +18,10 @@ const BulkDeleteConfirmationModal = ({ isOpen, onClose, onConfirm, count, isLoad
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
         {/* Background overlay */}
-        <div
+        {/* <div
           className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
           onClick={onClose}
-        />
+        /> */}
 
         {/* Modal */}
         <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">

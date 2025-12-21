@@ -16,6 +16,8 @@ import {
   useUpdateStylistMutation,
   useSuspendStylistMutation,
 } from "@/redux/services/StylistApiSlice";
+import BulkDeleteConfirmationModa from "./BulkDeleteConfirmationModal";
+import DeleteConfirmationModel from "./DeleteConfirmationModel";
 
 const StylistManagementPage = () => {
   const { user } = useSelector((store: RootState) => store.authSlice);
@@ -25,10 +27,15 @@ const StylistManagementPage = () => {
   const [selectedStylists, setSelectedStylists] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [stylistsPerPage] = useState(10);
+
+  // Modal states
   const [showStylistModal, setShowStylistModal] = useState(false);
-  const [selectedStylist, setSelectedStylist] = useState<any>(null);
   const [showVerificationModal, setShowVerificationModal] = useState(false);
   const [showSuspensionModal, setShowSuspensionModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false); // Single delete
+  const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false); // Bulk delete
+
+  const [selectedStylist, setSelectedStylist] = useState<any>(null);
   const [suspensionReason, setSuspensionReason] = useState("");
   const [rejectionReason, setRejectionReason] = useState("");
 
@@ -46,6 +53,7 @@ const StylistManagementPage = () => {
   const [deleteStylist, { isLoading: isDeleting }] = useDeleteStylistMutation();
   const [updateStylist, { isLoading: isUpdating }] = useUpdateStylistMutation();
   const [suspendStylist, { isLoading: isSuspending }] = useSuspendStylistMutation();
+
   const stylists = stylistsData?.stylists || [];
   const totalStylists = stylistsData?.total || 0;
   const totalPages = Math.ceil(totalStylists / stylistsPerPage);
@@ -69,89 +77,51 @@ const StylistManagementPage = () => {
   const indexOfFirstStylist = indexOfLastStylist - stylistsPerPage;
   const currentStylists = filteredStylists.slice(indexOfFirstStylist, indexOfLastStylist);
 
-  // Handle stylist actions
-  const handleViewStylist = (stylist: any) => {
+  // Handle single stylist delete
+  const handleDeleteStylist = (stylist: any) => {
     setSelectedStylist(stylist);
-    setShowStylistModal(true);
+    setShowDeleteModal(true);
   };
 
-  const handleEditStylist = (stylist: any) => {
-    setSelectedStylist(stylist);
-    // Navigate to edit page or open edit modal
-    console.log("Edit stylist:", stylist);
-  };
-
-  const handleApproveStylist = async (stylistId: string) => {
+  const handleConfirmDelete = async () => {
     try {
-      await verifyStylist({
-        id: stylistId,
-        action: "verify",
-        rejectionReason: "",
-      }).unwrap();
-      toast.success("Stylist verified successfully");
+      await deleteStylist(selectedStylist).unwrap();
+      toast.success("Stylist deleted successfully");
       refetch();
+      setSelectedStylists(selectedStylists.filter((id) => id !== selectedStylist._id));
+      setShowDeleteModal(false);
+      setSelectedStylist(null);
     } catch (error: any) {
-      toast.error(error?.data?.message || "Failed to verify stylist");
+      toast.error(error?.data?.message || "Failed to delete stylist");
     }
   };
 
-  const handleRejectStylist = async (stylist: any) => {
-    if (!rejectionReason || rejectionReason.trim().length < 10) {
-      toast.error("Please provide a rejection reason with at least 10 characters");
+  // Handle bulk delete
+  const handleBulkDelete = () => {
+    if (selectedStylists.length === 0) {
+      toast.error("Please select stylists first");
       return;
     }
+    setShowBulkDeleteModal(true);
+  };
 
+  const handleConfirmBulkDelete = async () => {
     try {
-      await verifyStylist({
-        id: stylist._id,
-        action: "reject",
-        rejectionReason,
-      }).unwrap();
-      toast.success("Stylist rejected successfully");
-      setRejectionReason("");
+      await Promise.all(
+        selectedStylists.map(async (id) => {
+          await deleteStylist(id).unwrap();
+        })
+      );
+      toast.success(`${selectedStylists.length} stylist(s) deleted successfully`);
+      setSelectedStylists([]);
       refetch();
+      setShowBulkDeleteModal(false);
     } catch (error: any) {
-      toast.error(error?.data?.message || "Failed to reject stylist");
+      toast.error(error?.data?.message || "Failed to delete stylists");
     }
   };
 
-  const handleSuspendStylist = (stylist: any) => {
-    setSelectedStylist(stylist);
-    setShowSuspensionModal(true);
-  };
-
-  // Update handleActivateStylist function
-  const handleActivateStylist = async (stylistId: string) => {
-    try {
-      await suspendStylist({
-        id: stylistId,
-        action: "activate",
-        suspensionReason: "",
-      }).unwrap();
-      toast.success("Stylist activated successfully");
-      refetch();
-    } catch (error: any) {
-      toast.error(error?.data?.message || "Failed to activate stylist");
-    }
-  };
-
-  const handleDeleteStylist = async (stylistId: string) => {
-    if (
-      window.confirm(
-        "Are you sure you want to delete this stylist? This will also remove all their products and orders."
-      )
-    ) {
-      try {
-        await deleteStylist(stylistId).unwrap();
-        toast.success("Stylist deleted successfully");
-        refetch();
-        setSelectedStylists(selectedStylists.filter((id) => id !== stylistId));
-      } catch (error: any) {
-        toast.error(error?.data?.message || "Failed to delete stylist");
-      }
-    }
-  };
-
+  // Update bulk action handler
   const handleBulkAction = async (action: string) => {
     if (selectedStylists.length === 0) {
       toast.error("Please select stylists first");
@@ -198,24 +168,79 @@ const StylistManagementPage = () => {
           toast.success(`${selectedStylists.length} stylist(s) suspended`);
           break;
         case "delete":
-          if (
-            window.confirm(
-              `Are you sure you want to delete ${selectedStylists.length} stylists? This action cannot be undone.`
-            )
-          ) {
-            await Promise.all(
-              selectedStylists.map(async (id) => {
-                await deleteStylist(id).unwrap();
-              })
-            );
-            toast.success(`${selectedStylists.length} stylist(s) deleted`);
-          }
-          break;
+          handleBulkDelete();
+          return; // Don't clear selection yet
       }
       setSelectedStylists([]);
       refetch();
     } catch (error: any) {
       toast.error(error?.data?.message || `Failed to perform ${action} action`);
+    }
+  };
+
+  // Other handlers remain the same...
+  const handleViewStylist = (stylist: any) => {
+    setSelectedStylist(stylist);
+    setShowStylistModal(true);
+  };
+
+  const handleEditStylist = (stylist: any) => {
+    setSelectedStylist(stylist);
+    // Navigate to edit page or open edit modal
+    console.log("Edit stylist:", stylist);
+  };
+
+  const handleApproveStylist = async (stylistId: string) => {
+    try {
+      await verifyStylist({
+        id: stylistId,
+        action: "verify",
+        rejectionReason: "",
+      }).unwrap();
+      toast.success("Stylist verified successfully");
+      refetch();
+    } catch (error: any) {
+      toast.error(error?.data?.message || "Failed to verify stylist");
+    }
+  };
+
+  const handleRejectStylist = async (stylist: any) => {
+    if (!rejectionReason || rejectionReason.trim().length < 10) {
+      toast.error("Please provide a rejection reason with at least 10 characters");
+      return;
+    }
+
+    try {
+      await verifyStylist({
+        id: stylist._id,
+        action: "reject",
+        rejectionReason,
+      }).unwrap();
+      toast.success("Stylist rejected successfully");
+      setRejectionReason("");
+      setSelectedStylist(null);
+      refetch();
+    } catch (error: any) {
+      toast.error(error?.data?.message || "Failed to reject stylist");
+    }
+  };
+
+  const handleSuspendStylist = (stylist: any) => {
+    setSelectedStylist(stylist);
+    setShowSuspensionModal(true);
+  };
+
+  const handleActivateStylist = async (stylistId: string) => {
+    try {
+      await suspendStylist({
+        id: stylistId,
+        action: "activate",
+        suspensionReason: "",
+      }).unwrap();
+      toast.success("Stylist activated successfully");
+      refetch();
+    } catch (error: any) {
+      toast.error(error?.data?.message || "Failed to activate stylist");
     }
   };
 
@@ -253,7 +278,6 @@ const StylistManagementPage = () => {
       </div>
     );
   }
-
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
@@ -311,9 +335,35 @@ const StylistManagementPage = () => {
         handleSuspendStylist={handleSuspendStylist}
         handleEditStylist={handleEditStylist}
         handleApproveStylist={handleApproveStylist}
-        handleRejectStylist={handleRejectStylist}
+        handleRejectStylist={() => {
+          setSelectedStylist(selectedStylist);
+          setShowVerificationModal(true);
+        }}
         handleActivateStylist={handleActivateStylist}
-        isLoading={isLoading || isVerifying || isDeleting || isUpdating}
+        isLoading={isLoading || isVerifying || isDeleting || isUpdating || isSuspending}
+      />
+
+      {/* Single Delete Confirmation Modal */}
+      {showDeleteModal && selectedStylist && (
+        <DeleteConfirmationModel
+          isOpen={showDeleteModal}
+          onClose={() => {
+            setShowDeleteModal(false);
+            setSelectedStylist(null);
+          }}
+          onConfirm={handleConfirmDelete}
+          selectedStylist={selectedStylist}
+          // isLoading={isDeleting}
+        />
+      )}
+
+      {/* Bulk Delete Confirmation Modal */}
+      <BulkDeleteConfirmationModa
+        isOpen={showBulkDeleteModal}
+        onClose={() => setShowBulkDeleteModal(false)}
+        onConfirm={handleConfirmBulkDelete}
+        count={selectedStylists.length}
+        isLoading={isDeleting}
       />
 
       {/* Stylist Detail Modal */}
@@ -325,7 +375,10 @@ const StylistManagementPage = () => {
           handleSuspendStylist={handleSuspendStylist}
           handleActivateStylist={handleActivateStylist}
           handleApproveStylist={() => handleApproveStylist(selectedStylist._id)}
-          handleRejectStylist={handleRejectStylist}
+          handleRejectStylist={() => {
+            setSelectedStylist(selectedStylist);
+            setShowVerificationModal(true);
+          }}
         />
       )}
 

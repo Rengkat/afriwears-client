@@ -10,7 +10,13 @@ export const stylistApi = createApi({
     getStylists: build.query({
       query: ({ company, specialty, page = 1, limit = 10 }) => ({
         url: `stylists`,
-        params: { company, specialty, page, limit },
+        params: {
+          company,
+          specialty,
+          page,
+          limit,
+          isCompanyVerified: true,
+        },
       }),
       providesTags: ["Stylist"],
     }),

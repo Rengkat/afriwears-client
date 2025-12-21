@@ -1,171 +1,142 @@
-import React, { useState } from "react";
-import { FiAlertTriangle, FiTrash2, FiX } from "react-icons/fi";
-import { toast } from "react-hot-toast";
+"use client";
+
+import { useGetStylistDetailQuery } from "@/redux/services/StylistApiSlice";
+import Image from "next/image";
+import React from "react";
+import { FiAlertTriangle, FiTrash2, FiUser } from "react-icons/fi";
+
+// interface DeleteConfirmationModelProps {
+//   isOpen: boolean;
+//   onClose: () => void;
+//   onConfirm: () => void;
+//   selectedStylist: any;
+//   isLoading?: boolean;
+// }
 
 const DeleteConfirmationModel = ({
-  setShowDeleteModal,
+  isOpen,
+  onClose,
+  onConfirm,
   selectedStylist,
-  deleteStylist,
-  refetch,
-  setSelectedStylists,
-  selectedStylists,
+  //   isLoading = false,
 }) => {
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [confirmationText, setConfirmationText] = useState("");
-
-  const handleDelete = async () => {
-    if (confirmationText.toLowerCase() !== "delete") {
-      toast.error("Please type 'DELETE' to confirm deletion");
-      return;
-    }
-
-    setIsDeleting(true);
-    try {
-      await deleteStylist(selectedStylist._id).unwrap();
-      toast.success("Stylist deleted successfully");
-      refetch();
-
-      // Update selected stylists if needed
-      if (setSelectedStylists && selectedStylists) {
-        setSelectedStylists(selectedStylists.filter((id) => id !== selectedStylist._id));
-      }
-
-      setShowDeleteModal(false);
-    } catch (error) {
-      toast.error(error?.data?.message || "Failed to delete stylist");
-    } finally {
-      setIsDeleting(false);
-      setConfirmationText("");
-    }
-  };
-
-  const handleClose = () => {
-    setConfirmationText("");
-    setShowDeleteModal(false);
-  };
-
+  // Don't render if not open OR if selectedStylist is undefined/null
+  if (!isOpen || !selectedStylist) return null;
+  const {
+    data: detailData,
+    isLoading,
+    error,
+  } = useGetStylistDetailQuery(selectedStylist, {
+    refetchOnMountOrArgChange: true,
+  });
+  //   console.log(detailData);
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 animate-fadeIn">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-red-100 rounded-lg">
-              <FiAlertTriangle className="h-6 w-6 text-red-600" />
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900">Delete Stylist</h3>
-              <p className="text-sm text-gray-500 mt-1">This action cannot be undone</p>
-            </div>
-          </div>
-          <button
-            onClick={handleClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            disabled={isDeleting}>
-            <FiX className="h-5 w-5 text-gray-400" />
-          </button>
-        </div>
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+        {/* Background overlay */}
+        {/* <div
+          className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+          onClick={onClose}
+        /> */}
 
-        {/* Content */}
-        <div className="p-6">
-          {/* Warning Alert */}
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-            <div className="flex items-start gap-3">
-              <FiAlertTriangle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
-              <div>
-                <h4 className="text-sm font-medium text-red-800">Warning: Critical Action</h4>
-                <ul className="mt-2 text-xs text-red-700 space-y-1 list-disc list-inside">
-                  <li>All products associated with this stylist will be removed</li>
-                  <li>All orders from this stylist will be cancelled</li>
-                  <li>The stylist account will be permanently deleted</li>
-                  <li>This action cannot be reversed</li>
-                </ul>
+        {/* Modal */}
+        <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+          <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+            <div className="sm:flex sm:items-start">
+              <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                <FiTrash2 className="h-6 w-6 text-red-600" aria-hidden="true" />
               </div>
-            </div>
-          </div>
+              <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                <h3 className="text-lg leading-6 font-medium text-gray-900">Delete Stylist</h3>
+                <div className="mt-2">
+                  <p className="text-sm text-gray-500">
+                    Are you sure you want to delete this stylist? This action cannot be undone.
+                  </p>
 
-          {/* Stylist Info */}
-          <div className="bg-gray-50 rounded-lg p-4 mb-6">
-            <div className="flex items-center gap-3">
-              {selectedStylist.avatar ? (
-                <img
-                  src={selectedStylist.avatar}
-                  alt={selectedStylist.companyName}
-                  className="h-10 w-10 rounded-full"
-                />
-              ) : (
-                <div className="h-10 w-10 bg-gray-200 rounded-full flex items-center justify-center">
-                  <FiTrash2 className="h-5 w-5 text-gray-400" />
+                  {/* Stylist Info - Safely access properties */}
+                  <div className="bg-gray-50 rounded-lg p-4 mt-4">
+                    <div className="flex items-center gap-3">
+                      {detailData?.stylist?.avatar ? (
+                        <Image
+                          width={500}
+                          height={500}
+                          src={detailData?.stylist?.avatar}
+                          alt={detailData?.stylist?.companyName || "Stylist"}
+                          className="h-10 w-10 rounded-full"
+                        />
+                      ) : (
+                        <div className="h-10 w-10 bg-gray-200 rounded-full flex items-center justify-center">
+                          <FiUser className="h-5 w-5 text-gray-400" />
+                        </div>
+                      )}
+                      <div>
+                        <h4 className="font-medium text-gray-900">
+                          {detailData?.stylist?.companyName || "Unknown Company"}
+                        </h4>
+                        <p className="text-sm text-gray-500">
+                          {detailData?.stylist?.owner?.firstName || ""}{" "}
+                          {detailData?.stylist?.owner?.surname || ""}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Warning Alert */}
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 mt-4">
+                    <div className="flex items-start gap-3">
+                      <FiAlertTriangle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <h4 className="text-sm font-medium text-red-800">Warning</h4>
+                        <p className="text-sm text-red-700 mt-1">
+                          This will permanently delete the stylist and all associated data including
+                          products, orders, and reviews.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              )}
-              <div>
-                <h4 className="font-medium text-gray-900">{selectedStylist.companyName}</h4>
-                <p className="text-sm text-gray-500">
-                  {selectedStylist.owner?.firstName} {selectedStylist.owner?.surname}
-                </p>
-              </div>
-            </div>
-            <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
-              <div>
-                <span className="text-gray-500">Products:</span>
-                <span className="font-medium ml-2">{selectedStylist.totalProducts || 0}</span>
-              </div>
-              <div>
-                <span className="text-gray-500">Status:</span>
-                <span className="font-medium ml-2">{selectedStylist.status || "active"}</span>
-              </div>
-              <div>
-                <span className="text-gray-500">Verification:</span>
-                <span className="font-medium ml-2">{selectedStylist.verificationStatus}</span>
-              </div>
-              <div>
-                <span className="text-gray-500">Rating:</span>
-                <span className="font-medium ml-2">{selectedStylist.rating || 0}/5</span>
               </div>
             </div>
           </div>
-
-          {/* Confirmation Input */}
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Type <span className="font-bold text-red-600">DELETE</span> to confirm:
-            </label>
-            <input
-              type="text"
-              value={confirmationText}
-              onChange={(e) => setConfirmationText(e.target.value)}
-              placeholder="Type DELETE here"
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition"
-              autoFocus
-            />
-            <p className="text-xs text-gray-500 mt-2">
-              This extra step prevents accidental deletion
-            </p>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex gap-3">
+          <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
             <button
-              onClick={handleClose}
-              disabled={isDeleting}
-              className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50">
-              Cancel
-            </button>
-            <button
-              onClick={handleDelete}
-              disabled={isDeleting || confirmationText.toLowerCase() !== "delete"}
-              className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
-              {isDeleting ? (
+              type="button"
+              onClick={onConfirm}
+              disabled={isLoading}
+              className="w-full inline-flex justify-center items-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed">
+              {isLoading ? (
                 <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <svg
+                    className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24">
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    />
+                  </svg>
                   Deleting...
                 </>
               ) : (
-                <>
-                  <FiTrash2 className="h-4 w-4" />
-                  Delete Stylist
-                </>
+                "Delete Stylist"
               )}
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={isLoading}
+              className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed">
+              Cancel
             </button>
           </div>
         </div>
