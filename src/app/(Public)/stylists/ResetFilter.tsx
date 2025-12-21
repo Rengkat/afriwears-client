@@ -11,7 +11,7 @@ const ResetFilter = ({ setActiveFilter, setSearchTerm, setPage }: ResetFilterPro
   const handleReset = () => {
     setSearchTerm("");
     setActiveFilter("all");
-    setPage(1); // Reset to first page
+    setPage(1);
   };
 
   return (

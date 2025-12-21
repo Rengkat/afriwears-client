@@ -5,6 +5,8 @@ import { BsInstagram, BsTelephoneFill, BsPinterest, BsStarFill, BsStarHalf } fro
 import { FaTwitter, FaFacebookSquare, FaMapMarkerAlt } from "react-icons/fa";
 import { IoLogoWechat } from "react-icons/io5";
 import ChatBtn from "./chatBtn";
+import { useGetStylistDetailQuery } from "@/redux/services/StylistApiSlice";
+import { useParams } from "next/navigation";
 
 // Mock data for stylist portfolio and reviews
 const mockPortfolio = [
@@ -40,7 +42,12 @@ const mockReviews = [
   },
 ];
 
-const SellerPage = ({ params, searchParams }) => {
+const SellerPage = async () => {
+  const { stylistId } = useParams();
+  const { data } = useGetStylistDetailQuery(stylistId, {
+    // refetchOnMountOrArgChange: true,
+  });
+  console.log(stylistId, data);
   // In a real app, you would fetch this data
   const stylist = {
     id: params.stylistId,

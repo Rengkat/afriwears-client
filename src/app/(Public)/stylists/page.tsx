@@ -25,7 +25,7 @@ interface ApiStylist {
   banner: string;
   isCompanyVerified: boolean;
   verificationStatus: string;
-  specialty: string;
+  specialty: string[]; // Changed from string to string[]
   slug: string;
   owner: {
     _id: string;
@@ -43,7 +43,8 @@ interface ApiStylist {
 interface UIStylist {
   id: string;
   company: string;
-  specialty: string;
+  specialty: string; // Keep as string for display (comma-separated)
+  specialtyArray: string[]; // Add array version for filtering
   rating: number;
   reviews: number;
   location: string;
@@ -69,11 +70,11 @@ interface ApiResponse {
 // Service filters
 const serviceFilters = [
   { id: "all", name: "All Services" },
-  { id: "traditional", name: "Traditional" },
-  { id: "corporate", name: "Corporate" },
-  { id: "casual", name: "Casual Wear" },
-  { id: "bridal", name: "Bridal" },
-  { id: "formal", name: "Formal Wear" },
+  { id: "Traditional", name: "Traditional" },
+  { id: "Corporate", name: "Corporate" },
+  { id: "Casual Wear", name: "Casual Wear" },
+  { id: "Bridal", name: "Bridal" },
+  { id: "Formal Wear", name: "Formal Wear" },
 ];
 
 const StylistsPage = () => {
@@ -100,39 +101,78 @@ const StylistsPage = () => {
   }, [searchTerm, debouncedSearch]);
 
   // Prepare query parameters
-  const queryParams = {
-    company: activeFilter === "all" ? debouncedSearchTerm : "",
-    specialty: activeFilter !== "all" ? activeFilter : "",
-    page,
-    limit,
-    isCompanyVerified: "true", // Always fetch verified stylists
+  const getQueryParams = () => {
+    const params: any = {
+      page,
+      limit,
+      isCompanyVerified: "true",
+    };
+
+    // Search functionality
+    if (debouncedSearchTerm) {
+      params.company = debouncedSearchTerm;
+    }
+
+    // If a specific filter is selected (not "all"), we'll filter client-side
+    // because backend expects specialty as string, not array
+    return params;
   };
 
   // Fetch stylists from API
-  const { data, isLoading, isError, error } = useGetStylistsQuery(queryParams);
+  const { data, isLoading, isError, error } = useGetStylistsQuery(getQueryParams());
 
   // Type cast the response
   const apiData = data as ApiResponse | undefined;
 
   // Filter and map API data to UI format
-  const formattedStylists: UIStylist[] = (apiData?.stylists || [])
+  const allStylists: UIStylist[] = (apiData?.stylists || [])
     .filter((stylist) => stylist.isCompanyVerified && stylist.status === "active")
-    .map((stylist) => ({
-      id: stylist._id,
-      company: stylist.companyName,
-      specialty: stylist.specialty || "Fashion Styling",
-      rating: stylist.rating || 0,
-      reviews: stylist.reviews || 0,
-      location: stylist.location?.state
-        ? stylist.location.state + (stylist.location.lga ? `, ${stylist.location.lga}` : "")
-        : "Location not specified",
-      experience: stylist.experience || "Not specified",
-      image: stylist.avatar || "/stylist-placeholder.jpg",
-      services: stylist.services || [],
-      description: stylist.description,
-      slug: stylist.slug,
-      isVerified: stylist.isCompanyVerified,
-    }));
+    .map((stylist) => {
+      const specialtyArray = Array.isArray(stylist.specialty)
+        ? stylist.specialty
+        : stylist.specialty
+        ? [stylist.specialty]
+        : [];
+
+      return {
+        id: stylist._id,
+        company: stylist.companyName,
+        specialty: specialtyArray.join(", "), // Convert array to string for display
+        specialtyArray, // Keep as array for filtering
+        rating: stylist.rating || 0,
+        reviews: stylist.reviews || 0,
+        location: stylist.location?.state
+          ? `${stylist.location.state}${stylist.location.lga ? `, ${stylist.location.lga}` : ""}`
+          : "Location not specified",
+        experience: stylist.experience || "Not specified",
+        image: stylist.avatar || "/stylist-placeholder.jpg",
+        services: stylist.services || [],
+        description: stylist.description,
+        slug: stylist.slug,
+        isVerified: stylist.isCompanyVerified,
+      };
+    });
+
+  // Client-side filtering
+  const filteredStylists = allStylists.filter((stylist) => {
+    // Filter by activeFilter
+    if (activeFilter !== "all") {
+      return stylist.specialtyArray.includes(activeFilter);
+    }
+    return true;
+  });
+
+  // Additional search filtering (client-side)
+  const searchedStylists = filteredStylists.filter((stylist) => {
+    if (!debouncedSearchTerm) return true;
+
+    const searchLower = debouncedSearchTerm.toLowerCase();
+    return (
+      stylist.company.toLowerCase().includes(searchLower) ||
+      stylist.specialty.toLowerCase().includes(searchLower) ||
+      stylist.services.some((service) => service.toLowerCase().includes(searchLower))
+    );
+  });
 
   const totalItems = apiData?.total || 0;
   const totalPages = apiData?.pages || 1;
@@ -159,7 +199,7 @@ const StylistsPage = () => {
           <div className="relative max-w-2xl mx-auto mb-8">
             <input
               type="text"
-              placeholder="Search verified stylists..."
+              placeholder="Search verified stylists by name, specialty, or services..."
               className="w-full pl-4 pr-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent shadow-sm"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -173,13 +213,27 @@ const StylistsPage = () => {
                 onClick={() => handleFilterChange(filter.id)}
                 className={`px-4 py-2 rounded-full text-sm font-medium ${
                   activeFilter === filter.id
-                    ? "bg-amber-500 text-white"
+                    ? "bg-amber-500 text-white shadow-md"
                     : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-200"
                 }`}>
                 {filter.name}
               </button>
             ))}
           </div>
+
+          {/* Results Summary */}
+          {!isLoading && apiData && (
+            <div className="text-center text-sm text-gray-600 mb-2">
+              {activeFilter !== "all" && (
+                <span className="inline-block bg-blue-50 text-blue-700 px-3 py-1 rounded-full mr-2">
+                  Filter: {serviceFilters.find((f) => f.id === activeFilter)?.name}
+                </span>
+              )}
+              <span>
+                Showing {searchedStylists.length} of {allStylists.length} verified stylists
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Loading State */}
@@ -212,24 +266,16 @@ const StylistsPage = () => {
               </button>
             </div>
           </div>
-        ) : formattedStylists.length > 0 ? (
+        ) : searchedStylists.length > 0 ? (
           <>
-            {/* Results Count */}
-            <div className="mb-6">
-              <p className="text-gray-600">
-                Showing <span className="font-semibold">{formattedStylists.length}</span> of{" "}
-                <span className="font-semibold">{totalItems}</span> verified stylists
-              </p>
-            </div>
-
             {/* Stylists Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-              {formattedStylists.map((stylist) => (
+              {searchedStylists.map((stylist) => (
                 <StylistList key={stylist.id} stylist={stylist} />
               ))}
             </div>
 
-            {/* Pagination */}
+            {/* Pagination - Note: Pagination is server-side, filtering is client-side */}
             {totalPages > 1 && (
               <div className="mt-12 flex justify-center items-center gap-4">
                 <button

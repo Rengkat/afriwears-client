@@ -15,7 +15,17 @@ import {
   FiStar,
   FiLoader,
   FiFileText,
+  FiTag,
 } from "react-icons/fi";
+
+interface StylistDetailModelProps {
+  handleEditStylist: (stylist: any) => void;
+  setShowStylistModal: (show: boolean) => void;
+  selectedStylist: any;
+  handleSuspendStylist: (stylist: any) => void;
+  handleActivateStylist: (stylistId: string) => void;
+  handleApproveStylist: (stylistId: string) => void;
+}
 
 const StylistDetailModel = ({
   handleEditStylist,
@@ -24,7 +34,7 @@ const StylistDetailModel = ({
   handleSuspendStylist,
   handleActivateStylist,
   handleApproveStylist,
-}: any) => {
+}: StylistDetailModelProps) => {
   // Fetch detailed stylist data
   const {
     data: detailData,
@@ -42,7 +52,14 @@ const StylistDetailModel = ({
   const companyName = stylistData?.companyName || stylistData?.company || "No Company Name";
   const avatar = stylistData?.avatar || "";
   const email = stylistData?.email || "";
-  const specialty = stylistData?.specialty || "Not specified";
+
+  // Handle specialty as array
+  const specialtyArray = Array.isArray(stylistData?.specialty)
+    ? stylistData.specialty
+    : stylistData?.specialty
+    ? [stylistData.specialty]
+    : [];
+
   const experience = stylistData?.experience || "Not specified";
   const description = stylistData?.description || "No description provided";
   const phone = stylistData?.phone || "Not provided";
@@ -94,7 +111,7 @@ const StylistDetailModel = ({
   const ownerAvatar = owner?.avatar || "";
   const ownerPhone = owner?.phone || "";
 
-  // Performance metrics (you'll need to calculate these from other APIs)
+  // Performance metrics
   const totalProducts = stylistData?.totalProducts || 0;
   const totalOrders = stylistData?.totalOrders || 0;
   const totalRevenue = stylistData?.totalRevenue || 0;
@@ -172,8 +189,26 @@ const StylistDetailModel = ({
               </div>
               <div className="flex-1">
                 <h4 className="text-2xl font-semibold text-gray-900">{companyName}</h4>
-                <p className="text-gray-600 mt-1">{specialty}</p>
-                <p className="text-gray-500 flex items-center gap-2 mt-1">
+
+                {/* Specialties display as tags */}
+                <div className="mt-2">
+                  {specialtyArray.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {specialtyArray.map((spec: string, index: number) => (
+                        <span
+                          key={index}
+                          className="inline-flex items-center gap-1 px-3 py-1 text-sm bg-blue-50 text-blue-700 rounded-full border border-blue-100">
+                          <FiTag size={12} />
+                          {spec}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-gray-500 text-sm">No specialties specified</p>
+                  )}
+                </div>
+
+                <p className="text-gray-500 flex items-center gap-2 mt-3">
                   <FiMail size={14} /> {email}
                 </p>
                 <div className="flex items-center gap-4 mt-3">
@@ -250,6 +285,14 @@ const StylistDetailModel = ({
                 <div>
                   <p className="text-sm text-gray-500">Description</p>
                   <p className="text-sm text-gray-900 mt-1">{description}</p>
+
+                  {/* Specialties summary */}
+                  {specialtyArray.length > 0 && (
+                    <div className="mt-4">
+                      <p className="text-sm text-gray-500">Specialties</p>
+                      <p className="text-sm text-gray-900 mt-1">{specialtyArray.join(", ")}</p>
+                    </div>
+                  )}
                 </div>
               </div>
 

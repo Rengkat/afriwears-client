@@ -9,19 +9,40 @@ import {
   FiPhone,
   FiTwitter,
   FiFileText,
+  FiCheck,
 } from "react-icons/fi";
+
+interface ProfileDetailProps {
+  stylist: any;
+  isEditing: boolean;
+  formData: {
+    specialty: string[];
+    // ... other fields
+  };
+  documents: any;
+  handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  handleSpecialtyChange: (specialty: string) => void; // New prop
+  handleServicesChange: (servicesString: string) => void;
+  handleSocialMediaChange: (platform: string, value: string) => void;
+  handleLocationChange: (field: string, value: string | number) => void;
+  handleDocumentUpload: (documentType: string, file: File) => void;
+  isUploading: boolean;
+  validSpecialties: string[]; // New prop
+}
 
 const ProfileDetail = ({
   stylist,
   isEditing,
   formData,
   documents,
+  handleSpecialtyChange,
   handleSocialMediaChange,
   handleInputChange,
   handleLocationChange,
   handleDocumentUpload,
   isUploading,
-}: any) => {
+  validSpecialties = ["Traditional", "Corporate", "Casual Wear", "Bridal", "Formal Wear"],
+}: ProfileDetailProps) => {
   const [documentUploading, setDocumentUploading] = useState<string | null>(null);
 
   const handleDocumentChange = async (documentType: string, file: File) => {
@@ -55,40 +76,67 @@ const ProfileDetail = ({
           )}
         </div>
 
-        {/* Specialty & Experience */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <h3 className="text-sm font-medium text-gray-500 mb-2">Specialty</h3>
-            {isEditing ? (
-              <input
-                title="specialty"
-                type="text"
-                name="specialty"
-                value={formData.specialty || ""}
-                onChange={handleInputChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500"
-                placeholder="e.g., Bridal Makeup, Hair Coloring"
-              />
-            ) : (
-              <p className="text-gray-700">{formData.specialty || "Not specified"}</p>
-            )}
-          </div>
-          <div>
-            <h3 className="text-sm font-medium text-gray-500 mb-2">Experience</h3>
-            {isEditing ? (
-              <input
-                title="experience"
-                type="text"
-                name="experience"
-                value={formData.experience || ""}
-                onChange={handleInputChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500"
-                placeholder="e.g., 5 years"
-              />
-            ) : (
-              <p className="text-gray-700">{formData.experience || "Not specified"}</p>
-            )}
-          </div>
+        {/* Specialty - Updated for Array */}
+        <div>
+          <h3 className="text-sm font-medium text-gray-500 mb-2">Specialties</h3>
+          {isEditing ? (
+            <div className="space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {validSpecialties.map((specialty) => (
+                  <div key={specialty} className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id={`specialty-${specialty}`}
+                      checked={formData.specialty?.includes(specialty) || false}
+                      onChange={() => handleSpecialtyChange(specialty)}
+                      disabled={isUploading}
+                      className="h-4 w-4 text-amber-600 focus:ring-amber-500 border-gray-300 rounded"
+                    />
+                    <label
+                      htmlFor={`specialty-${specialty}`}
+                      className="ml-2 text-sm text-gray-700 cursor-pointer">
+                      {specialty}
+                    </label>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-gray-500">
+                Selected: {formData.specialty?.length || 0}/3 specialties
+              </p>
+            </div>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {formData.specialty && formData.specialty.length > 0 ? (
+                formData.specialty.map((spec, index) => (
+                  <span
+                    key={index}
+                    className="px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full text-sm font-medium border border-blue-100">
+                    {spec}
+                  </span>
+                ))
+              ) : (
+                <p className="text-gray-500">No specialties selected</p>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Experience */}
+        <div>
+          <h3 className="text-sm font-medium text-gray-500 mb-2">Experience</h3>
+          {isEditing ? (
+            <input
+              title="experience"
+              type="text"
+              name="experience"
+              value={formData.experience || ""}
+              onChange={handleInputChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500"
+              placeholder="e.g., 5 years"
+            />
+          ) : (
+            <p className="text-gray-700">{formData.experience || "Not specified"}</p>
+          )}
         </div>
 
         {/* Contact Information */}
@@ -229,7 +277,7 @@ const ProfileDetail = ({
           </div>
         </div>
 
-        {/* Social Media */}
+        {/* Social Media - Only show in edit mode */}
         {isEditing && (
           <div>
             <h3 className="text-sm font-medium text-gray-500 mb-4">Social Media</h3>

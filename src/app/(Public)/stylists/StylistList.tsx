@@ -2,12 +2,13 @@ import Image from "next/image";
 import Link from "next/link";
 import React from "react";
 import { BsArrowRight } from "react-icons/bs";
-import { FiMapPin, FiStar, FiCheckCircle } from "react-icons/fi";
+import { FiMapPin, FiStar, FiCheckCircle, FiTag } from "react-icons/fi";
 
 interface Stylist {
   id: string;
   company: string;
   specialty: string;
+  specialtyArray?: string[];
   rating: number;
   reviews: number;
   location: string;
@@ -23,6 +24,10 @@ interface StylistListProps {
 }
 
 const StylistList = ({ stylist }: StylistListProps) => {
+  // Parse specialty string back to array for display
+  const specialties =
+    stylist.specialtyArray || (stylist.specialty ? stylist.specialty.split(", ") : []);
+
   return (
     <div className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 h-full flex flex-col group">
       <Link href={`/stylists/${stylist.slug || stylist.id}`} className="flex-1 flex flex-col">
@@ -61,7 +66,27 @@ const StylistList = ({ stylist }: StylistListProps) => {
             <h3 className="text-xl font-bold text-gray-900 mb-1.5 line-clamp-1">
               {stylist.company}
             </h3>
-            <p className="text-amber-600 font-medium mb-2 line-clamp-1">{stylist.specialty}</p>
+
+            {/* Specialties as tags */}
+            <div className="mb-2">
+              {specialties.length > 0 ? (
+                <div className="flex flex-wrap gap-1">
+                  {specialties.slice(0, 2).map((spec, i) => (
+                    <span
+                      key={i}
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
+                      <FiTag size={10} />
+                      {spec}
+                    </span>
+                  ))}
+                  {specialties.length > 2 && (
+                    <span className="text-xs text-gray-500">+{specialties.length - 2} more</span>
+                  )}
+                </div>
+              ) : (
+                <p className="text-amber-600 font-medium text-sm">Fashion Stylist</p>
+              )}
+            </div>
           </div>
 
           <div className="flex items-center text-gray-500 text-sm mb-4">
