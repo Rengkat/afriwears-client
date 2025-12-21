@@ -25,7 +25,7 @@ interface ApiStylist {
   banner: string;
   isCompanyVerified: boolean;
   verificationStatus: string;
-  specialty: string[]; // Changed from string to string[]
+  specialty: string[];
   slug: string;
   owner: {
     _id: string;

@@ -36,7 +36,12 @@ export const stylistApi = createApi({
       }),
       providesTags: (result, error, id) => [{ type: "Stylist", id }],
     }),
-
+    getStylistProducts: build.query({
+      query: (stylistId) => ({
+        url: `stylist/products/${stylistId}`,
+      }),
+      providesTags: ["Stylist"],
+    }),
     // ==================== MUTATIONS ====================
     // Admin-only: Create stylist company
     createStylist: build.mutation({
@@ -155,4 +160,5 @@ export const {
   useRemovePortfolioImageMutation,
   useUploadStylistDocumentMutation,
   useSuspendStylistMutation,
+  useGetStylistProductsQuery,
 } = stylistApi;

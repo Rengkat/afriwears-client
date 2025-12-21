@@ -27,10 +27,10 @@ const StylistList = ({ stylist }: StylistListProps) => {
   // Parse specialty string back to array for display
   const specialties =
     stylist.specialtyArray || (stylist.specialty ? stylist.specialty.split(", ") : []);
-
+  // console.log(stylist);
   return (
     <div className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 h-full flex flex-col group">
-      <Link href={`/stylists/${stylist.slug || stylist.id}`} className="flex-1 flex flex-col">
+      <Link href={`/stylists/${stylist?.id}`} className="flex-1 flex flex-col">
         <div className="relative h-60">
           <Image
             src={stylist.image || "/stylist-placeholder.jpg"}
