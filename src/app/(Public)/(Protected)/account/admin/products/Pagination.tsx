@@ -7,16 +7,15 @@ const Pagination = ({
   setCurrentPage,
   currentPage,
   totalPages,
+  totalProducts,
 }: any) => {
   return (
     <div className="bg-white px-6 py-4 border-t border-gray-200">
       <div className="flex items-center justify-between">
         <div className="text-sm text-gray-700">
           Showing <span className="font-medium">{indexOfFirstProduct + 1}</span> to{" "}
-          <span className="font-medium">
-            {Math.min(indexOfLastProduct, filteredProducts.length)}
-          </span>{" "}
-          of <span className="font-medium">{filteredProducts.length}</span> products
+          <span className="font-medium">{indexOfLastProduct}</span> of{" "}
+          <span className="font-medium">{totalProducts}</span> products
         </div>
         <div className="flex gap-2">
           <button

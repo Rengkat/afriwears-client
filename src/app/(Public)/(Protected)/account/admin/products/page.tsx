@@ -5,17 +5,21 @@ import { RootState } from "@/redux/Store";
 import { FiPackage } from "react-icons/fi";
 import RejectionModel from "./RejectionModel";
 import ProductDetailModel from "./ProductDetailModel";
-
 import Pagination from "./Pagination";
 import ProductList from "./ProductList";
 import FilterAndSearch from "./FilterAndSearch";
 import { mockProducts } from "@/Utils/mockData";
 import StatCard from "./StatCard";
+import {
+  useVerifyProductMutation,
+  useUpdateProductMutation,
+  useGetAllProductsAdminQuery,
+} from "@/redux/services/ProductApi";
+import toast from "react-hot-toast";
 
 const ProductApprovalPage = () => {
   const { user } = useSelector((store: RootState) => store.authSlice);
-  const [products, setProducts] = useState(mockProducts);
-  const [loading, setLoading] = useState(false);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("pending");
   const [categoryFilter, setCategoryFilter] = useState("all");
@@ -28,118 +32,121 @@ const ProductApprovalPage = () => {
   const [showRejectionModal, setShowRejectionModal] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
 
-  // Filter products based on search and filters
-  const filteredProducts = products.filter((product) => {
-    const matchesSearch =
-      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.stylist.name.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesStatus = statusFilter === "all" || product.status === statusFilter;
-    const matchesCategory = categoryFilter === "all" || product.category === categoryFilter;
-    const matchesType = typeFilter === "all" || product.type === typeFilter;
-
-    return matchesSearch && matchesStatus && matchesCategory && matchesType;
-  });
-
-  // Pagination
-  const indexOfLastProduct = currentPage * productsPerPage;
-  const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
-  const currentProducts = filteredProducts.slice(indexOfFirstProduct, indexOfLastProduct);
-  const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
-
-  // Handle product actions
-  const handleViewProduct = (product: any) => {
-    setSelectedProduct(product);
-    setShowProductModal(true);
+  // Prepare query parameters for API
+  const queryParams: any = {
+    page: currentPage,
+    limit: productsPerPage,
   };
 
-  const handleApproveProduct = (productId: string) => {
-    setProducts(
-      products.map((p) =>
-        p._id === productId
-          ? {
-              ...p,
-              status: "approved",
-              isAdminApproved: true,
-              rejectionReason: "",
-            }
-          : p
-      )
-    );
+  // Add filters to query params if not "all"
+  if (statusFilter !== "all") queryParams.status = statusFilter;
+  if (categoryFilter !== "all") queryParams.category = categoryFilter;
+  if (typeFilter !== "all") queryParams.type = typeFilter;
+  if (searchTerm) queryParams.name = searchTerm;
+
+  // Fetch products from API
+  const {
+    data: productsData,
+    isLoading,
+    error,
+    refetch,
+  } = useGetAllProductsAdminQuery(queryParams);
+  // console.log(productsData);
+  // Mutation hooks for product actions
+  const [verifyProduct] = useVerifyProductMutation();
+  const [updateProduct] = useUpdateProductMutation();
+
+  const products = productsData?.products || [];
+  const totalProducts = productsData?.total || 0;
+  const totalPages = productsData?.pages || 1;
+
+  // Handle product approval
+  const handleApproveProduct = async (productId: string) => {
+    try {
+      await verifyProduct({
+        productId,
+        action: "approve",
+      }).unwrap();
+
+      toast.success("Product approved successfully!");
+      refetch();
+    } catch (error: any) {
+      toast.error(error?.data?.message || "Failed to approve product");
+    }
   };
 
-  const handleRejectProduct = (product: any) => {
+  // Handle product rejection
+  const handleRejectProduct = async (product: any) => {
     setSelectedProduct(product);
     setShowRejectionModal(true);
   };
 
-  const handleConfirmRejection = () => {
+  const handleConfirmRejection = async () => {
     if (!rejectionReason.trim()) {
       alert("Please provide a rejection reason");
       return;
     }
 
-    setProducts(
-      products.map((p) =>
-        p._id === selectedProduct._id
-          ? {
-              ...p,
-              status: "rejected",
-              isAdminApproved: false,
-              rejectionReason: rejectionReason,
-            }
-          : p
-      )
-    );
+    if (!selectedProduct?._id) return;
 
-    setShowRejectionModal(false);
-    setRejectionReason("");
-    setSelectedProduct(null);
+    try {
+      await verifyProduct({
+        productId: selectedProduct._id,
+        action: "reject",
+        reason: rejectionReason,
+      }).unwrap();
+
+      toast.success("Product rejected successfully!");
+      setShowRejectionModal(false);
+      setRejectionReason("");
+      setSelectedProduct(null);
+      refetch();
+    } catch (error: any) {
+      toast.error(error?.data?.message || "Failed to reject product");
+    }
   };
 
-  const handleBulkAction = (action: string) => {
+  // Handle bulk actions
+  const handleBulkAction = async (action: string) => {
     if (selectedProducts.length === 0) return;
 
-    switch (action) {
-      case "approve":
-        setProducts(
-          products.map((p) =>
-            selectedProducts.includes(p._id)
-              ? {
-                  ...p,
-                  status: "approved",
-                  isAdminApproved: true,
-                  rejectionReason: "",
-                }
-              : p
+    try {
+      if (action === "approve") {
+        // Approve all selected products
+        await Promise.all(
+          selectedProducts.map((productId) =>
+            verifyProduct({
+              productId,
+              action: "approve",
+            }).unwrap()
           )
         );
-        setSelectedProducts([]);
-        break;
-      case "reject":
-        // For bulk rejection, we'd typically show a modal for reason
+        toast.success(`${selectedProducts.length} product(s) approved successfully!`);
+      } else if (action === "reject") {
+        // For bulk rejection, we'd need a way to get rejection reason for each
         // For now, using a generic reason
-        setProducts(
-          products.map((p) =>
-            selectedProducts.includes(p._id)
-              ? {
-                  ...p,
-                  status: "rejected",
-                  isAdminApproved: false,
-                  rejectionReason: "Bulk rejection - does not meet platform standards",
-                }
-              : p
+        await Promise.all(
+          selectedProducts.map((productId) =>
+            verifyProduct({
+              productId,
+              action: "reject",
+              reason: "Bulk rejection - does not meet platform standards",
+            }).unwrap()
           )
         );
-        setSelectedProducts([]);
-        break;
+        toast.success(`${selectedProducts.length} product(s) rejected successfully!`);
+      }
+
+      setSelectedProducts([]);
+      refetch();
+    } catch (error: any) {
+      toast.error(error?.data?.message || `Failed to ${action} products`);
     }
   };
 
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.checked) {
-      setSelectedProducts(currentProducts.map((product) => product._id));
+      setSelectedProducts(products.map((product: any) => product._id));
     } else {
       setSelectedProducts([]);
     }
@@ -153,11 +160,51 @@ const ProductApprovalPage = () => {
     }
   };
 
-  // Stats calculations
-  const pendingCount = products.filter((p) => p.status === "pending").length;
-  const approvedCount = products.filter((p) => p.status === "approved").length;
-  const rejectedCount = products.filter((p) => p.status === "rejected").length;
-  const totalProductsCount = products.length;
+  const handleViewProduct = (product: any) => {
+    setSelectedProduct(product);
+    setShowProductModal(true);
+  };
+
+  // Stats calculations from real data
+  const pendingCount = products.filter((p: any) => p.status === "pending").length;
+  const approvedCount = products.filter((p: any) => p.status === "approved").length;
+  const rejectedCount = products.filter((p: any) => p.status === "rejected").length;
+  const totalProductsCount = totalProducts;
+
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="bg-red-50 border border-red-200 rounded-xl p-6">
+          <h3 className="text-lg font-medium text-red-800">Error loading products</h3>
+          <p className="text-red-700 mt-2">
+            {error?.data?.message || "Failed to fetch products. Please try again."}
+          </p>
+          <button
+            onClick={() => refetch()}
+            className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -169,6 +216,11 @@ const ProductApprovalPage = () => {
             <p className="text-gray-600 mt-1">Review and approve products submitted by stylists</p>
           </div>
           <div className="mt-4 md:mt-0">
+            <button
+              onClick={() => refetch()}
+              className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium rounded-lg shadow-sm transition-colors mr-2">
+              Refresh
+            </button>
             <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-sm transition-colors">
               Export Products
             </button>
@@ -183,6 +235,7 @@ const ProductApprovalPage = () => {
         approvedCount={approvedCount}
         rejectedCount={rejectedCount}
       />
+
       {/* Filters and Search */}
       <FilterAndSearch
         handleBulkAction={handleBulkAction}
@@ -196,6 +249,7 @@ const ProductApprovalPage = () => {
         setTypeFilter={setTypeFilter}
         selectedProducts={selectedProducts}
       />
+
       {/* Products Table */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
@@ -207,10 +261,7 @@ const ProductApprovalPage = () => {
                     title="selectAllProducts"
                     type="checkbox"
                     onChange={handleSelectAll}
-                    checked={
-                      selectedProducts.length === currentProducts.length &&
-                      currentProducts.length > 0
-                    }
+                    checked={selectedProducts.length === products.length && products.length > 0}
                     className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                   />
                 </th>
@@ -238,7 +289,8 @@ const ProductApprovalPage = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {currentProducts.map((product) => {
+              {products.map((product: any) => {
+                // console.log(product);
                 return (
                   <ProductList
                     key={product._id}
@@ -256,14 +308,17 @@ const ProductApprovalPage = () => {
         </div>
 
         {/* Empty State */}
-        {currentProducts.length === 0 && (
+        {products.length === 0 && (
           <div className="text-center py-12">
             <FiPackage className="mx-auto h-12 w-12 text-gray-400" />
             <h3 className="mt-2 text-sm font-medium text-gray-900">No products found</h3>
             <p className="mt-1 text-sm text-gray-500">
-              {filteredProducts.length === 0
+              {searchTerm ||
+              statusFilter !== "all" ||
+              categoryFilter !== "all" ||
+              typeFilter !== "all"
                 ? "No products match your current filters."
-                : "Try adjusting your search or filter criteria."}
+                : "No products available for approval."}
             </p>
           </div>
         )}
@@ -271,20 +326,21 @@ const ProductApprovalPage = () => {
         {/* Pagination */}
         {totalPages > 1 && (
           <Pagination
-            indexOfFirstProduct={indexOfFirstProduct}
-            filteredProducts={filteredProducts}
-            indexOfLastProduct={indexOfLastProduct}
-            setCurrentPage={setCurrentPage}
+            indexOfFirstProduct={(currentPage - 1) * productsPerPage}
+            filteredProducts={products}
+            indexOfLastProduct={Math.min(currentPage * productsPerPage, totalProducts)}
+            setCurrentPage={handlePageChange}
             currentPage={currentPage}
             totalPages={totalPages}
           />
         )}
       </div>
+
       {/* Product Detail Modal */}
       {showProductModal && selectedProduct && (
         <ProductDetailModel
           setShowProductModal={setShowProductModal}
-          selectedProduct={selectedProduct}
+          productId={selectedProduct}
           handleApproveProduct={handleApproveProduct}
           handleRejectProduct={handleRejectProduct}
         />

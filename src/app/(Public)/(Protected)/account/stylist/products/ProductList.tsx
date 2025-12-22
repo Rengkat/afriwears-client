@@ -37,21 +37,11 @@ const ProductList = ({ product }: any) => {
       await deleteMyProduct(product?._id).unwrap();
       toast.success("Product deleted successfully!", {
         position: "top-center",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
       });
       setIsModalOpen(false);
     } catch (error: any) {
       toast.error(error?.data?.message || "Failed to delete product. Please try again.", {
         position: "top-center",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
       });
       console.error("Delete product error:", error);
     }
@@ -111,7 +101,9 @@ const ProductList = ({ product }: any) => {
             )}
           </span>
           {product?.rejectionReason && (
-            <div className="text-xs text-red-600 mt-1 max-w-xs">{product?.rejectionReason}</div>
+            <div className="text-xs text-red-600 mt-1 max-w-xs">
+              {product?.rejectionReason?.substring(0, 20)}...
+            </div>
           )}
         </td>
         <td className="px-6 py-4 whitespace-nowrap">

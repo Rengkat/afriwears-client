@@ -6,13 +6,14 @@ export const productApi = createApi({
   baseQuery: baseQueryWithReauth,
   tagTypes: ["Products", "Product", "MyProducts"],
   endpoints: (build) => ({
-    getProducts: build.query({
-      query: ({ stylist, page = 1, name, limit = 10, category, type, featured, status }) => ({
+    getApprovedProducts: build.query({
+      query: ({ stylist, page = 1, name, limit = 10, category, type, featured }) => ({
         url: `products`,
-        params: { stylist, page, name, limit, category, type, featured, status },
+        params: { stylist, page, name, limit, category, type, featured },
       }),
       providesTags: ["Products"],
     }),
+
     getMyProducts: build.query({
       query: ({ page = 1, limit = 10, status, category, type, featured }) => ({
         url: `products/my-products`,
@@ -20,34 +21,51 @@ export const productApi = createApi({
       }),
       providesTags: ["MyProducts"],
     }),
+
+    getAllProductsAdmin: build.query({
+      query: ({ page = 1, limit = 10, name, category, type, featured, status }) => ({
+        url: `products/all-products-admin`,
+        params: { page, limit, name, category, type, featured, status },
+      }),
+      providesTags: ["Products"],
+    }),
+
     getFeaturedProducts: build.query({
       query: () => ({
         url: `products?featured=true`,
       }),
       providesTags: ["Products"],
     }),
+
     getProductDetail: build.query({
       query: (id) => ({
         url: `products/${id}`,
       }),
       providesTags: (result, error, id) => [{ type: "Product", id }],
     }),
+
     createProduct: build.mutation({
       query: (data) => ({
         url: `products`,
         method: "POST",
         body: data,
       }),
-      invalidatesTags: ["Products"],
+      invalidatesTags: ["MyProducts"], // Invalidate MyProducts since this adds to user's products
     }),
+
     updateProduct: build.mutation({
       query: ({ id, ...data }) => ({
         url: `products/${id}`,
         method: "PATCH",
         body: data,
       }),
-      invalidatesTags: (result, error, { id }) => ["Products", { type: "Product", id }],
+      invalidatesTags: (result, error, { id }) => [
+        "Products",
+        "MyProducts",
+        { type: "Product", id },
+      ],
     }),
+
     deleteProduct: build.mutation({
       query: (id) => ({
         url: `products/${id}`,
@@ -55,6 +73,7 @@ export const productApi = createApi({
       }),
       invalidatesTags: ["Products", "MyProducts"],
     }),
+
     uploadProductImage: build.mutation({
       query: (file) => {
         const formData = new FormData();
@@ -67,16 +86,16 @@ export const productApi = createApi({
         };
       },
     }),
-    // Delete product image from Sanity
+
     deleteProductImage: build.mutation({
       query: (imageUrl) => ({
         url: `products/delete-product-image`,
         method: "DELETE",
         body: { imageUrl },
       }),
-      // Invalidate relevant product caches since images are part of product data
       invalidatesTags: ["Products", "MyProducts"],
     }),
+
     addReview: build.mutation({
       query: ({ productId, ...data }) => ({
         url: `products/${productId}/review`,
@@ -85,6 +104,7 @@ export const productApi = createApi({
       }),
       invalidatesTags: (result, error, { productId }) => [{ type: "Product", id: productId }],
     }),
+
     updateReview: build.mutation({
       query: ({ productId, reviewId, ...data }) => ({
         url: `products/${productId}/review/${reviewId}`,
@@ -93,20 +113,26 @@ export const productApi = createApi({
       }),
       invalidatesTags: (result, error, { productId }) => [{ type: "Product", id: productId }],
     }),
+
     verifyProduct: build.mutation({
       query: ({ productId, ...data }) => ({
         url: `products/verify/${productId}`,
         method: "PUT",
         body: data,
       }),
-      invalidatesTags: ["Products"],
+      invalidatesTags: (result, error, { productId }) => [
+        "Products",
+        "MyProducts",
+        { type: "Product", id: productId },
+      ],
     }),
   }),
 });
 
 export const {
-  useGetProductsQuery,
+  useGetApprovedProductsQuery,
   useGetMyProductsQuery,
+  useGetAllProductsAdminQuery,
   useGetFeaturedProductsQuery,
   useGetProductDetailQuery,
   useCreateProductMutation,

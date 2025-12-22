@@ -35,6 +35,7 @@ const FilterAndSearch = ({
         {/* Filters */}
         <div className="flex flex-col sm:flex-row gap-4">
           <select
+            title="filter"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
@@ -45,6 +46,7 @@ const FilterAndSearch = ({
           </select>
 
           <select
+            title="filter"
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
             className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">

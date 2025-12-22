@@ -26,7 +26,7 @@ const UserManagementPage = () => {
   const [showUserModal, setShowUserModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [showSuspensionModal, setShowSuspensionModal] = useState(false);
-
+  // const {}=useGetUsers
   // Filter users based on search and filters
   const filteredUsers = users.filter((user) => {
     const matchesSearch =

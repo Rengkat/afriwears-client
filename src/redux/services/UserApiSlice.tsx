@@ -52,16 +52,78 @@ interface AddressListResponse {
   count: number;
 }
 
+// Add interface for paginated users response
+interface UsersListResponse {
+  success: boolean;
+  data: UserProfile[];
+  count: number;
+  pagination?: {
+    page: number;
+    limit: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
+}
+
 export const userApiSlice = createApi({
   reducerPath: "userApi",
   baseQuery: baseQueryWithReauth,
-  tagTypes: ["User", "Address"],
+  tagTypes: ["User", "Address", "UsersList"],
   endpoints: (builder) => ({
     // User endpoints
     getCurrentUserDetails: builder.query<ApiResponse<UserProfile>, void>({
       query: () => "/users/me",
       providesTags: (result) => [
         { type: "User", id: result?.data?._id || "CURRENT" },
+        ...(result?.data?.addresses?.map((addr) => ({
+          type: "Address" as const,
+          id: addr._id,
+        })) || []),
+      ],
+    }),
+
+    // New endpoint to get all users (admin only)
+    getAllUsers: builder.query<
+      UsersListResponse,
+      {
+        page?: number;
+        limit?: number;
+        search?: string;
+        role?: string;
+        sortBy?: string;
+        order?: "asc" | "desc";
+      }
+    >({
+      query: (params = {}) => {
+        const { page = 1, limit = 10, search, role, sortBy, order } = params;
+        const queryParams = new URLSearchParams();
+
+        queryParams.append("page", page.toString());
+        queryParams.append("limit", limit.toString());
+
+        if (search) queryParams.append("search", search);
+        if (role) queryParams.append("role", role);
+        if (sortBy) queryParams.append("sortBy", sortBy);
+        if (order) queryParams.append("order", order);
+
+        const queryString = queryParams.toString();
+        return `/users${queryString ? `?${queryString}` : ""}`;
+      },
+      providesTags: (result) => [
+        { type: "UsersList", id: "LIST" },
+        ...(result?.data?.map((user) => ({
+          type: "User" as const,
+          id: user._id,
+        })) || []),
+      ],
+    }),
+
+    // Optional: Get single user by ID (admin only)
+    getUserById: builder.query<ApiResponse<UserProfile>, string>({
+      query: (id) => `/users/${id}`,
+      providesTags: (result, error, id) => [
+        { type: "User", id },
         ...(result?.data?.addresses?.map((addr) => ({
           type: "Address" as const,
           id: addr._id,
@@ -76,6 +138,34 @@ export const userApiSlice = createApi({
         body,
       }),
       invalidatesTags: [{ type: "User", id: "CURRENT" }],
+    }),
+
+    // Update user by ID (admin only)
+    updateUser: builder.mutation<
+      ApiResponse<UserProfile>,
+      { id: string; updates: Partial<UserProfile> }
+    >({
+      query: ({ id, updates }) => ({
+        url: `/users/${id}`,
+        method: "PATCH",
+        body: updates,
+      }),
+      invalidatesTags: (result, error, { id }) => [
+        { type: "User", id },
+        { type: "UsersList", id: "LIST" },
+      ],
+    }),
+
+    // Delete user (admin only)
+    deleteUser: builder.mutation<{ success: boolean; message?: string }, string>({
+      query: (id) => ({
+        url: `/users/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: (result, error, id) => [
+        { type: "User", id },
+        { type: "UsersList", id: "LIST" },
+      ],
     }),
 
     uploadAvatar: builder.mutation<ApiResponse<{ avatarUrl: string }>, FormData>({
@@ -153,7 +243,11 @@ export const userApiSlice = createApi({
 
 export const {
   useGetCurrentUserDetailsQuery,
+  useGetAllUsersQuery,
+  useGetUserByIdQuery,
   useUpdateCurrentUserMutation,
+  useUpdateUserMutation,
+  useDeleteUserMutation,
   useUploadAvatarMutation,
   useGetAddressesQuery,
   useCreateAddressMutation,
