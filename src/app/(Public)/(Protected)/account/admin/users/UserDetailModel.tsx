@@ -1,136 +1,200 @@
 import { getStatusColor } from "@/Utils/utils";
 import React from "react";
-import { FiUserCheck, FiUserX } from "react-icons/fi";
+import {
+  FiUser,
+  FiMail,
+  FiCalendar,
+  FiDollarSign,
+  FiCheckCircle,
+  FiXCircle,
+  FiEdit,
+  FiLock,
+  FiUnlock,
+} from "react-icons/fi";
 
-const UserDetailModel = ({
-  setShowUserModal,
-  selectedUser,
-  formatDate,
-  handleEditUser,
-  handleSuspendUser,
-  handleActivateUser,
-}: any) => {
+interface UserDetailModalProps {
+  user: any;
+  onClose: () => void;
+  onEdit: (user: any) => void;
+  onSuspend: () => void;
+  onActivate: () => void;
+}
+
+const UserDetailModal: React.FC<UserDetailModalProps> = ({
+  user,
+  onClose,
+  onEdit,
+  onSuspend,
+  onActivate,
+}) => {
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
+
+  const statusColor = user.isVerified ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800";
+  const statusText = user.isVerified ? "Active" : "Inactive";
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-xl shadow-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-semibold text-gray-900">User Details</h3>
-            <button
-              onClick={() => setShowUserModal(false)}
-              className="text-gray-400 hover:text-gray-600 transition-colors">
-              <FiUserX size={24} />
-            </button>
-          </div>
+      <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+          <h3 className="text-xl font-semibold text-gray-900">User Details</h3>
+          <button
+            title="close"
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 transition-colors p-1 hover:bg-gray-100 rounded-lg">
+            <FiXCircle size={24} />
+          </button>
+        </div>
 
+        <div className="p-6">
           <div className="space-y-6">
-            {/* User Info */}
-            <div className="flex items-center gap-4">
-              <div className="h-16 w-16 bg-gray-200 rounded-full flex items-center justify-center">
-                {selectedUser.avatar ? (
+            {/* Profile Header */}
+            <div className="flex items-start gap-4 pb-6 border-b border-gray-200">
+              <div className="h-20 w-20 bg-gradient-to-br from-blue-100 to-purple-100 rounded-2xl flex items-center justify-center">
+                {user.avatar ? (
                   <img
-                    className="h-16 w-16 rounded-full"
-                    src={selectedUser.avatar}
-                    alt={selectedUser.name}
+                    className="h-20 w-20 rounded-2xl object-cover"
+                    src={user.avatar}
+                    alt={`${user.firstName} ${user.surname}`}
                   />
                 ) : (
-                  <FiUserCheck className="h-8 w-8 text-gray-400" />
+                  <FiUser className="h-10 w-10 text-blue-600" />
                 )}
               </div>
-              <div>
-                <h4 className="text-lg font-semibold text-gray-900">{selectedUser.name}</h4>
-                <p className="text-gray-600">{selectedUser.email}</p>
-                <span
-                  className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
-                    selectedUser.status
-                  )} mt-1`}>
-                  {selectedUser.status}
-                </span>
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-2">
+                  <h4 className="text-xl font-bold text-gray-900">
+                    {user.firstName} {user.surname}
+                  </h4>
+                  <span className={`px-3 py-1 text-xs font-semibold rounded-full ${statusColor}`}>
+                    {statusText}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 text-gray-600">
+                  <FiMail className="h-4 w-4" />
+                  <span>{user.email}</span>
+                  {user.isVerified && (
+                    <span className="text-green-500 ml-2" title="Email Verified">
+                      <FiCheckCircle className="h-4 w-4" />
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
 
             {/* Details Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <h5 className="font-medium text-gray-900 mb-2">Account Information</h5>
-                <dl className="space-y-2">
-                  <div className="flex justify-between">
-                    <dt className="text-sm text-gray-500">User ID</dt>
-                    <dd className="text-sm text-gray-900">{selectedUser._id}</dd>
+              {/* Account Information */}
+              <div className="space-y-4">
+                <h5 className="font-semibold text-gray-900 flex items-center gap-2">
+                  <FiUser className="h-5 w-5 text-blue-500" />
+                  Account Information
+                </h5>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                    <span className="text-sm text-gray-600">User ID</span>
+                    <span className="text-sm font-medium text-gray-900 font-mono">
+                      {user._id.substring(0, 8)}...
+                    </span>
                   </div>
-                  <div className="flex justify-between">
-                    <dt className="text-sm text-gray-500">Role</dt>
-                    <dd className="text-sm text-gray-900 capitalize">{selectedUser.role}</dd>
+                  <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                    <span className="text-sm text-gray-600">Role</span>
+                    <span className="text-sm font-medium text-gray-900 capitalize">
+                      {user.role}
+                    </span>
                   </div>
-                  <div className="flex justify-between">
-                    <dt className="text-sm text-gray-500">Email Verified</dt>
-                    <dd className="text-sm">
-                      {selectedUser.isEmailVerified ? (
-                        <span className="text-green-600">Verified</span>
-                      ) : (
-                        <span className="text-amber-600">Pending</span>
-                      )}
-                    </dd>
+                  <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                    <span className="text-sm text-gray-600">Newsletter</span>
+                    <span
+                      className={`text-sm font-medium ${
+                        user.subscribedToNewsLetter ? "text-green-600" : "text-gray-600"
+                      }`}>
+                      {user.subscribedToNewsLetter ? "Subscribed" : "Not Subscribed"}
+                    </span>
                   </div>
-                </dl>
+                </div>
               </div>
 
-              <div>
-                <h5 className="font-medium text-gray-900 mb-2">Activity</h5>
-                <dl className="space-y-2">
-                  <div className="flex justify-between">
-                    <dt className="text-sm text-gray-500">Joined Date</dt>
-                    <dd className="text-sm text-gray-900">{formatDate(selectedUser.createdAt)}</dd>
+              {/* Activity Information */}
+              <div className="space-y-4">
+                <h5 className="font-semibold text-gray-900 flex items-center gap-2">
+                  <FiCalendar className="h-5 w-5 text-purple-500" />
+                  Activity
+                </h5>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                    <span className="text-sm text-gray-600">Joined Date</span>
+                    <span className="text-sm font-medium text-gray-900">
+                      {formatDate(user.createdAt)}
+                    </span>
                   </div>
-                  <div className="flex justify-between">
-                    <dt className="text-sm text-gray-500">Last Login</dt>
-                    <dd className="text-sm text-gray-900">{formatDate(selectedUser.lastLogin)}</dd>
+                  <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                    <span className="text-sm text-gray-600">Last Updated</span>
+                    <span className="text-sm font-medium text-gray-900">
+                      {formatDate(user.updatedAt)}
+                    </span>
                   </div>
-                  <div className="flex justify-between">
-                    <dt className="text-sm text-gray-500">Total Orders</dt>
-                    <dd className="text-sm text-gray-900">{selectedUser.ordersCount}</dd>
+                  <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                    <span className="text-sm text-gray-600">Company</span>
+                    <span className="text-sm font-medium text-gray-900">
+                      {user.company ? "Associated" : "None"}
+                    </span>
                   </div>
-                </dl>
+                </div>
               </div>
             </div>
 
             {/* Wallet Information */}
-            <div>
-              <h5 className="font-medium text-gray-900 mb-2">Wallet Information</h5>
-              <div className="bg-gray-50 rounded-lg p-4">
-                <div className="text-2xl font-bold text-gray-900">
-                  ₦{selectedUser.walletBalance.toLocaleString()}
+            <div className="space-y-4">
+              <h5 className="font-semibold text-gray-900 flex items-center gap-2">
+                <FiDollarSign className="h-5 w-5 text-green-500" />
+                Wallet Information
+              </h5>
+              <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-5 border border-green-100">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-3xl font-bold text-gray-900">
+                      ₦{(user.walletAmount || 0).toLocaleString()}
+                    </div>
+                    <p className="text-sm text-gray-600">Current balance</p>
+                  </div>
+                  <div className="p-3 bg-white rounded-lg shadow-sm">
+                    <FiDollarSign className="h-6 w-6 text-green-600" />
+                  </div>
                 </div>
-                <p className="text-sm text-gray-600">Current balance</p>
               </div>
             </div>
 
             {/* Actions */}
-            <div className="flex gap-3 pt-4 border-t border-gray-200">
-              <button
-                onClick={() => handleEditUser(selectedUser)}
-                className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors">
-                Edit User
-              </button>
-              {selectedUser.status === "active" ? (
+            <div className="pt-6 border-t border-gray-200">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <button
-                  onClick={() => {
-                    handleSuspendUser(selectedUser);
-                    setShowUserModal(false);
-                  }}
-                  className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors">
-                  Suspend User
+                  onClick={() => onEdit(user)}
+                  className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-medium rounded-lg transition-all flex items-center justify-center gap-2">
+                  <FiEdit className="h-5 w-5" />
+                  Edit User
                 </button>
-              ) : (
-                <button
-                  onClick={() => {
-                    handleActivateUser(selectedUser._id);
-                    setShowUserModal(false);
-                  }}
-                  className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors">
-                  Activate User
-                </button>
-              )}
+                {user.isVerified ? (
+                  <button
+                    onClick={onSuspend}
+                    className="flex-1 px-4 py-3 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-medium rounded-lg transition-all flex items-center justify-center gap-2">
+                    <FiLock className="h-5 w-5" />
+                    Suspend User
+                  </button>
+                ) : (
+                  <button
+                    onClick={onActivate}
+                    className="flex-1 px-4 py-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-medium rounded-lg transition-all flex items-center justify-center gap-2">
+                    <FiUnlock className="h-5 w-5" />
+                    Activate User
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -139,4 +203,4 @@ const UserDetailModel = ({
   );
 };
 
-export default UserDetailModel;
+export default UserDetailModal;
