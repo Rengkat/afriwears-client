@@ -70,6 +70,7 @@ const FilterAndSort: React.FC<FilterAndSortProps> = ({
                   className="inline-flex items-center py-1 pl-3 pr-2 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
                   {filter}
                   <button
+                    title="remove filter"
                     type="button"
                     onClick={() => handleRemoveFilter(filter)}
                     className="flex-shrink-0 ml-1 h-4 w-4 rounded-full inline-flex items-center justify-center text-amber-600 hover:bg-amber-200 hover:text-amber-800">
