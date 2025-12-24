@@ -234,11 +234,15 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
 
         {showMeasurements && (
           <div className="mt-4">
-            <MeasurementsForm product={product} />
+            <MeasurementsForm
+              product={product}
+              selectedSize={selectedSize}
+              selectedColor={selectedColor}
+              quantity={quantity}
+            />
           </div>
         )}
       </div>
-
       {/* SKU & Category */}
       <div className="mt-6 pt-6 border-t border-gray-200 text-sm text-gray-500">
         <div className="flex flex-wrap gap-4">

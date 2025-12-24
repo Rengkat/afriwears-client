@@ -1,12 +1,24 @@
 "use client";
-import { useState } from "react";
+import React, { useState } from "react";
 import { FiUpload, FiInfo, FiCheck } from "react-icons/fi";
+import { useCreateOrderMutation } from "@/redux/services/OrderApiSlice";
+import { useRouter } from "next/navigation";
+import { toast } from "react-hot-toast";
 
 interface MeasurementsFormProps {
   product: any;
+  selectedSize?: string;
+  selectedColor?: string;
+  quantity?: number;
 }
 
-const MeasurementsForm: React.FC<MeasurementsFormProps> = ({ product }) => {
+const MeasurementsForm: React.FC<MeasurementsFormProps> = ({
+  product,
+  selectedSize = "",
+  selectedColor = "",
+  quantity = 1,
+}) => {
+  const router = useRouter();
   const [measurements, setMeasurements] = useState({
     bustOrChest: "",
     waist: "",
@@ -31,21 +43,42 @@ const MeasurementsForm: React.FC<MeasurementsFormProps> = ({ product }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [isCollapsed, setIsCollapsed] = useState(true);
-  const [showPayment, setShowPayment] = useState(false);
+  const [shippingAddress, setShippingAddress] = useState({
+    street: "",
+    city: "",
+    state: "",
+    phone: "",
+    additionalInfo: "",
+  });
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const [createOrder, { isLoading: isCreatingOrder }] = useCreateOrderMutation();
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setMeasurements((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    if (name in measurements) {
+      setMeasurements((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    } else if (name in shippingAddress) {
+      setShippingAddress((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Check file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setError("Image size should be less than 5MB");
+        return;
+      }
       setImage(file);
       setImagePreview(URL.createObjectURL(file));
+      setError("");
     }
   };
 
@@ -56,46 +89,108 @@ const MeasurementsForm: React.FC<MeasurementsFormProps> = ({ product }) => {
   const totalDue = amountPaid + shippingFee;
   const balanceDue = product.price - amountPaid;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Validate required measurements
     if (!measurements.waist) {
       setError("Please provide at least your waist measurement");
+      toast.error("Please provide at least your waist measurement");
+      return;
+    }
+
+    // Validate shipping address
+    if (
+      !shippingAddress.street ||
+      !shippingAddress.city ||
+      !shippingAddress.state ||
+      !shippingAddress.phone
+    ) {
+      setError("Please fill in all required shipping address fields");
+      toast.error("Please fill in all required shipping address fields");
       return;
     }
 
     setLoading(true);
-    // In a real app, you would submit the measurements here
-    console.log("Submitting measurements:", {
-      productId: product._id,
-      productName: product.name,
-      measurements,
-      amountPaid,
-      balanceDue,
-    });
+    setError("");
 
-    setTimeout(() => {
+    try {
+      // Convert image to base64 if exists
+      let materialSampleBase64 = "";
+      if (image) {
+        materialSampleBase64 = await convertImageToBase64(image);
+      }
+
+      // Prepare order data
+      const orderData = {
+        shippingAddress: {
+          address: shippingAddress.street,
+          city: shippingAddress.city,
+          state: shippingAddress.state,
+          phone: shippingAddress.phone,
+          additionalInfo: shippingAddress.additionalInfo,
+        },
+        paymentMethod: "online", // Default to online payment for custom orders
+        orderType: "custom", // Custom order type
+        measurements: {
+          ...measurements,
+          selectedSize,
+          selectedColor,
+        },
+        materialSample: materialSampleBase64,
+        items: [
+          {
+            product: product._id,
+            quantity: quantity || 1,
+            orderType: "custom",
+            measurements: {
+              ...measurements,
+              selectedSize,
+              selectedColor,
+            },
+            materialSample: materialSampleBase64,
+          },
+        ],
+      };
+
+      // Call the create order mutation
+      const result = await createOrder(orderData).unwrap();
+
+      if (result.success && result.authorizationUrl) {
+        // Redirect to payment page
+        toast.success("Order created successfully! Redirecting to payment...");
+        window.location.href = result.authorizationUrl;
+      } else if (result.success) {
+        // Order created but no payment required (e.g., wallet payment)
+        toast.success("Order created successfully!");
+        router.push(`/orders/${result.order._id}`);
+      }
+    } catch (error: any) {
+      console.error("Order creation error:", error);
+      const errorMessage =
+        error?.data?.message || error?.message || "Failed to create order. Please try again.";
+      setError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
       setLoading(false);
-      setShowPayment(true);
-      // Show success message
-      alert("Measurements submitted successfully! Proceed to payment.");
-    }, 1500);
+    }
   };
 
-  const handlePayment = () => {
-    // This would trigger actual payment
-    console.log("Initiating payment for:", {
-      product: product.name,
-      totalDue,
+  // Helper function to convert image to base64
+  const convertImageToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
     });
-    // In a real app, you would integrate with Paystack or other payment gateway here
   };
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">Custom Measurements</h3>
+          <h3 className="text-lg font-semibold text-gray-900">Custom Measurements Order</h3>
           <p className="text-sm text-gray-600 mt-1">
             Provide your measurements for a perfect fit. All measurements should be in centimeters.
           </p>
@@ -115,27 +210,100 @@ const MeasurementsForm: React.FC<MeasurementsFormProps> = ({ product }) => {
       )}
 
       <form onSubmit={handleSubmit}>
+        {/* Shipping Address Section */}
+        <div className="mb-6">
+          <h4 className="font-medium text-gray-700 mb-3">Shipping Address *</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Street Address *
+              </label>
+              <input
+                type="text"
+                name="street"
+                value={shippingAddress.street}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                placeholder="Enter street address"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">City *</label>
+              <input
+                type="text"
+                name="city"
+                value={shippingAddress.city}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                placeholder="Enter city"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">State *</label>
+              <input
+                type="text"
+                name="state"
+                value={shippingAddress.state}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                placeholder="Enter state"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number *</label>
+              <input
+                type="tel"
+                name="phone"
+                value={shippingAddress.phone}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                placeholder="Enter phone number"
+                required
+              />
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Additional Information (Optional)
+              </label>
+              <textarea
+                name="additionalInfo"
+                value={shippingAddress.additionalInfo}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                placeholder="Any additional delivery instructions"
+                rows={2}
+              />
+            </div>
+          </div>
+        </div>
+
         {/* Essential Measurements */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <MeasurementInput
-            label="Waist*"
-            name="waist"
-            value={measurements.waist}
-            onChange={handleInputChange}
-            required={true}
-          />
-          <MeasurementInput
-            label="Bust/Chest"
-            name="bustOrChest"
-            value={measurements.bustOrChest}
-            onChange={handleInputChange}
-          />
-          <MeasurementInput
-            label="Hips"
-            name="hips"
-            value={measurements.hips}
-            onChange={handleInputChange}
-          />
+        <div className="mb-6">
+          <h4 className="font-medium text-gray-700 mb-3">Essential Measurements *</h4>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <MeasurementInput
+              label="Waist *"
+              name="waist"
+              value={measurements.waist}
+              onChange={handleInputChange}
+              required={true}
+            />
+            <MeasurementInput
+              label="Bust/Chest"
+              name="bustOrChest"
+              value={measurements.bustOrChest}
+              onChange={handleInputChange}
+            />
+            <MeasurementInput
+              label="Hips"
+              name="hips"
+              value={measurements.hips}
+              onChange={handleInputChange}
+            />
+          </div>
         </div>
 
         {/* Collapsible Additional Measurements */}
@@ -220,6 +388,18 @@ const MeasurementsForm: React.FC<MeasurementsFormProps> = ({ product }) => {
               <span className="font-medium">₦{product.price?.toLocaleString()}</span>
             </div>
             <div className="flex justify-between text-sm">
+              <span className="text-gray-600">Quantity</span>
+              <span className="font-medium">{quantity || 1}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-600">Selected Size</span>
+              <span className="font-medium">{selectedSize || "Not selected"}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-600">Selected Color</span>
+              <span className="font-medium">{selectedColor || "Not selected"}</span>
+            </div>
+            <div className="flex justify-between text-sm">
               <span className="text-gray-600">Deposit (60%)</span>
               <span className="font-medium">₦{amountPaid.toLocaleString()}</span>
             </div>
@@ -238,28 +418,19 @@ const MeasurementsForm: React.FC<MeasurementsFormProps> = ({ product }) => {
         </div>
 
         {/* Submit Button */}
-        <div className="flex flex-col sm:flex-row gap-3">
+        <div className="flex flex-col gap-3">
           <button
             type="submit"
-            disabled={loading || !measurements.waist}
+            disabled={loading || isCreatingOrder || !measurements.waist}
             className="flex-1 bg-amber-600 hover:bg-amber-700 text-white py-3 px-4 rounded-md font-medium disabled:bg-amber-300 transition-colors flex items-center justify-center gap-2">
-            {loading ? (
+            {loading || isCreatingOrder ? (
               "Processing..."
             ) : (
               <>
-                <FiCheck /> Save Measurements
+                <FiCheck /> Create Custom Order
               </>
             )}
           </button>
-
-          {showPayment && (
-            <button
-              type="button"
-              onClick={handlePayment}
-              className="flex-1 bg-gray-900 hover:bg-black text-white py-3 px-4 rounded-md font-medium transition-colors">
-              Proceed to Payment
-            </button>
-          )}
         </div>
 
         {/* Help Text */}
@@ -278,7 +449,7 @@ const MeasurementsForm: React.FC<MeasurementsFormProps> = ({ product }) => {
 };
 
 // Reusable measurement input component
-const MeasurementInput = ({ label, name, value, onChange, required = false }) => (
+const MeasurementInput = ({ label, name, value, onChange, required = false }: any) => (
   <div>
     <label className="block text-sm font-medium text-gray-700 mb-1">
       {label} {required && <span className="text-red-500">*</span>}

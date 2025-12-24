@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   FiEye,
@@ -13,89 +13,70 @@ import {
 } from "react-icons/fi";
 import EmptyOder from "./EmptyOder";
 import OrderList from "./OrderList";
-
-// Mock data for stylist orders
-const mockOrders = [
-  {
-    id: "ORD-7892",
-    customer: "Jane Doe",
-    date: "2023-05-15",
-    amount: 35000,
-    status: "processing",
-    items: [
-      { name: "Premium Ankara Jumpsuit", quantity: 1, price: 25000 },
-      { name: "Matching Headwrap", quantity: 1, price: 10000 },
-    ],
-    shipping: {
-      address: "123 Fashion St, Lagos Island, Lagos",
-      courier: "DHL Express",
-      tracking: "DL789456123NG",
-    },
-  },
-  {
-    id: "ORD-6541",
-    customer: "John Smith",
-    date: "2023-05-10",
-    amount: 42000,
-    status: "shipped",
-    items: [
-      { name: "Kente Agbada Set", quantity: 1, price: 35000 },
-      { name: "Leather Sandals", quantity: 1, price: 7000 },
-    ],
-    shipping: {
-      address: "45 Tailor Ave, Ikeja, Lagos",
-      courier: "FedEx",
-      tracking: "FX852369741NG",
-    },
-  },
-  {
-    id: "ORD-3214",
-    customer: "Amina Yusuf",
-    date: "2023-05-05",
-    amount: 28000,
-    status: "delivered",
-    items: [
-      { name: "Adire Wrap Dress", quantity: 1, price: 22000 },
-      { name: "Beaded Necklace", quantity: 1, price: 6000 },
-    ],
-    shipping: {
-      address: "8 Designer Close, Victoria Island, Lagos",
-      courier: "UPS",
-      tracking: "UP963258741NG",
-    },
-  },
-];
+import { toast } from "react-hot-toast";
+import { useGetStylistOrdersQuery } from "@/redux/services/OrderApiSlice";
 
 const statusOptions = [
   { value: "all", label: "All Orders" },
+  { value: "pending", label: "Pending" },
   { value: "processing", label: "Processing" },
   { value: "shipped", label: "Shipped" },
   { value: "delivered", label: "Delivered" },
+  { value: "cancelled", label: "Cancelled" },
 ];
 
 const StylistOrdersPage = () => {
-  const [orders, setOrders] = useState(mockOrders);
   const [filter, setFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedOrder, setExpandedOrder] = useState(null);
+  const [page, setPage] = useState(1);
+  const limit = 10;
 
-  const filteredOrders = orders.filter((order) => {
-    const matchesFilter = filter === "all" || order.status === filter;
-    const matchesSearch =
-      order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      order.customer.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesFilter && matchesSearch;
+  const { data, isLoading, error, refetch } = useGetStylistOrdersQuery({
+    page,
+    limit,
+    status: filter !== "all" ? filter : undefined,
   });
 
-  const updateOrderStatus = (orderId, newStatus) => {
-    setOrders(
-      orders.map((order) => (order.id === orderId ? { ...order, status: newStatus } : order))
-    );
-  };
+  useEffect(() => {
+    if (error) {
+      toast.error("Failed to load orders");
+    }
+  }, [error]);
+
+  const orders = data?.orders || [];
+  const totalRevenue = orders.reduce((sum, order) => sum + order.totalPrice, 0);
+
+  const filteredOrders = orders.filter((order) => {
+    const matchesSearch =
+      order.orderNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      order.customer?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      order.customer?.email?.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesSearch;
+  });
 
   const toggleOrderExpand = (orderId) => {
     setExpandedOrder(expandedOrder === orderId ? null : orderId);
   };
+
+  // Format date for display
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -106,7 +87,7 @@ const StylistOrdersPage = () => {
             <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Order Management</h1>
             <p className="text-gray-600 mt-1">
               {orders.length} {orders.length === 1 ? "order" : "orders"} • ₦
-              {orders.reduce((sum, order) => sum + order.amount, 0).toLocaleString()} total revenue
+              {totalRevenue.toLocaleString()} total revenue
             </p>
           </div>
 
@@ -129,7 +110,6 @@ const StylistOrdersPage = () => {
                 <FiFilter className="text-gray-400" />
               </div>
               <select
-                title="setFilter"
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}
                 className="appearance-none pl-10 pr-8 py-2 border border-gray-300 rounded-lg bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500">
@@ -190,15 +170,92 @@ const StylistOrdersPage = () => {
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filteredOrders.map((order) => (
                     <OrderList
-                      order={order}
+                      key={order._id}
+                      order={{
+                        id: order._id,
+                        orderNumber: order.orderNumber,
+                        customer: order.customer?.name || order.customer?.email || "Unknown",
+                        date: formatDate(order.createdAt),
+                        amount: order.totalPrice,
+                        status: order.orderStatus,
+                        items:
+                          order.orderItems?.map((item) => ({
+                            name: item.product?.name || "Product",
+                            quantity: item.quantity,
+                            price: item.priceAtPurchase,
+                          })) || [],
+                        shipping: {
+                          address: order.shippingAddress?.address || "Address not specified",
+                          courier: order.shippingInfo?.courier || "Not specified",
+                          tracking: order.shippingInfo?.trackingNumber || "Not available",
+                        },
+                      }}
                       toggleOrderExpand={toggleOrderExpand}
                       expandedOrder={expandedOrder}
-                      updateOrderStatus={updateOrderStatus}
                     />
                   ))}
                 </tbody>
               </table>
             </div>
+
+            {/* Pagination */}
+            {data?.totalPages > 1 && (
+              <div className="flex items-center justify-between px-6 py-3 border-t border-gray-200">
+                <div className="flex-1 flex justify-between sm:hidden">
+                  <button
+                    onClick={() => setPage(Math.max(1, page - 1))}
+                    disabled={page === 1}
+                    className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50">
+                    Previous
+                  </button>
+                  <button
+                    onClick={() => setPage(Math.min(data.totalPages, page + 1))}
+                    disabled={page === data.totalPages}
+                    className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50">
+                    Next
+                  </button>
+                </div>
+                <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-sm text-gray-700">
+                      Showing page <span className="font-medium">{page}</span> of{" "}
+                      <span className="font-medium">{data.totalPages}</span>
+                    </p>
+                  </div>
+                  <div>
+                    <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                      <button
+                        onClick={() => setPage(Math.max(1, page - 1))}
+                        disabled={page === 1}
+                        className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50">
+                        Previous
+                      </button>
+                      {[...Array(Math.min(5, data.totalPages))].map((_, i) => {
+                        const pageNum = i + 1;
+                        return (
+                          <button
+                            key={pageNum}
+                            onClick={() => setPage(pageNum)}
+                            className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                              page === pageNum
+                                ? "z-10 bg-amber-50 border-amber-500 text-amber-600"
+                                : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
+                            }`}>
+                            {pageNum}
+                          </button>
+                        );
+                      })}
+                      <button
+                        onClick={() => setPage(Math.min(data.totalPages, page + 1))}
+                        disabled={page === data.totalPages}
+                        className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50">
+                        Next
+                      </button>
+                    </nav>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
