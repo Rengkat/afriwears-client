@@ -90,20 +90,18 @@ export const userApiSlice = createApi({
         page?: number;
         limit?: number;
         search?: string;
-        role?: string;
         sortBy?: string;
         order?: "asc" | "desc";
       }
     >({
       query: (params = {}) => {
-        const { page = 1, limit = 10, search, role, sortBy, order } = params;
+        const { page = 1, limit = 10, search, sortBy, order } = params;
         const queryParams = new URLSearchParams();
 
         queryParams.append("page", page.toString());
         queryParams.append("limit", limit.toString());
 
         if (search) queryParams.append("search", search);
-        if (role) queryParams.append("role", role);
         if (sortBy) queryParams.append("sortBy", sortBy);
         if (order) queryParams.append("order", order);
 

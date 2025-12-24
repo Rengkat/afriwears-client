@@ -1,5 +1,6 @@
-import { getStatusColor } from "@/Utils/utils";
-import React from "react";
+import { useGetUserByIdQuery } from "@/redux/services/UserApiSlice";
+import Image from "next/image";
+import React, { useEffect } from "react";
 import {
   FiUser,
   FiMail,
@@ -10,10 +11,11 @@ import {
   FiEdit,
   FiLock,
   FiUnlock,
+  FiLoader,
 } from "react-icons/fi";
 
 interface UserDetailModalProps {
-  user: any;
+  userId: string; // Pass userId instead of full user object
   onClose: () => void;
   onEdit: (user: any) => void;
   onSuspend: () => void;
@@ -21,12 +23,18 @@ interface UserDetailModalProps {
 }
 
 const UserDetailModal: React.FC<UserDetailModalProps> = ({
-  user,
+  userId,
   onClose,
   onEdit,
   onSuspend,
   onActivate,
 }) => {
+  // console.log(userId);
+  const { data, isLoading, error, refetch } = useGetUserByIdQuery(userId);
+
+  // Extract the user data from the response
+  const user = data?.user || data?.data || data?.users?.[0];
+  // console.log(user);
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
@@ -35,8 +43,52 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
     });
   };
 
-  const statusColor = user.isVerified ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800";
-  const statusText = user.isVerified ? "Active" : "Inactive";
+  const statusColor = user?.isVerified ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800";
+  const statusText = user?.isVerified ? "Active" : "Inactive";
+
+  // If loading, show loading state
+  if (isLoading) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-8">
+          <div className="flex flex-col items-center justify-center space-y-4">
+            <FiLoader className="h-12 w-12 text-blue-600 animate-spin" />
+            <p className="text-gray-600">Loading user details...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // If error, show error state
+  if (error || !user) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="bg-white rounded-xl shadow-xl max-w-md w-full">
+          <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+            <h3 className="text-xl font-semibold text-gray-900">Error</h3>
+            <button
+              title="close"
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 transition-colors p-1 hover:bg-gray-100 rounded-lg">
+              <FiXCircle size={24} />
+            </button>
+          </div>
+          <div className="p-6">
+            <div className="flex flex-col items-center justify-center space-y-4 text-center">
+              <FiXCircle className="h-16 w-16 text-red-500" />
+              <p className="text-gray-700">Failed to load user details</p>
+              <button
+                onClick={() => refetch()}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors">
+                Try Again
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -56,14 +108,24 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
             {/* Profile Header */}
             <div className="flex items-start gap-4 pb-6 border-b border-gray-200">
               <div className="h-20 w-20 bg-gradient-to-br from-blue-100 to-purple-100 rounded-2xl flex items-center justify-center">
-                {user.avatar ? (
-                  <img
+                {user.avatar && user.avatar !== "/avatar.jpg" ? (
+                  <Image
+                    width={80}
+                    height={80}
                     className="h-20 w-20 rounded-2xl object-cover"
                     src={user.avatar}
                     alt={`${user.firstName} ${user.surname}`}
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                    }}
                   />
                 ) : (
-                  <FiUser className="h-10 w-10 text-blue-600" />
+                  <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-blue-200 to-purple-200 flex items-center justify-center">
+                    <span className="text-2xl font-bold text-blue-700">
+                      {user.firstName?.charAt(0)}
+                      {user.surname?.charAt(0)}
+                    </span>
+                  </div>
                 )}
               </div>
               <div className="flex-1">
@@ -73,6 +135,16 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
                   </h4>
                   <span className={`px-3 py-1 text-xs font-semibold rounded-full ${statusColor}`}>
                     {statusText}
+                  </span>
+                  <span
+                    className={`px-3 py-1 text-xs font-semibold rounded-full ${
+                      user.role === "admin"
+                        ? "bg-purple-100 text-purple-800"
+                        : user.role === "stylist"
+                        ? "bg-amber-100 text-amber-800"
+                        : "bg-blue-100 text-blue-800"
+                    }`}>
+                    {user.role}
                   </span>
                 </div>
                 <div className="flex items-center gap-2 text-gray-600">
@@ -84,6 +156,11 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
                     </span>
                   )}
                 </div>
+                {user.phone && (
+                  <div className="flex items-center gap-2 text-gray-600 mt-2">
+                    <span>Phone: {user.phone}</span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -106,6 +183,15 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
                     <span className="text-sm text-gray-600">Role</span>
                     <span className="text-sm font-medium text-gray-900 capitalize">
                       {user.role}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                    <span className="text-sm text-gray-600">Email Verified</span>
+                    <span
+                      className={`text-sm font-medium ${
+                        user.isVerified ? "text-green-600" : "text-red-600"
+                      }`}>
+                      {user.isVerified ? "Verified" : "Not Verified"}
                     </span>
                   </div>
                   <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
@@ -142,7 +228,7 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
                   <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                     <span className="text-sm text-gray-600">Company</span>
                     <span className="text-sm font-medium text-gray-900">
-                      {user.company ? "Associated" : "None"}
+                      {user.company ? user.company : "None"}
                     </span>
                   </div>
                 </div>
@@ -150,52 +236,65 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
             </div>
 
             {/* Wallet Information */}
-            <div className="space-y-4">
-              <h5 className="font-semibold text-gray-900 flex items-center gap-2">
-                <FiDollarSign className="h-5 w-5 text-green-500" />
-                Wallet Information
-              </h5>
-              <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-5 border border-green-100">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-3xl font-bold text-gray-900">
-                      ₦{(user.walletAmount || 0).toLocaleString()}
+            {user.role !== "admin" && (
+              <div className="space-y-4">
+                <h5 className="font-semibold text-gray-900 flex items-center gap-2">
+                  <FiDollarSign className="h-5 w-5 text-green-500" />
+                  Wallet Information
+                </h5>
+                <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-5 border border-green-100">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-3xl font-bold text-gray-900">
+                        ₦{(user.walletAmount || 0).toLocaleString()}
+                      </div>
+                      <p className="text-sm text-gray-600">Current balance</p>
                     </div>
-                    <p className="text-sm text-gray-600">Current balance</p>
-                  </div>
-                  <div className="p-3 bg-white rounded-lg shadow-sm">
-                    <FiDollarSign className="h-6 w-6 text-green-600" />
                   </div>
                 </div>
               </div>
-            </div>
+            )}
+
+            {/* Additional Info if available */}
+            {user.verificationTokenExpirationDate && (
+              <div className="space-y-4">
+                <h5 className="font-semibold text-gray-900">Verification Info</h5>
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <div className="text-sm text-gray-600">
+                    Token expires: {formatDate(user.verificationTokenExpirationDate)}
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Actions */}
-            <div className="pt-6 border-t border-gray-200">
-              <div className="flex flex-col sm:flex-row gap-3">
-                <button
-                  onClick={() => onEdit(user)}
-                  className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-medium rounded-lg transition-all flex items-center justify-center gap-2">
-                  <FiEdit className="h-5 w-5" />
-                  Edit User
-                </button>
-                {user.isVerified ? (
+            {user.role === "user" && (
+              <div className="pt-6 border-t border-gray-200">
+                <div className="flex flex-col sm:flex-row gap-3">
                   <button
-                    onClick={onSuspend}
-                    className="flex-1 px-4 py-3 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-medium rounded-lg transition-all flex items-center justify-center gap-2">
-                    <FiLock className="h-5 w-5" />
-                    Suspend User
+                    onClick={() => onEdit(user)}
+                    className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-medium rounded-lg transition-all flex items-center justify-center gap-2">
+                    <FiEdit className="h-5 w-5" />
+                    Edit User
                   </button>
-                ) : (
-                  <button
-                    onClick={onActivate}
-                    className="flex-1 px-4 py-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-medium rounded-lg transition-all flex items-center justify-center gap-2">
-                    <FiUnlock className="h-5 w-5" />
-                    Activate User
-                  </button>
-                )}
+                  {user.isVerified ? (
+                    <button
+                      onClick={onSuspend}
+                      className="flex-1 px-4 py-3 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-medium rounded-lg transition-all flex items-center justify-center gap-2">
+                      <FiLock className="h-5 w-5" />
+                      Suspend User
+                    </button>
+                  ) : (
+                    <button
+                      onClick={onActivate}
+                      className="flex-1 px-4 py-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-medium rounded-lg transition-all flex items-center justify-center gap-2">
+                      <FiUnlock className="h-5 w-5" />
+                      Activate User
+                    </button>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>

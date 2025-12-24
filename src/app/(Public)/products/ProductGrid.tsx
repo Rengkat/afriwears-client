@@ -1,30 +1,103 @@
 import ProductCard from "@/components/ProductCard";
 import React from "react";
 
-const ProductGrid = ({ sortedProducts, clearAllFilters, filteredProducts, activeFilters }) => {
+interface Product {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  minPrice?: number;
+  maxPrice?: number;
+  mainImage: string;
+  subImages: string[];
+  category: string;
+  type: string;
+  rating: number;
+  reviewCount: number;
+  featured: boolean;
+  isBestSeller: boolean;
+  isNewProduct: boolean;
+  stock: number;
+  sku: string;
+  slug: string;
+  attributes: any;
+  stylist: any;
+  stylistName?: string;
+  tags: string[];
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  isNew: boolean;
+}
+
+interface ProductGridProps {
+  sortedProducts: Product[];
+  clearAllFilters: () => void;
+  filteredProducts: Product[];
+  activeFilters: string[];
+  isLoading?: boolean;
+}
+
+const ProductGrid: React.FC<ProductGridProps> = ({
+  sortedProducts,
+  clearAllFilters,
+  filteredProducts,
+  activeFilters,
+  isLoading = false,
+}) => {
+  if (isLoading) {
+    return (
+      <div className="lg:col-span-3">
+        <div className="mb-6">
+          <div className="h-6 bg-gray-200 rounded w-48 animate-pulse"></div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="animate-pulse">
+              <div className="bg-gray-200 h-64 rounded-lg"></div>
+              <div className="mt-4 space-y-2">
+                <div className="bg-gray-200 h-4 rounded"></div>
+                <div className="bg-gray-200 h-4 rounded w-3/4"></div>
+                <div className="bg-gray-200 h-6 rounded w-1/2"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  const totalProducts = filteredProducts.length;
+  const totalStock = filteredProducts.reduce((sum, product) => sum + (product.stock || 0), 0);
+
   return (
     <div className="lg:col-span-3">
-      {/* Results count */}
-      <div className="mb-6">
+      {/* <div className="mb-6">
         <p className="text-sm text-gray-700">
-          Showing <span className="font-medium">{filteredProducts.length}</span>{" "}
-          {filteredProducts.length === 1 ? "product" : "products"}
-          {activeFilters.length > 0 && (
+          Showing <span className="font-medium">{totalProducts}</span>{" "}
+          {totalProducts === 1 ? "product" : "products"}
+          {activeFilters.length > 0 ? (
             <>
               {" "}
               filtered by: <span className="font-medium">{activeFilters.join(", ")}</span>
             </>
+          ) : (
+            <>
+              {" "}
+              in total stock of <span className="font-medium">{totalStock}</span> items
+            </>
           )}
         </p>
-      </div>
+      </div> */}
 
-      {/* Products */}
       {sortedProducts.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {sortedProducts.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mt-10">
+            {sortedProducts.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        </>
       ) : (
         <div className="text-center py-16">
           <h3 className="text-lg font-medium text-gray-900">No products found</h3>
@@ -47,7 +120,7 @@ const ProductGrid = ({ sortedProducts, clearAllFilters, filteredProducts, active
           </button>
         </div>
         <div className="hidden md:-mt-px md:flex">
-          {[1, 2, 3, 4, 5].map((page) => (
+          {[1].map((page) => (
             <button
               key={page}
               className={`inline-flex items-center border-t-2 px-4 pt-4 text-sm font-medium ${

@@ -7,11 +7,10 @@ import StatCard from "./StatCard";
 import FilterAndSearch from "./FilterAndSearch";
 import CurrentUsersList from "./CurrentUsersList";
 import Pagination from "./Pagination";
-
-import { useGetAllUsersQuery } from "@/redux/services/UserApiSlice";
-import UserDetailModal from "./UserDetailModel";
-import SuspensionModal from "./SuspensionModel";
 import ConfirmationModal from "./ConfirmationModal";
+import { useGetAllUsersQuery } from "@/redux/services/UserApiSlice";
+import SuspensionModal from "./SuspensionModel";
+import UserDetailModal from "./UserDetailModel";
 
 interface User {
   _id: string;
@@ -32,9 +31,9 @@ const UserManagementPage = () => {
   const { user: currentUser } = useSelector((store: RootState) => store.authSlice);
   const [users, setUsers] = useState<User[]>([]);
   const [totalUsers, setTotalUsers] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [roleFilter, setRoleFilter] = useState("all");
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [usersPerPage] = useState(10);
@@ -55,42 +54,45 @@ const UserManagementPage = () => {
   });
 
   useEffect(() => {
-    if (data?.users?.users) {
-      setUsers(data.users.users);
+    if (data?.users) {
+      setUsers(data.users.users || []);
       setTotalUsers(data.users.totalUsers || 0);
+      setTotalPages(data.users.pages || 1);
     }
   }, [data]);
 
-  // Transform API data to match component expectations
-  const transformUserData = (user: User) => ({
+  // Simple user data formatting for display
+  const formatUserForDisplay = (user: User) => ({
     _id: user._id,
     name: `${user.firstName} ${user.surname}`,
     email: user.email,
     role: user.role,
     status: user.isVerified ? "active" : "inactive",
-    ordersCount: 0, // You might need to fetch this from a different endpoint
-    walletBalance: user.walletAmount || 0,
+    walletAmount: user.walletAmount || 0,
     createdAt: user.createdAt,
-    lastLogin: user.updatedAt,
-    isEmailVerified: user.isVerified,
     avatar: user.avatar,
-    suspensionReason: "",
+    isVerified: user.isVerified,
+    subscribedToNewsLetter: user.subscribedToNewsLetter,
+    company: user.company,
   });
 
   // Filter users based on search and filters
-  const filteredUsers = users.map(transformUserData).filter((user) => {
-    const matchesSearch =
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredUsers = users
+    .filter((user) => {
+      const matchesSearch =
+        searchTerm === "" ||
+        user.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.surname.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.email.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesStatus = statusFilter === "all" || user.status === statusFilter;
-    const matchesRole = roleFilter === "all" || user.role === roleFilter;
+      const matchesStatus =
+        statusFilter === "all" ||
+        (statusFilter === "active" && user.isVerified) ||
+        (statusFilter === "inactive" && !user.isVerified);
 
-    return matchesSearch && matchesStatus && matchesRole;
-  });
-
-  // Pagination
-  const totalPages = Math.ceil(totalUsers / usersPerPage);
+      return matchesSearch && matchesStatus;
+    })
+    .map(formatUserForDisplay);
 
   // Handle user actions
   const handleViewUser = (user: any) => {
@@ -102,7 +104,6 @@ const UserManagementPage = () => {
   };
 
   const handleEditUser = (user: any) => {
-    // Implement edit functionality
     console.log("Edit user:", user);
   };
 
@@ -115,7 +116,6 @@ const UserManagementPage = () => {
   };
 
   const handleActivateUser = (userId: string) => {
-    // API call to activate user would go here
     setUsers(users.map((u) => (u._id === userId ? { ...u, isVerified: true } : u)));
   };
 
@@ -124,7 +124,6 @@ const UserManagementPage = () => {
       title: "Delete User",
       message: "Are you sure you want to delete this user? This action cannot be undone.",
       onConfirm: () => {
-        // API call to delete user would go here
         setUsers(users.filter((u) => u._id !== userId));
         setSelectedUsers(selectedUsers.filter((id) => id !== userId));
         setShowConfirmationModal(false);
@@ -139,7 +138,6 @@ const UserManagementPage = () => {
       title: "Delete Users",
       message: `Are you sure you want to delete ${selectedUsers.length} users? This action cannot be undone.`,
       onConfirm: () => {
-        // API call for bulk delete would go here
         setUsers(users.filter((u) => !selectedUsers.includes(u._id)));
         setSelectedUsers([]);
         setShowConfirmationModal(false);
@@ -154,14 +152,12 @@ const UserManagementPage = () => {
 
     switch (action) {
       case "activate":
-        // API call for bulk activate would go here
         setUsers(
           users.map((u) => (selectedUsers.includes(u._id) ? { ...u, isVerified: true } : u))
         );
         setSelectedUsers([]);
         break;
       case "suspend":
-        // Show suspension modal for bulk action
         setShowSuspensionModal(true);
         break;
       case "delete":
@@ -188,7 +184,6 @@ const UserManagementPage = () => {
 
   const handleSuspendConfirm = (reason: string) => {
     if (selectedUser) {
-      // API call to suspend user would go here
       setUsers(users.map((u) => (u._id === selectedUser._id ? { ...u, isVerified: false } : u)));
       setShowSuspensionModal(false);
     }
@@ -214,7 +209,7 @@ const UserManagementPage = () => {
             <p className="text-gray-600 mt-1">Manage and monitor all platform users</p>
           </div>
           <div className="mt-4 md:mt-0">
-            <button className="px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-medium rounded-lg shadow-sm transition-all duration-200 transform hover:-translate-y-0.5">
+            <button className="px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-medium rounded-lg shadow-sm transition-all duration-200 hover:-translate-y-0.5">
               Export Users
             </button>
           </div>
@@ -230,8 +225,6 @@ const UserManagementPage = () => {
         setSearchTerm={setSearchTerm}
         statusFilter={statusFilter}
         setStatusFilter={setStatusFilter}
-        roleFilter={roleFilter}
-        setRoleFilter={setRoleFilter}
         selectedUsers={selectedUsers}
         handleBulkAction={handleBulkAction}
       />
@@ -242,7 +235,7 @@ const UserManagementPage = () => {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
               <tr>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-12">
                   <input
                     title="select all"
                     type="checkbox"
@@ -250,7 +243,7 @@ const UserManagementPage = () => {
                     checked={
                       selectedUsers.length === filteredUsers.length && filteredUsers.length > 0
                     }
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 focus:ring-2"
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                   />
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
@@ -266,6 +259,9 @@ const UserManagementPage = () => {
                   Wallet Balance
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                  Newsletter
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                   Joined Date
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
@@ -274,21 +270,19 @@ const UserManagementPage = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredUsers.map((user) => {
-                return (
-                  <CurrentUsersList
-                    key={user._id}
-                    user={user}
-                    selectedUsers={selectedUsers}
-                    handleSelectUser={handleSelectUser}
-                    handleViewUser={handleViewUser}
-                    handleEditUser={handleEditUser}
-                    handleSuspendUser={handleSuspendUser}
-                    handleActivateUser={handleActivateUser}
-                    handleDeleteUser={confirmDeleteUser}
-                  />
-                );
-              })}
+              {filteredUsers.map((user) => (
+                <CurrentUsersList
+                  key={user._id}
+                  user={user}
+                  selectedUsers={selectedUsers}
+                  handleSelectUser={handleSelectUser}
+                  handleViewUser={handleViewUser}
+                  handleEditUser={handleEditUser}
+                  handleSuspendUser={handleSuspendUser}
+                  handleActivateUser={handleActivateUser}
+                  handleDeleteUser={confirmDeleteUser}
+                />
+              ))}
             </tbody>
           </table>
         </div>
@@ -330,12 +324,12 @@ const UserManagementPage = () => {
       {/* Modals */}
       {showUserModal && selectedUser && (
         <UserDetailModal
-          user={selectedUser}
+          userId={selectedUser._id}
           onClose={() => setShowUserModal(false)}
           onEdit={handleEditUser}
           onSuspend={() => {
-            const transformedUser = transformUserData(selectedUser);
-            handleSuspendUser(transformedUser);
+            const formattedUser = formatUserForDisplay(selectedUser);
+            handleSuspendUser(formattedUser);
             setShowUserModal(false);
           }}
           onActivate={() => {
