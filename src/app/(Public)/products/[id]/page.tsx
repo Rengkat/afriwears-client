@@ -1,23 +1,266 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { FiShare2, FiHeart, FiChevronLeft, FiTruck, FiShield } from "react-icons/fi";
-import { BsStarFill, BsStarHalf } from "react-icons/bs";
+import {
+  FiShare2,
+  FiHeart,
+  FiChevronLeft,
+  FiTruck,
+  FiShield,
+  FiShoppingCart,
+} from "react-icons/fi";
+import { BsStarFill, BsStarHalf, BsHeart, BsHeartFill } from "react-icons/bs";
 import { useGetProductDetailQuery } from "@/redux/services/ProductApi";
 import ProductImages from "./ProductImages";
 import ProductInfo from "./ProductInfor";
 import ProductTabs from "@/components/ProductTabs";
+import {
+  useAddToCartMutation,
+  useGetCartProductsQuery,
+  useUpdateCartMutation,
+} from "@/redux/services/CartApiSlice";
+import { toast } from "react-hot-toast";
+import { useRouter } from "next/navigation";
+import { useDispatch, useSelector } from "react-redux";
+import { addCartItem } from "@/redux/features/cartSlice";
+import { RootState } from "@/redux/Store";
+import {
+  useAddToWishlistMutation,
+  useGetMyWishlistQuery,
+  useRemoveFromWishlistMutation,
+} from "@/redux/services/WishlistApiSlice";
 
 const ProductPage = ({ params }) => {
   const { id } = params;
+  const router = useRouter();
+  const dispatch = useDispatch();
+  const isUserLoggedIn = useSelector((store: RootState) => !!store.authSlice.user);
+  console.log(isUserLoggedIn);
   const { data, isLoading, isError } = useGetProductDetailQuery(id);
+
+  // Cart mutations
+  const [addToCart, { isLoading: isAddingToCart }] = useAddToCartMutation();
+  const [updateCartItem] = useUpdateCartMutation();
+  const { data: cartData, refetch: refetchCart } = useGetCartProductsQuery();
+
+  // Wishlist mutations
+  const [addToWishlist, { isLoading: isAddingToWishlist }] = useAddToWishlistMutation();
+  const [removeFromWishlist, { isLoading: isRemovingFromWishlist }] =
+    useRemoveFromWishlistMutation();
+  const { data: wishlistData, refetch: refetchWishlist } = useGetMyWishlistQuery();
+
+  // Get cart state from Redux
+  const cartState = useSelector((store: RootState) => store.cartSlice);
 
   const [selectedImage, setSelectedImage] = useState(0);
   const [showMeasurements, setShowMeasurements] = useState(false);
   const [selectedSize, setSelectedSize] = useState("");
   const [selectedColor, setSelectedColor] = useState("");
   const [quantity, setQuantity] = useState(1);
+  const [isInWishlist, setIsInWishlist] = useState(false);
+  const [isInCart, setIsInCart] = useState(false);
+  const [cartItemId, setCartItemId] = useState(null);
+
+  // Check if product is in wishlist
+  useEffect(() => {
+    if (wishlistData?.wishlist && data?.product) {
+      const isWishlisted = wishlistData.wishlist.items?.some(
+        (item) => item.product?._id === data.product._id || item.product === data.product._id
+      );
+      setIsInWishlist(isWishlisted);
+    }
+  }, [wishlistData, data]);
+
+  // Check if product is in cart
+  useEffect(() => {
+    // Check server cart first
+    if (cartData?.cart && data?.product) {
+      const cartItem = cartData.cart.items?.find(
+        (item) => item.product?._id === data.product._id || item.product === data.product._id
+      );
+      if (cartItem) {
+        setIsInCart(true);
+        setCartItemId(cartItem._id);
+        setQuantity(cartItem.quantity);
+
+        if (cartItem.selectedSize) setSelectedSize(cartItem.selectedSize);
+        if (cartItem.selectedColor) setSelectedColor(cartItem.selectedColor);
+      } else {
+        setIsInCart(false);
+        setCartItemId(null);
+      }
+    } else {
+      // Fallback to localStorage if no server cart
+      const localCart = localStorage.getItem("cart");
+      if (localCart && data?.product) {
+        const parsedCart = JSON.parse(localCart);
+        const localItem = parsedCart.items?.find(
+          (item: any) => item.product?._id === data.product._id || item.product === data.product._id
+        );
+        if (localItem) {
+          setIsInCart(true);
+          setQuantity(localItem.quantity);
+
+          // Sync with server if user is logged in
+          if (cartData) {
+            // Add item to server cart
+            addToCart({
+              productId: data.product._id,
+              quantity: localItem.quantity,
+            }).then(() => {
+              refetchCart();
+            });
+          }
+        }
+      }
+    }
+  }, [cartData, data]);
+
+  //add to cart handler
+  const handleAddToCart = async () => {
+    if (isOutOfStock) {
+      toast.error("Product is out of stock");
+      return;
+    }
+
+    try {
+      const cartItemData = {
+        productId: product._id,
+        quantity,
+      };
+
+      // Get current cart from localStorage for immediate update
+      const currentCart = JSON.parse(localStorage.getItem("cart") || '{"items":[]}');
+
+      // Update local cart immediately
+      const existingItemIndex = currentCart.items.findIndex(
+        (item: any) => item.product?._id === product._id || item.product === product._id
+      );
+
+      if (existingItemIndex >= 0) {
+        currentCart.items[existingItemIndex].quantity = quantity;
+      } else {
+        currentCart.items.push({
+          _id: `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          product: product._id,
+          quantity,
+          price: product.price,
+        });
+      }
+
+      currentCart.itemCount = currentCart.items.reduce(
+        (total: number, item: any) => total + item.quantity,
+        0
+      );
+      currentCart.lastUpdated = Date.now();
+
+      // Save to localStorage immediately
+      localStorage.setItem("cart", JSON.stringify(currentCart));
+
+      // Update Redux store
+      dispatch(
+        addCartItem({
+          _id: `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          product: product._id,
+          quantity,
+          price: product.price,
+        })
+      );
+
+      // Call the API if user is logged in
+      if (isUserLoggedIn) {
+        // You need to check if user is logged in
+        await addToCart(cartItemData).unwrap();
+        await refetchCart();
+      }
+
+      toast.success(isInCart ? "Cart updated successfully!" : "Added to cart successfully!");
+      setIsInCart(true);
+    } catch (error: any) {
+      console.error("Cart error:", error);
+      toast.error(error?.data?.message || "Failed to add to cart");
+    }
+  };
+  const handleBuyNow = async () => {
+    // For Buy Now, require size selection
+    if (isOutOfStock || !selectedSize) {
+      toast.error(isOutOfStock ? "Product is out of stock" : "Please select a size");
+      return;
+    }
+
+    try {
+      const cartItemData = {
+        productId: product._id,
+        quantity,
+        selectedSize,
+        selectedColor, // optional for Buy Now
+      };
+
+      // OPTIMISTIC UPDATE for Buy Now
+      dispatch(
+        addCartItem({
+          _id: `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          product: product._id,
+          quantity,
+          selectedSize,
+          selectedColor,
+          price: product.price,
+          isBuyNow: true,
+        })
+      );
+
+      // Add to cart first
+      await addToCart(cartItemData).unwrap();
+
+      // Refresh cart and go to checkout
+      await refetchCart();
+      router.push("/checkout");
+    } catch (error: any) {
+      console.error("Buy now error:", error);
+      toast.error(error?.data?.message || "Failed to proceed to checkout");
+    }
+  };
+
+  const handleWishlistToggle = async () => {
+    if (isInWishlist) {
+      // Remove from wishlist
+      try {
+        await removeFromWishlist(product._id).unwrap();
+        setIsInWishlist(false);
+        toast.success("Removed from wishlist");
+        await refetchWishlist();
+      } catch (error) {
+        console.error("Remove from wishlist error:", error);
+        toast.error(error?.data?.message || "Failed to remove from wishlist");
+      }
+    } else {
+      // Add to wishlist
+      try {
+        // await addToWishlist({ productId: product._id }).unwrap();
+        console.log("productId:", product?._id);
+        setIsInWishlist(true);
+        toast.success("Added to wishlist!");
+        await refetchWishlist();
+      } catch (error) {
+        console.error("Add to wishlist error:", error);
+        toast.error(error?.data?.message || "Failed to add to wishlist");
+      }
+    }
+  };
+
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: product.name,
+        text: `Check out ${product.name} on Stylista!`,
+        url: window.location.href,
+      });
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+      toast.success("Link copied to clipboard!");
+    }
+  };
 
   if (isLoading) {
     return (
@@ -108,11 +351,32 @@ const ProductPage = ({ params }) => {
               <div className="flex items-center justify-between mb-2">
                 <h1 className="text-2xl md:text-3xl font-bold text-gray-900">{product.name}</h1>
                 <div className="flex items-center gap-2">
-                  <button title="share" className="p-2 text-gray-400 hover:text-gray-600">
+                  <button
+                    onClick={handleShare}
+                    title="share"
+                    className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
                     <FiShare2 size={20} />
                   </button>
-                  <button title="like" className="p-2 text-gray-400 hover:text-red-500">
-                    <FiHeart size={20} />
+                  <button
+                    onClick={handleWishlistToggle}
+                    disabled={isAddingToWishlist || isRemovingFromWishlist}
+                    title={isInWishlist ? "Remove from wishlist" : "Add to wishlist"}
+                    className={`p-2 transition-colors ${
+                      isInWishlist
+                        ? "text-red-500 hover:text-red-600"
+                        : "text-gray-400 hover:text-red-500"
+                    } ${
+                      isAddingToWishlist || isRemovingFromWishlist
+                        ? "opacity-50 cursor-not-allowed"
+                        : ""
+                    }`}>
+                    {isAddingToWishlist || isRemovingFromWishlist ? (
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-red-500"></div>
+                    ) : isInWishlist ? (
+                      <BsHeartFill size={20} />
+                    ) : (
+                      <FiHeart size={20} />
+                    )}
                   </button>
                 </div>
               </div>
@@ -218,15 +482,32 @@ const ProductPage = ({ params }) => {
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-3 mb-6">
               <button
-                disabled={isOutOfStock || !selectedSize}
-                className={`flex-1 py-3 px-6 rounded-lg font-medium transition-colors ${
-                  isOutOfStock || !selectedSize
+                onClick={handleAddToCart}
+                disabled={isOutOfStock || isAddingToCart}
+                className={`flex-1 py-3 px-6 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 ${
+                  isOutOfStock || isAddingToCart
                     ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                     : "bg-amber-600 hover:bg-amber-700 text-white"
                 }`}>
-                {isOutOfStock ? "Out of Stock" : "Add to Cart"}
+                {isAddingToCart ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                    Processing...
+                  </>
+                ) : isInCart ? (
+                  <>
+                    <FiShoppingCart />
+                    Update Cart ({quantity})
+                  </>
+                ) : (
+                  <>
+                    <FiShoppingCart />
+                    Add to Cart
+                  </>
+                )}
               </button>
               <button
+                onClick={handleBuyNow}
                 disabled={isOutOfStock || !selectedSize}
                 className={`flex-1 py-3 px-6 rounded-lg font-medium transition-colors ${
                   isOutOfStock || !selectedSize
@@ -298,15 +579,6 @@ const ProductPage = ({ params }) => {
             <ProductTabs product={product} />
           </div>
         )}
-
-        {/* Related Products */}
-        {/* <div className="mt-12">
-          <RelatedProducts
-            category={product.category}
-            currentProductId={product._id}
-            stylistId={product.stylist?._id}
-          />
-        </div> */}
       </div>
     </div>
   );

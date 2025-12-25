@@ -14,12 +14,16 @@ const OrderList = ({ order, toggleOrderExpand, expandedOrder, updateOrderStatus 
     const baseClasses = "px-3 py-1 inline-flex items-center text-sm font-medium rounded-full";
 
     switch (status) {
+      case "pending":
+        return `${baseClasses} bg-gray-50 text-gray-800 border border-gray-200`;
       case "processing":
         return `${baseClasses} bg-amber-50 text-amber-800 border border-amber-200`;
       case "shipped":
         return `${baseClasses} bg-blue-50 text-blue-800 border border-blue-200`;
       case "delivered":
         return `${baseClasses} bg-green-50 text-green-800 border border-green-200`;
+      case "cancelled":
+        return `${baseClasses} bg-red-50 text-red-800 border border-red-200`;
       default:
         return `${baseClasses} bg-gray-50 text-gray-800 border border-gray-200`;
     }
@@ -27,37 +31,14 @@ const OrderList = ({ order, toggleOrderExpand, expandedOrder, updateOrderStatus 
 
   const getStatusIcon = (status) => {
     switch (status) {
+      case "pending":
+        return <FiClock className="mr-2" size={14} />;
       case "processing":
         return <FiClock className="mr-2" size={14} />;
       case "shipped":
         return <FiTruck className="mr-2" size={14} />;
       case "delivered":
         return <FiCheckCircle className="mr-2" size={14} />;
-      default:
-        return null;
-    }
-  };
-
-  const getStatusActions = (order) => {
-    switch (order.status) {
-      case "processing":
-        return (
-          <button
-            onClick={() => updateOrderStatus(order.id, "shipped")}
-            className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-            <FiTruck className="mr-1" size={12} />
-            Mark as Shipped
-          </button>
-        );
-      case "shipped":
-        return (
-          <button
-            onClick={() => updateOrderStatus(order.id, "delivered")}
-            className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-            <FiCheckCircle className="mr-1" size={12} />
-            Mark as Delivered
-          </button>
-        );
       default:
         return null;
     }
@@ -83,20 +64,23 @@ const OrderList = ({ order, toggleOrderExpand, expandedOrder, updateOrderStatus 
                 <FiChevronRight size={16} />
               )}
             </button>
-            <div className="text-sm font-medium text-gray-900">#{order.id}</div>
+            <div>
+              <div className="text-sm font-medium text-gray-900">
+                #{order.orderNumber || order.id}
+              </div>
+              {order.orderType && (
+                <div className="text-xs text-gray-500">
+                  {order.orderType === "custom" ? "Custom Order" : "Standard Order"}
+                </div>
+              )}
+            </div>
           </div>
         </td>
         <td className="px-6 py-4 whitespace-nowrap">
           <div className="text-sm text-gray-900">{order.customer}</div>
         </td>
         <td className="px-6 py-4 whitespace-nowrap">
-          <div className="text-sm text-gray-500">
-            {new Date(order.date).toLocaleDateString("en-US", {
-              year: "numeric",
-              month: "short",
-              day: "numeric",
-            })}
-          </div>
+          <div className="text-sm text-gray-500">{order.date}</div>
         </td>
         <td className="px-6 py-4 whitespace-nowrap">
           <div className="text-sm font-semibold text-gray-900">
@@ -111,7 +95,6 @@ const OrderList = ({ order, toggleOrderExpand, expandedOrder, updateOrderStatus 
         </td>
         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
           <div className="flex justify-end items-center gap-3">
-            {getStatusActions(order)}
             <Link
               href={`/stylist/orders/${order.id}`}
               className="text-gray-600 hover:text-gray-900 p-1"
@@ -129,32 +112,57 @@ const OrderList = ({ order, toggleOrderExpand, expandedOrder, updateOrderStatus 
               <div>
                 <h4 className="text-sm font-medium text-gray-900 mb-2">Items Ordered</h4>
                 <ul className="space-y-2">
-                  {order.items.map((item, index) => (
-                    <li key={index} className="flex justify-between text-sm">
-                      <span className="text-gray-600">
-                        {item.quantity} × {item.name}
-                      </span>
-                      <span className="text-gray-900 font-medium">
-                        ₦{item.price.toLocaleString()}
-                      </span>
-                    </li>
-                  ))}
+                  {order.items &&
+                    order.items.map((item, index) => (
+                      <li key={index} className="flex justify-between text-sm">
+                        <span className="text-gray-600">
+                          {item.quantity} × {item.name}
+                        </span>
+                        <span className="text-gray-900 font-medium">
+                          ₦{(item.price * item.quantity).toLocaleString()}
+                        </span>
+                      </li>
+                    ))}
                 </ul>
+                {order.items?.some((item) => item.measurements) && (
+                  <div className="mt-4">
+                    <h5 className="text-sm font-medium text-gray-900 mb-2">Measurements</h5>
+                    <div className="text-xs text-gray-600 bg-gray-100 p-2 rounded">
+                      Custom measurements provided
+                    </div>
+                  </div>
+                )}
               </div>
               <div>
                 <h4 className="text-sm font-medium text-gray-900 mb-2">Shipping Information</h4>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Courier:</span>
-                    <span className="text-gray-900 font-medium">{order.shipping.courier}</span>
+                    <span className="text-gray-600">Address:</span>
+                    <span className="text-gray-900 font-medium">{order.shipping.address}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Tracking Number:</span>
-                    <span className="text-gray-900 font-medium">{order.shipping.tracking}</span>
-                  </div>
-                  <div>
-                    <p className="text-gray-600">Address:</p>
-                    <p className="text-gray-900 font-medium">{order.shipping.address}</p>
+                  {order.shipping.courier !== "Not specified" && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Courier:</span>
+                      <span className="text-gray-900 font-medium">{order.shipping.courier}</span>
+                    </div>
+                  )}
+                  {order.shipping.tracking !== "Not available" && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Tracking:</span>
+                      <span className="text-gray-900 font-medium">{order.shipping.tracking}</span>
+                    </div>
+                  )}
+                </div>
+                <div className="mt-4">
+                  <h5 className="text-sm font-medium text-gray-900 mb-2">Payment Info</h5>
+                  <div className="text-xs text-gray-600">
+                    {order.paymentStatus === "completed" ? (
+                      <span className="text-green-600">✓ Payment Completed</span>
+                    ) : order.paymentStatus === "partially_paid" ? (
+                      <span className="text-amber-600">⏳ Partially Paid</span>
+                    ) : (
+                      <span className="text-red-600">✗ Payment Pending</span>
+                    )}
                   </div>
                 </div>
               </div>

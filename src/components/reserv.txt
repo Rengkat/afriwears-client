@@ -1,43 +1,194 @@
-// Update your ProductDetailPage component
 "use client";
-
-import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
-import { FiStar, FiShare2, FiHeart, FiTruck, FiShield, FiArrowLeft } from "react-icons/fi";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import {
+  FiShare2,
+  FiHeart,
+  FiChevronLeft,
+  FiTruck,
+  FiShield,
+  FiShoppingCart,
+} from "react-icons/fi";
+import { BsStarFill, BsStarHalf, BsHeart, BsHeartFill } from "react-icons/bs";
 import { useGetProductDetailQuery } from "@/redux/services/ProductApi";
-import ProductInfo from "@/components/ProductInfo";
-import ProductActions from "@/components/ProductActions";
-import StylistCard from "@/components/StylistCard";
+import ProductImages from "./ProductImages";
+import ProductInfo from "./ProductInfor";
 import ProductTabs from "@/components/ProductTabs";
-import RelatedProducts from "@/components/RelatedProducts";
-import ProductGallery from "@/components/ProductGallery";
+import {
+  useAddToCartMutation,
+  useGetCartProductsQuery,
+  useUpdateCartMutation,
+} from "@/redux/services/CartApiSlice";
+import {
+  useAddToWishlistMutation,
+  useGetMyWishlistQuery,
+  useRemoveFromWishlistMutation,
+} from "@/redux/services/WishlistApiSlice";
 import { toast } from "react-hot-toast";
+import { useRouter } from "next/navigation";
 
-const ProductDetailPage = () => {
-  const params = useParams();
-  const productId = params.id as string;
+const ProductPage = ({ params }) => {
+  const { id } = params;
+  const router = useRouter();
+  const { data, isLoading, isError } = useGetProductDetailQuery(id);
 
-  const {
-    data: productData,
-    isLoading,
-    isError,
-    error,
-    refetch,
-  } = useGetProductDetailQuery(productId);
+  // Cart mutations
+  const [addToCart, { isLoading: isAddingToCart }] = useAddToCartMutation();
+  const [updateCartItem] = useUpdateCartMutation();
+  const { data: cartData, refetch: refetchCart } = useGetCartProductsQuery();
+
+  // Wishlist mutations
+  const [addToWishlist, { isLoading: isAddingToWishlist }] = useAddToWishlistMutation();
+  const [removeFromWishlist, { isLoading: isRemovingFromWishlist }] =
+    useRemoveFromWishlistMutation();
+  const { data: wishlistData, refetch: refetchWishlist } = useGetMyWishlistQuery();
 
   const [selectedImage, setSelectedImage] = useState(0);
+  const [showMeasurements, setShowMeasurements] = useState(false);
+  const [selectedSize, setSelectedSize] = useState("");
+  const [selectedColor, setSelectedColor] = useState("");
   const [quantity, setQuantity] = useState(1);
-  const [selectedSize, setSelectedSize] = useState<string | null>(null);
-  const [selectedColor, setSelectedColor] = useState<string | null>(null);
+  const [isInWishlist, setIsInWishlist] = useState(false);
+  const [isInCart, setIsInCart] = useState(false);
+  const [cartItemId, setCartItemId] = useState(null);
 
-  const product = productData?.product;
+  // Check if product is in wishlist
+  useEffect(() => {
+    if (wishlistData?.wishlist && data?.product) {
+      const isWishlisted = wishlistData.wishlist.items?.some(
+        (item) => item.product?._id === data.product._id || item.product === data.product._id
+      );
+      setIsInWishlist(isWishlisted);
+    }
+  }, [wishlistData, data]);
 
-  // Handle loading and error states
+  // Check if product is in cart
+  useEffect(() => {
+    if (cartData?.cart && data?.product) {
+      const cartItem = cartData.cart.items?.find(
+        (item) => item.product?._id === data.product._id || item.product === data.product._id
+      );
+      if (cartItem) {
+        setIsInCart(true);
+        setCartItemId(cartItem._id);
+        setQuantity(cartItem.quantity);
+
+        // Set selected size and color from cart item
+        if (cartItem.selectedSize) setSelectedSize(cartItem.selectedSize);
+        if (cartItem.selectedColor) setSelectedColor(cartItem.selectedColor);
+      }
+    }
+  }, [cartData, data]);
+
+  const handleAddToCart = async () => {
+    if (isOutOfStock) {
+      toast.error("Product is out of stock");
+      return;
+    }
+
+    try {
+      const cartItemData = {
+        productId: product._id,
+        quantity,
+      };
+
+      // If already in cart, update quantity
+      if (isInCart && cartItemId) {
+        await updateCartItem({
+          itemId: cartItemId,
+          quantity,
+          selectedSize,
+          selectedColor,
+        }).unwrap();
+        toast.success("Cart updated successfully!");
+      } else {
+        // Add new item to cart
+        console.log(cartItemData);
+        await addToCart(cartItemData).unwrap();
+        toast.success("Added to cart successfully!");
+      }
+
+      // Refresh cart data
+      await refetchCart();
+      setIsInCart(true);
+    } catch (error) {
+      console.error("Cart error:", error);
+      toast.error(error?.data?.message || "Failed to add to cart");
+    }
+  };
+
+  const handleBuyNow = async () => {
+    if (isOutOfStock || !selectedSize) {
+      toast.error(isOutOfStock ? "Product is out of stock" : "Please select a size");
+      return;
+    }
+
+    try {
+      // First add to cart
+      const cartItemData = {
+        product: product._id,
+        quantity,
+        selectedSize,
+        selectedColor,
+      };
+
+      if (!isInCart) {
+        await addToCart(cartItemData).unwrap();
+        await refetchCart();
+      }
+
+      // Redirect to checkout
+      router.push("/checkout");
+    } catch (error) {
+      console.error("Buy now error:", error);
+      toast.error(error?.data?.message || "Failed to proceed to checkout");
+    }
+  };
+
+  const handleWishlistToggle = async () => {
+    if (isInWishlist) {
+      // Remove from wishlist
+      try {
+        await removeFromWishlist(product._id).unwrap();
+        setIsInWishlist(false);
+        toast.success("Removed from wishlist");
+        await refetchWishlist();
+      } catch (error) {
+        console.error("Remove from wishlist error:", error);
+        toast.error(error?.data?.message || "Failed to remove from wishlist");
+      }
+    } else {
+      // Add to wishlist
+      try {
+        // await addToWishlist({ productId: product._id }).unwrap();
+        console.log("productId:", product?._id);
+        setIsInWishlist(true);
+        toast.success("Added to wishlist!");
+        await refetchWishlist();
+      } catch (error) {
+        console.error("Add to wishlist error:", error);
+        toast.error(error?.data?.message || "Failed to add to wishlist");
+      }
+    }
+  };
+
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: product.name,
+        text: `Check out ${product.name} on Stylista!`,
+        url: window.location.href,
+      });
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+      toast.success("Link copied to clipboard!");
+    }
+  };
+
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="bg-gray-50 min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading product details...</p>
@@ -46,9 +197,9 @@ const ProductDetailPage = () => {
     );
   }
 
-  if (isError || !product) {
+  if (isError || !data?.product) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="bg-gray-50 min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="text-red-500 text-4xl mb-4">⚠️</div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Product Not Found</h1>
@@ -65,11 +216,12 @@ const ProductDetailPage = () => {
     );
   }
 
+  const product = data.product;
   const images = [product.mainImage, ...(product.subImages || [])].filter(Boolean);
   const isOutOfStock = product.stock === 0;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="bg-gray-50 min-h-screen">
       {/* Breadcrumb Navigation */}
       <div className="bg-white border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -98,11 +250,11 @@ const ProductDetailPage = () => {
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Left Column - Product Images */}
           <div className="lg:w-1/2">
-            <ProductGallery
+            <ProductImages
               images={images}
               selectedImage={selectedImage}
-              onSelectImage={setSelectedImage}
-              productName={product.name}
+              setSelectedImage={setSelectedImage}
+              product={product}
             />
           </div>
 
@@ -113,7 +265,7 @@ const ProductDetailPage = () => {
               <Link
                 href="/products"
                 className="inline-flex items-center text-gray-600 hover:text-gray-900">
-                <FiArrowLeft className="mr-2" />
+                <FiChevronLeft className="mr-2" />
                 Back to Products
               </Link>
             </div>
@@ -124,16 +276,31 @@ const ProductDetailPage = () => {
                 <h1 className="text-2xl md:text-3xl font-bold text-gray-900">{product.name}</h1>
                 <div className="flex items-center gap-2">
                   <button
+                    onClick={handleShare}
                     title="share"
-                    type="button"
-                    className="p-2 text-gray-400 hover:text-gray-600">
+                    className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
                     <FiShare2 size={20} />
                   </button>
                   <button
-                    title="like"
-                    type="button"
-                    className="p-2 text-gray-400 hover:text-red-500">
-                    <FiHeart size={20} />
+                    onClick={handleWishlistToggle}
+                    disabled={isAddingToWishlist || isRemovingFromWishlist}
+                    title={isInWishlist ? "Remove from wishlist" : "Add to wishlist"}
+                    className={`p-2 transition-colors ${
+                      isInWishlist
+                        ? "text-red-500 hover:text-red-600"
+                        : "text-gray-400 hover:text-red-500"
+                    } ${
+                      isAddingToWishlist || isRemovingFromWishlist
+                        ? "opacity-50 cursor-not-allowed"
+                        : ""
+                    }`}>
+                    {isAddingToWishlist || isRemovingFromWishlist ? (
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-red-500"></div>
+                    ) : isInWishlist ? (
+                      <BsHeartFill size={20} />
+                    ) : (
+                      <FiHeart size={20} />
+                    )}
                   </button>
                 </div>
               </div>
@@ -144,7 +311,7 @@ const ProductDetailPage = () => {
                 <Link
                   href={`/stylists/${product.stylist?._id}`}
                   className="text-sm font-medium text-amber-600 hover:text-amber-700">
-                  {product.stylistName || product.stylist?.name || "Unknown Stylist"}
+                  {product.stylist?.companyName || "Unknown Stylist"}
                 </Link>
               </div>
 
@@ -152,12 +319,10 @@ const ProductDetailPage = () => {
               <div className="flex items-center gap-4 mb-6">
                 <div className="flex items-center">
                   {[1, 2, 3, 4, 5].map((star) => (
-                    <FiStar
+                    <BsStarFill
                       key={star}
                       className={`w-5 h-5 ${
-                        star <= Math.floor(product.rating || 0)
-                          ? "text-amber-500 fill-amber-500"
-                          : "text-gray-300"
+                        star <= Math.floor(product.rating || 0) ? "text-amber-500" : "text-gray-300"
                       }`}
                     />
                   ))}
@@ -178,6 +343,11 @@ const ProductDetailPage = () => {
                     New
                   </span>
                 )}
+                {product.featured && (
+                  <span className="px-2 py-1 text-xs font-medium bg-amber-100 text-amber-800 rounded-full">
+                    Featured
+                  </span>
+                )}
               </div>
 
               {/* Price */}
@@ -186,22 +356,24 @@ const ProductDetailPage = () => {
                   <span className="text-3xl font-bold text-gray-900">
                     ₦{product.price?.toLocaleString()}
                   </span>
-                  {product.minPrice && (
-                    <span className="text-lg text-gray-500 line-through">
-                      ₦{product.maxPrice?.toLocaleString()}
-                    </span>
-                  )}
-                  {product.maxPrice && product.maxPrice > product.price && (
-                    <span className="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded">
-                      Save ₦{(product.maxPrice - product.price).toLocaleString()}
-                    </span>
-                  )}
+                  {product.minPrice &&
+                    product.maxPrice &&
+                    product.minPrice !== product.maxPrice && (
+                      <>
+                        <span className="text-sm text-gray-500">
+                          (From ₦{product.minPrice?.toLocaleString()})
+                        </span>
+                        <span className="px-2 py-1 text-xs font-medium bg-amber-100 text-amber-800 rounded">
+                          Custom Pricing
+                        </span>
+                      </>
+                    )}
                 </div>
                 <p className="text-sm text-gray-500 mt-1">Inclusive of all taxes</p>
               </div>
             </div>
 
-            {/* Variants */}
+            {/* Product Info Component */}
             <ProductInfo
               product={product}
               selectedSize={selectedSize}
@@ -210,6 +382,8 @@ const ProductDetailPage = () => {
               setSelectedColor={setSelectedColor}
               quantity={quantity}
               setQuantity={setQuantity}
+              showMeasurements={showMeasurements}
+              setShowMeasurements={setShowMeasurements}
             />
 
             {/* Stock Status */}
@@ -224,19 +398,49 @@ const ProductDetailPage = () => {
                 </div>
               ) : (
                 <div className="inline-flex items-center px-4 py-2 bg-green-50 text-green-700 rounded-lg">
-                  <span className="font-medium">In Stock</span>
+                  <span className="font-medium">In Stock ({product.stock} available)</span>
                 </div>
               )}
             </div>
 
-            {/* Actions */}
-            <ProductActions
-              product={product}
-              quantity={quantity}
-              selectedSize={selectedSize}
-              selectedColor={selectedColor}
-              isOutOfStock={isOutOfStock}
-            />
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-3 mb-6">
+              <button
+                onClick={handleAddToCart}
+                disabled={isOutOfStock || isAddingToCart}
+                className={`flex-1 py-3 px-6 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 ${
+                  isOutOfStock || isAddingToCart
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    : "bg-amber-600 hover:bg-amber-700 text-white"
+                }`}>
+                {isAddingToCart ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                    Processing...
+                  </>
+                ) : isInCart ? (
+                  <>
+                    <FiShoppingCart />
+                    Update Cart ({quantity})
+                  </>
+                ) : (
+                  <>
+                    <FiShoppingCart />
+                    Add to Cart
+                  </>
+                )}
+              </button>
+              <button
+                onClick={handleBuyNow}
+                disabled={isOutOfStock || !selectedSize}
+                className={`flex-1 py-3 px-6 rounded-lg font-medium transition-colors ${
+                  isOutOfStock || !selectedSize
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    : "bg-gray-900 hover:bg-black text-white"
+                }`}>
+                {isOutOfStock ? "Unavailable" : "Buy Now"}
+              </button>
+            </div>
 
             {/* Trust Badges */}
             <div className="mt-8 pt-6 border-t border-gray-200">
@@ -268,26 +472,56 @@ const ProductDetailPage = () => {
             </div>
 
             {/* Stylist Card */}
-            {/* <StylistCard stylist={product.stylist} /> */}
+            <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+              <div className="flex items-center gap-3">
+                {product.stylist?.avatar && (
+                  <Image
+                    src={product.stylist.avatar}
+                    alt={product.stylist.companyName}
+                    width={48}
+                    height={48}
+                    className="rounded-full"
+                  />
+                )}
+                <div>
+                  <h3 className="font-medium text-gray-900">{product.stylist?.companyName}</h3>
+                  <p className="text-sm text-gray-500">
+                    {product.stylist?.location?.state || "Nigeria"}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Specializes in: {product.stylist?.specialty?.join(", ")}
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Product Tabs */}
-        <div className="mt-12">
-          <ProductTabs product={product} />
-        </div>
-
-        {/* Related Products */}
-        <div className="mt-12">
-          {/* <RelatedProducts
-            category={product.category}
-            currentProductId={product._id}
-            stylistId={product.stylist?._id}
-          /> */}
-        </div>
+        {product.description && (
+          <div className="mt-12">
+            <ProductTabs product={product} />
+          </div>
+        )}
       </div>
     </div>
   );
 };
 
-export default ProductDetailPage;
+export default ProductPage;
+
+
+
+
+
+
+
+    <div className="flex items-center justify-center gap-6 mb-6 text-sm">
+      <button
+        onClick={() => router.push("/cart")}
+        className="text-amber-600 hover:text-amber-700 font-medium flex items-center gap-1"
+      >
+        <FiShoppingCart />
+        View Cart ({cartState.itemCount})
+      </button>
+    </div>
