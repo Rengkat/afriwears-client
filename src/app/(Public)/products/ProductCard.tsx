@@ -6,7 +6,6 @@ import { BsHeart, BsHeartFill, BsEye, BsStarFill, BsStar, BsTag } from "react-ic
 import { motion } from "framer-motion";
 
 const ProductCard = ({ product }) => {
-  // console.log(product);
   const [isHovered, setIsHovered] = useState(false);
   const [isWishlisted, setIsWishlisted] = useState(false);
 
@@ -28,7 +27,7 @@ const ProductCard = ({ product }) => {
 
   // Get product link based on slug or ID
   const getProductLink = () => {
-    return `/products/${product.id}`;
+    return product.slug ? `/products/${product.slug}` : `/products/${product.id}`;
   };
 
   // Render star rating
@@ -85,7 +84,7 @@ const ProductCard = ({ product }) => {
         <div className="relative overflow-hidden bg-gray-100 aspect-square">
           {/* Product Image */}
           <Image
-            src={product.image || "/placeholder.jpg"}
+            src={product.mainImage || "/placeholder.jpg"}
             alt={product.name}
             fill
             className="object-cover transition-transform duration-500 group-hover:scale-110"

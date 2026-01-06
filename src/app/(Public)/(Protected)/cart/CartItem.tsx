@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { FiHeart, FiTrash2 } from "react-icons/fi";
 interface CartProduct {
   id: string;
@@ -22,14 +23,16 @@ const CartItem = ({
   onUpdateQuantity: (id: string, quantity: number) => void;
   onMoveToWishlist: (id: string) => void;
 }) => {
-  console.log(product);
+  // console.log(product);
   const handleQuantityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newQuantity = parseInt(e.target.value);
     onUpdateQuantity(product.product._id, newQuantity);
   };
 
   return (
-    <div className="flex flex-col md:flex-row gap-4 p-4 bg-white rounded-lg shadow-sm border border-gray-100 mb-4">
+    <Link
+      href={`/products/${product.product._id}`}
+      className="flex flex-col md:flex-row gap-4 p-4 bg-white rounded-lg shadow-sm border border-gray-100 mb-4">
       <div className="w-full md:w-1/4 lg:w-1/5">
         <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden">
           <img
@@ -53,6 +56,7 @@ const CartItem = ({
             </span>
             <div className="flex items-center gap-2 mt-2">
               <select
+                title="change quantity"
                 value={product.quantity}
                 onChange={handleQuantityChange}
                 className="border border-gray-300 rounded p-1 text-sm"
@@ -80,7 +84,7 @@ const CartItem = ({
           </button>
         </div>
       </div>
-    </div>
+    </Link>
   );
 };
 export default CartItem;

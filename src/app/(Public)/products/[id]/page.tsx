@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -10,7 +10,7 @@ import {
   FiShield,
   FiShoppingCart,
 } from "react-icons/fi";
-import { BsStarFill, BsStarHalf, BsHeart, BsHeartFill } from "react-icons/bs";
+import { BsStarFill, BsHeartFill } from "react-icons/bs";
 import { useGetProductDetailQuery } from "@/redux/services/ProductApi";
 import ProductImages from "./ProductImages";
 import ProductInfo from "./ProductInfor";
@@ -23,7 +23,7 @@ import {
 import { toast } from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
-import { addCartItem } from "@/redux/features/cartSlice";
+import { addCartItem, updateCartItemQuantity } from "@/redux/features/cartSlice";
 import { RootState } from "@/redux/Store";
 import {
   useAddToWishlistMutation,
@@ -31,27 +31,36 @@ import {
   useRemoveFromWishlistMutation,
 } from "@/redux/services/WishlistApiSlice";
 
-const ProductPage = ({ params }) => {
-  const { id } = params;
+interface ProductPageProps {
+  params: {
+    id: string;
+  };
+}
+
+const ProductPage = ({ params }: ProductPageProps) => {
+  const { id } = use(params);
   const router = useRouter();
   const dispatch = useDispatch();
-  const isUserLoggedIn = useSelector((store: RootState) => !!store.authSlice.user);
-  console.log(isUserLoggedIn);
+
+  const user = useSelector((store: RootState) => store.authSlice.user);
+  const isUserLoggedIn = !!user;
+  const cartState = useSelector((store: RootState) => store.cartSlice);
+
   const { data, isLoading, isError } = useGetProductDetailQuery(id);
 
-  // Cart mutations
+  // Cart mutations - TEMPORARILY DISABLE CART FETCHING
   const [addToCart, { isLoading: isAddingToCart }] = useAddToCartMutation();
   const [updateCartItem] = useUpdateCartMutation();
-  const { data: cartData, refetch: refetchCart } = useGetCartProductsQuery();
-
+  const { data: cartData, refetch: refetchCart } = useGetCartProductsQuery(undefined, {
+    skip: !isUserLoggedIn,
+  });
   // Wishlist mutations
   const [addToWishlist, { isLoading: isAddingToWishlist }] = useAddToWishlistMutation();
   const [removeFromWishlist, { isLoading: isRemovingFromWishlist }] =
     useRemoveFromWishlistMutation();
-  const { data: wishlistData, refetch: refetchWishlist } = useGetMyWishlistQuery();
-
-  // Get cart state from Redux
-  const cartState = useSelector((store: RootState) => store.cartSlice);
+  const { data: wishlistData, refetch: refetchWishlist } = useGetMyWishlistQuery(undefined, {
+    skip: !isUserLoggedIn,
+  });
 
   const [selectedImage, setSelectedImage] = useState(0);
   const [showMeasurements, setShowMeasurements] = useState(false);
@@ -60,132 +69,53 @@ const ProductPage = ({ params }) => {
   const [quantity, setQuantity] = useState(1);
   const [isInWishlist, setIsInWishlist] = useState(false);
   const [isInCart, setIsInCart] = useState(false);
-  const [cartItemId, setCartItemId] = useState(null);
+  const [cartItemId, setCartItemId] = useState<string | null>(null);
 
   // Check if product is in wishlist
   useEffect(() => {
-    if (wishlistData?.wishlist && data?.product) {
-      const isWishlisted = wishlistData.wishlist.items?.some(
-        (item) => item.product?._id === data.product._id || item.product === data.product._id
+    if (wishlistData?.success && wishlistData.data && data?.product) {
+      const wishlistItems = wishlistData.data.items || wishlistData.data.wishlist?.items || [];
+      const isWishlisted = wishlistItems.some(
+        (item: any) => item.product?._id === data.product._id || item.product === data.product._id
       );
       setIsInWishlist(isWishlisted);
     }
   }, [wishlistData, data]);
 
-  // Check if product is in cart
+  // Check if product is in cart (local only for now)
   useEffect(() => {
-    // Check server cart first
-    if (cartData?.cart && data?.product) {
-      const cartItem = cartData.cart.items?.find(
-        (item) => item.product?._id === data.product._id || item.product === data.product._id
+    if (data?.product) {
+      const productId = data.product._id;
+      const localItem = cartState.items.find(
+        (item) => item.product === productId || item.product?._id === productId
       );
-      if (cartItem) {
-        setIsInCart(true);
-        setCartItemId(cartItem._id);
-        setQuantity(cartItem.quantity);
 
-        if (cartItem.selectedSize) setSelectedSize(cartItem.selectedSize);
-        if (cartItem.selectedColor) setSelectedColor(cartItem.selectedColor);
+      if (localItem) {
+        setIsInCart(true);
+        setCartItemId(localItem._id);
+        setQuantity(localItem.quantity);
+        if (localItem.selectedSize) setSelectedSize(localItem.selectedSize);
+        if (localItem.selectedColor) setSelectedColor(localItem.selectedColor);
       } else {
         setIsInCart(false);
         setCartItemId(null);
       }
-    } else {
-      // Fallback to localStorage if no server cart
-      const localCart = localStorage.getItem("cart");
-      if (localCart && data?.product) {
-        const parsedCart = JSON.parse(localCart);
-        const localItem = parsedCart.items?.find(
-          (item: any) => item.product?._id === data.product._id || item.product === data.product._id
-        );
-        if (localItem) {
-          setIsInCart(true);
-          setQuantity(localItem.quantity);
-
-          // Sync with server if user is logged in
-          if (cartData) {
-            // Add item to server cart
-            addToCart({
-              productId: data.product._id,
-              quantity: localItem.quantity,
-            }).then(() => {
-              refetchCart();
-            });
-          }
-        }
-      }
     }
-  }, [cartData, data]);
+  }, [data?.product, cartState.items]);
 
-  //add to cart handler
+  // Handle cart addition/update - LOCAL ONLY FOR NOW
   const handleAddToCart = async () => {
-    if (isOutOfStock) {
+    if (!data?.product) return;
+
+    const product = data.product;
+
+    if (product.stock === 0) {
       toast.error("Product is out of stock");
       return;
     }
 
-    try {
-      const cartItemData = {
-        productId: product._id,
-        quantity,
-      };
-
-      // Get current cart from localStorage for immediate update
-      const currentCart = JSON.parse(localStorage.getItem("cart") || '{"items":[]}');
-
-      // Update local cart immediately
-      const existingItemIndex = currentCart.items.findIndex(
-        (item: any) => item.product?._id === product._id || item.product === product._id
-      );
-
-      if (existingItemIndex >= 0) {
-        currentCart.items[existingItemIndex].quantity = quantity;
-      } else {
-        currentCart.items.push({
-          _id: `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-          product: product._id,
-          quantity,
-          price: product.price,
-        });
-      }
-
-      currentCart.itemCount = currentCart.items.reduce(
-        (total: number, item: any) => total + item.quantity,
-        0
-      );
-      currentCart.lastUpdated = Date.now();
-
-      // Save to localStorage immediately
-      localStorage.setItem("cart", JSON.stringify(currentCart));
-
-      // Update Redux store
-      dispatch(
-        addCartItem({
-          _id: `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-          product: product._id,
-          quantity,
-          price: product.price,
-        })
-      );
-
-      // Call the API if user is logged in
-      if (isUserLoggedIn) {
-        // You need to check if user is logged in
-        await addToCart(cartItemData).unwrap();
-        await refetchCart();
-      }
-
-      toast.success(isInCart ? "Cart updated successfully!" : "Added to cart successfully!");
-      setIsInCart(true);
-    } catch (error: any) {
-      console.error("Cart error:", error);
-      toast.error(error?.data?.message || "Failed to add to cart");
-    }
-  };
-  const handleBuyNow = async () => {
-    // For Buy Now, require size selection
-    if (isOutOfStock || !selectedSize) {
-      toast.error(isOutOfStock ? "Product is out of stock" : "Please select a size");
+    if (quantity > product.stock) {
+      toast.error(`Only ${product.stock} items available`);
       return;
     }
 
@@ -193,56 +123,100 @@ const ProductPage = ({ params }) => {
       const cartItemData = {
         productId: product._id,
         quantity,
-        selectedSize,
-        selectedColor, // optional for Buy Now
+        selectedSize: selectedSize || undefined,
+        selectedColor: selectedColor || undefined,
       };
 
-      // OPTIMISTIC UPDATE for Buy Now
-      dispatch(
-        addCartItem({
-          _id: `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-          product: product._id,
-          quantity,
-          selectedSize,
-          selectedColor,
-          price: product.price,
-          isBuyNow: true,
-        })
-      );
+      // If user is logged in, update server cart
+      if (isUserLoggedIn) {
+        try {
+          if (isInCart && cartItemId && !cartItemId.startsWith("temp_")) {
+            // Update existing server cart item
+            await updateCartItem({
+              productId: product._id,
+              quantity,
+            }).unwrap();
+          } else {
+            // Add to server cart
+            await addToCart(cartItemData).unwrap();
+          }
 
-      // Add to cart first
-      await addToCart(cartItemData).unwrap();
-
-      // Refresh cart and go to checkout
-      await refetchCart();
-      router.push("/checkout");
+          // Refetch cart to update Redux state
+          await refetchCart();
+          toast.success(isInCart ? "Cart updated successfully!" : "Added to cart successfully!");
+          setIsInCart(true);
+        } catch (serverError: any) {
+          console.error("Server cart update failed:", serverError);
+          toast.error(serverError?.data?.message || "Failed to update cart on server");
+          // Fall back to local cart
+          updateLocalCart();
+        }
+      } else {
+        // User not logged in - update local cart only
+        updateLocalCart();
+        toast.success(isInCart ? "Cart updated successfully!" : "Added to cart successfully!");
+        setIsInCart(true);
+      }
     } catch (error: any) {
+      console.error("Cart error:", error);
+      toast.error(error?.message || "Failed to add to cart");
+    }
+  };
+  const handleBuyNow = async () => {
+    if (!data?.product) return;
+
+    const product = data.product;
+
+    if (product.stock === 0) {
+      toast.error("Product is out of stock");
+      return;
+    }
+
+    if (!selectedSize && product.sizes?.length > 0) {
+      toast.error("Please select a size");
+      return;
+    }
+
+    try {
+      // Add to cart first
+      await handleAddToCart();
+
+      // Navigate to checkout
+      router.push("/checkout");
+    } catch (error) {
       console.error("Buy now error:", error);
-      toast.error(error?.data?.message || "Failed to proceed to checkout");
+      toast.error("Failed to proceed to checkout");
     }
   };
 
   const handleWishlistToggle = async () => {
+    if (!data?.product) return;
+
+    const product = data.product;
+
+    if (!isUserLoggedIn) {
+      toast.error("Please login to manage your wishlist");
+      router.push("/login");
+      return;
+    }
+
     if (isInWishlist) {
-      // Remove from wishlist
       try {
         await removeFromWishlist(product._id).unwrap();
         setIsInWishlist(false);
         toast.success("Removed from wishlist");
         await refetchWishlist();
-      } catch (error) {
+      } catch (error: any) {
         console.error("Remove from wishlist error:", error);
         toast.error(error?.data?.message || "Failed to remove from wishlist");
       }
     } else {
-      // Add to wishlist
       try {
-        // await addToWishlist({ productId: product._id }).unwrap();
-        console.log("productId:", product?._id);
+        await addToWishlist({ productId: product._id }).unwrap();
         setIsInWishlist(true);
         toast.success("Added to wishlist!");
         await refetchWishlist();
-      } catch (error) {
+      } catch (error: any) {
         console.error("Add to wishlist error:", error);
         toast.error(error?.data?.message || "Failed to add to wishlist");
       }
@@ -250,6 +224,10 @@ const ProductPage = ({ params }) => {
   };
 
   const handleShare = () => {
+    if (!data?.product) return;
+
+    const product = data.product;
+
     if (navigator.share) {
       navigator.share({
         title: product.name,

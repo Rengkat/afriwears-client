@@ -1,9 +1,8 @@
-// cartSlice.ts
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 interface CartItem {
   _id: string;
-  product: string | any;
+  product: string;
   quantity: number;
   selectedSize?: string;
   selectedColor?: string;
@@ -14,16 +13,17 @@ interface CartItem {
 interface CartState {
   items: CartItem[];
   itemCount: number;
+  totalPrice: number;
   lastUpdated: number;
   isLoading: boolean;
 }
 
-// Load initial state from localStorage
 const loadCartFromStorage = (): CartState => {
   if (typeof window === "undefined") {
     return {
       items: [],
       itemCount: 0,
+      totalPrice: 0,
       lastUpdated: Date.now(),
       isLoading: false,
     };
@@ -33,9 +33,22 @@ const loadCartFromStorage = (): CartState => {
     const storedCart = localStorage.getItem("cart");
     if (storedCart) {
       const parsedCart = JSON.parse(storedCart);
+      const normalizedItems =
+        parsedCart.items?.map((item: any) => ({
+          ...item,
+          product: item.product?._id || item.product,
+        })) || [];
+
       return {
-        items: parsedCart.items || [],
-        itemCount: parsedCart.itemCount || 0,
+        items: normalizedItems,
+        itemCount: normalizedItems.reduce(
+          (total: number, item: CartItem) => total + item.quantity,
+          0
+        ),
+        totalPrice: normalizedItems.reduce(
+          (total: number, item: CartItem) => total + (item.price || 0) * item.quantity,
+          0
+        ),
         lastUpdated: parsedCart.lastUpdated || Date.now(),
         isLoading: false,
       };
@@ -47,6 +60,7 @@ const loadCartFromStorage = (): CartState => {
   return {
     items: [],
     itemCount: 0,
+    totalPrice: 0,
     lastUpdated: Date.now(),
     isLoading: false,
   };
@@ -61,48 +75,58 @@ const cartSlice = createSlice({
     setCartItems: (state, action: PayloadAction<CartItem[]>) => {
       state.items = action.payload;
       state.itemCount = action.payload.reduce((total, item) => total + item.quantity, 0);
+      state.totalPrice = action.payload.reduce(
+        (total, item) => total + (item.price || 0) * item.quantity,
+        0
+      );
       state.lastUpdated = Date.now();
 
-      // Save to localStorage
       if (typeof window !== "undefined") {
         localStorage.setItem("cart", JSON.stringify(state));
       }
     },
 
     addCartItem: (state, action: PayloadAction<CartItem>) => {
-      const existingItemIndex = state.items.findIndex(
-        (item) =>
-          item.product?._id === action.payload.product?._id ||
-          item.product === action.payload.product
-      );
+      const productId = action.payload.product;
+      const existingItemIndex = state.items.findIndex((item) => item.product === productId);
 
       if (existingItemIndex >= 0) {
-        // Update existing item
         state.items[existingItemIndex] = {
           ...state.items[existingItemIndex],
           ...action.payload,
           quantity: action.payload.quantity,
         };
       } else {
-        // Add new item
-        state.items.push(action.payload);
+        state.items.push({
+          ...action.payload,
+          product: productId,
+        });
       }
 
       state.itemCount = state.items.reduce((total, item) => total + item.quantity, 0);
+      state.totalPrice = state.items.reduce(
+        (total, item) => total + (item.price || 0) * item.quantity,
+        0
+      );
       state.lastUpdated = Date.now();
 
-      // Save to localStorage
       if (typeof window !== "undefined") {
         localStorage.setItem("cart", JSON.stringify(state));
       }
     },
 
     removeCartItem: (state, action: PayloadAction<string>) => {
-      state.items = state.items.filter((item) => item._id !== action.payload);
+      state.items = state.items.filter(
+        (item) => item._id !== action.payload && item.product !== action.payload
+      );
+
       state.itemCount = state.items.reduce((total, item) => total + item.quantity, 0);
+      state.totalPrice = state.items.reduce(
+        (total, item) => total + (item.price || 0) * item.quantity,
+        0
+      );
       state.lastUpdated = Date.now();
 
-      // Save to localStorage
       if (typeof window !== "undefined") {
         localStorage.setItem("cart", JSON.stringify(state));
       }
@@ -112,17 +136,16 @@ const cartSlice = createSlice({
       state,
       action: PayloadAction<{ productId: string; quantity: number }>
     ) => {
-      const item = state.items.find(
-        (item) =>
-          item.product?._id === action.payload.productId ||
-          item.product === action.payload.productId
-      );
+      const item = state.items.find((item) => item.product === action.payload.productId);
       if (item) {
         item.quantity = action.payload.quantity;
         state.itemCount = state.items.reduce((total, item) => total + item.quantity, 0);
+        state.totalPrice = state.items.reduce(
+          (total, item) => total + (item.price || 0) * item.quantity,
+          0
+        );
         state.lastUpdated = Date.now();
 
-        // Save to localStorage
         if (typeof window !== "undefined") {
           localStorage.setItem("cart", JSON.stringify(state));
         }
@@ -132,9 +155,9 @@ const cartSlice = createSlice({
     clearCart: (state) => {
       state.items = [];
       state.itemCount = 0;
+      state.totalPrice = 0;
       state.lastUpdated = Date.now();
 
-      // Save to localStorage
       if (typeof window !== "undefined") {
         localStorage.setItem("cart", JSON.stringify(state));
       }

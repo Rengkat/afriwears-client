@@ -3,71 +3,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { BsArrowRight, BsStarFill, BsStarHalf } from "react-icons/bs";
 import { motion } from "framer-motion";
-
-const mockFeaturedProducts = [
-  {
-    id: "f1",
-    name: "Royal Kente Agbada Set",
-    slug: "royal-kente-agbada",
-    image: "/featured-1.jpg",
-    price: 65000,
-    originalPrice: 80000,
-    stylist: "Royal Heritage Designs",
-    colors: ["gold", "red", "black"],
-    rating: 5.0,
-    reviews: 342,
-    isBestSeller: true,
-    isNew: false,
-    description: "Handwoven kente fabric with intricate embroidery details",
-  },
-  {
-    id: "f2",
-    name: "Premium Silk Adire Gown",
-    slug: "premium-silk-adire",
-    image: "/featured-2.jpg",
-    price: 55000,
-    originalPrice: 68000,
-    stylist: "Amina Luxury",
-    colors: ["indigo", "white", "gold"],
-    rating: 4.9,
-    reviews: 278,
-    isBestSeller: true,
-    isNew: true,
-    description: "Luxury silk adire with hand-painted patterns and lace accents",
-  },
-  {
-    id: "f3",
-    name: "Modern Ankara 3-Piece",
-    slug: "modern-ankara-3piece",
-    image: "/featured-3.jpg",
-    price: 48000,
-    originalPrice: 55000,
-    stylist: "Urban African Couture",
-    colors: ["blue", "yellow", "green"],
-    rating: 4.8,
-    reviews: 195,
-    isBestSeller: false,
-    isNew: true,
-    description: "Contemporary take on traditional Ankara with modern tailoring",
-  },
-  {
-    id: "f4",
-    name: "Beaded Asooke Evening Dress",
-    slug: "beaded-asooke-evening",
-    image: "/featured-4.jpg",
-    price: 72000,
-    originalPrice: 85000,
-    stylist: "Zainab Royalty",
-    colors: ["cream", "gold", "burgundy"],
-    rating: 5.0,
-    reviews: 421,
-    isBestSeller: true,
-    isNew: false,
-    description: "Hand-beaded asooke fabric with crystal embellishments",
-  },
-];
+import { useGetApprovedProductsQuery } from "@/redux/services/ProductApi";
 
 const FeaturedProductCard = ({ product }) => {
+  console.log(product);
   return (
     <motion.div
       initial={{ opacity: 0, y: 30 }}
@@ -92,7 +31,7 @@ const FeaturedProductCard = ({ product }) => {
       {/* Product Image */}
       <div className="relative h-80 overflow-hidden">
         <Image
-          src={product.image}
+          src={product.image || "/placeholder-product.jpg"}
           alt={product.name}
           fill
           className="object-cover transition-transform duration-500 group-hover:scale-105"
@@ -103,10 +42,10 @@ const FeaturedProductCard = ({ product }) => {
       {/* Product Info */}
       <div className="p-6">
         <div className="flex justify-between items-start mb-2">
-          <h3 className="font-bold text-lg text-gray-900">{product.name}</h3>
+          <h3 className="font-bold text-lg text-gray-900 line-clamp-1">{product.name}</h3>
           <div className="flex flex-col items-end">
             <span className="font-bold text-gray-900">₦{product.price.toLocaleString()}</span>
-            {product.originalPrice && (
+            {product.originalPrice > product.price && (
               <span className="text-sm text-gray-400 line-through">
                 ₦{product.originalPrice.toLocaleString()}
               </span>
@@ -114,8 +53,8 @@ const FeaturedProductCard = ({ product }) => {
           </div>
         </div>
 
-        <p className="text-gray-600 text-sm mb-3">{product.stylist}</p>
-        <p className="text-gray-500 text-sm mb-4">{product.description}</p>
+        <p className="text-gray-600 text-sm mb-3 line-clamp-1">{product.stylist}</p>
+        <p className="text-gray-500 text-sm mb-4 line-clamp-2">{product.description}</p>
 
         {/* Rating */}
         <div className="flex items-center gap-2 mb-4">
@@ -130,23 +69,30 @@ const FeaturedProductCard = ({ product }) => {
               return <BsStarFill key={i} size={14} className="text-gray-300" />;
             })}
           </div>
-          <span className="text-xs text-gray-500">({product.reviews})</span>
+          <span className="text-xs text-gray-500">({product.reviews.toLocaleString()})</span>
         </div>
 
         {/* Color Options */}
-        <div className="flex gap-2 mb-5">
-          {product.colors.map((color) => (
-            <div
-              key={color}
-              className="w-4 h-4 rounded-full border border-gray-200"
-              style={{ backgroundColor: color }}
-              title={color}
-            />
-          ))}
-        </div>
+        {product.colors && product.colors.length > 0 && (
+          <div className="flex gap-2 mb-5">
+            {product.colors.slice(0, 4).map((color: string, index: string) => (
+              <div
+                key={index}
+                className="w-4 h-4 rounded-full border border-gray-200"
+                style={{ backgroundColor: color }}
+                title={color}
+              />
+            ))}
+            {product.colors.length > 4 && (
+              <span className="text-xs text-gray-500 self-center">
+                +{product.colors.length - 4}
+              </span>
+            )}
+          </div>
+        )}
 
         {/* CTA Button */}
-        <Link href={`/products/${product.slug}`}>
+        <Link href={`/products/${product?.id}`}>
           <motion.button
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
@@ -160,6 +106,149 @@ const FeaturedProductCard = ({ product }) => {
 };
 
 const FeaturedProducts = () => {
+  const {
+    data: productsData,
+    isLoading,
+    isError,
+    error,
+  } = useGetApprovedProductsQuery({
+    page: 1,
+    limit: 4,
+    featured: true,
+  });
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50">
+        <div className="max-w-7xl mx-auto">
+          {/* Section Header */}
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              Our Featured Collections
+            </h2>
+            <div className="w-24 h-1.5 bg-amber-500 mx-auto rounded-full mb-6" />
+            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+              Carefully curated selection of our most premium African fashion pieces, loved by
+              customers and crafted by master artisans
+            </p>
+          </div>
+
+          {/* Loading Skeleton */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <div key={index} className="animate-pulse bg-white rounded-xl shadow-lg">
+                <div className="h-80 bg-gray-200 rounded-t-xl"></div>
+                <div className="p-6 space-y-3">
+                  <div className="flex justify-between">
+                    <div className="bg-gray-200 h-5 rounded w-2/3"></div>
+                    <div className="bg-gray-200 h-5 rounded w-1/4"></div>
+                  </div>
+                  <div className="bg-gray-200 h-4 rounded w-1/2"></div>
+                  <div className="bg-gray-200 h-12 rounded w-full"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Error state
+  if (isError) {
+    console.error("Error loading featured products:", error);
+    return (
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              Our Featured Collections
+            </h2>
+            <div className="w-24 h-1.5 bg-amber-500 mx-auto rounded-full mb-6" />
+            <p className="text-lg text-red-600 max-w-3xl mx-auto">
+              Unable to load featured products. Please try again later.
+            </p>
+          </div>
+          <div className="text-center mt-8">
+            <button
+              onClick={() => window.location.reload()}
+              className="px-6 py-3 bg-amber-600 text-white rounded-full font-medium hover:bg-amber-700 transition-colors">
+              Retry
+            </button>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Extract products from API response
+  const products = productsData?.data?.products || productsData?.products || [];
+
+  // Transform API data
+  const transformProductData = (product: any) => {
+    return {
+      id: product._id || product.id,
+      name: product.name,
+      slug: product.slug || `product-${product._id || product.id}`,
+      image: product.mainImage || product.images?.[0] || "/placeholder-product.jpg",
+      price: product.price || 0,
+      originalPrice: product.originalPrice || product.price,
+      stylist:
+        product.stylistName ||
+        product.stylist?.businessName ||
+        product.stylist?.name ||
+        "Unknown Stylist",
+      colors: product.attributes?.colors?.map((c: any) => c.hexCode || c.name) || [
+        "#4B0082",
+        "#DC143C",
+        "#FFD700",
+      ], // Indigo, Crimson, Gold as fallback
+      rating: product.rating || 4.5,
+      reviews: product.reviewCount || product.reviews?.length || 0,
+      isBestSeller: product.isBestSeller || false,
+      isNew: product.isNewProduct || false,
+      description: product.description || "Premium African fashion piece",
+    };
+  };
+
+  const featuredProducts = products.slice(0, 4).map(transformProductData);
+
+  // If no featured products found
+  if (featuredProducts.length === 0) {
+    return (
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <motion.h2
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+              className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              Our Featured Collections
+            </motion.h2>
+            <motion.div
+              initial={{ opacity: 0, scaleX: 0 }}
+              whileInView={{ opacity: 1, scaleX: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="w-24 h-1.5 bg-amber-500 mx-auto rounded-full mb-6"
+            />
+            <motion.p
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+              className="text-lg text-gray-600 max-w-3xl mx-auto">
+              No featured products available at the moment. Check back soon!
+            </motion.p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50">
       <div className="max-w-7xl mx-auto">
@@ -193,25 +282,27 @@ const FeaturedProducts = () => {
 
         {/* Featured Products Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {mockFeaturedProducts.map((product) => (
+          {featuredProducts.map((product) => (
             <FeaturedProductCard key={product.id} product={product} />
           ))}
         </div>
 
-        {/* View All Button */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-          className="text-center mt-16">
-          <Link href="/collections/featured">
-            <button className="inline-flex items-center gap-2 px-8 py-3 bg-gray-900 text-white rounded-full font-medium hover:bg-gray-800 transition-colors">
-              Browse All Featured Items
-              <BsArrowRight size={18} />
-            </button>
-          </Link>
-        </motion.div>
+        {/* View All Button - Only show if there are products */}
+        {featuredProducts.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+            className="text-center mt-16">
+            <Link href="/products?featured=true">
+              <button className="inline-flex items-center gap-2 px-8 py-3 bg-gray-900 text-white rounded-full font-medium hover:bg-gray-800 transition-colors">
+                Browse All Featured Items
+                <BsArrowRight size={18} />
+              </button>
+            </Link>
+          </motion.div>
+        )}
       </div>
     </section>
   );
