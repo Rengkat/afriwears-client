@@ -38,7 +38,7 @@ export const stylistApi = createApi({
     }),
     getStylistProducts: build.query({
       query: (stylistId) => ({
-        url: `stylist/products/${stylistId}`,
+        url: `stylists/products/${stylistId}`,
       }),
       providesTags: ["Stylist"],
     }),

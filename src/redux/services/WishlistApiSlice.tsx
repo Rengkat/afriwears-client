@@ -8,10 +8,10 @@ export const wishlistApi = createApi({
   endpoints: (build) => ({
     // Add product to wishlist
     addToWishlist: build.mutation({
-      query: (productId: string) => ({
+      query: (data: { productId: string }) => ({
         url: "wishlist",
         method: "POST",
-        body: { productId },
+        body: data,
       }),
       invalidatesTags: ["Wishlist"],
     }),

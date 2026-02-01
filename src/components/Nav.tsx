@@ -1,7 +1,7 @@
 "use client";
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import Link from "next/link";
-import { BsSearch, BsCart, BsChatDots, BsBellFill, BsBoxSeam, BsX } from "react-icons/bs";
+import { BsSearch, BsCart, BsChatDots, BsBellFill, BsBoxSeam, BsX, BsCheck } from "react-icons/bs";
 import { FaHome } from "react-icons/fa";
 import { HiMenu } from "react-icons/hi";
 import NavLink from "./NavLinks";
@@ -14,6 +14,16 @@ import { useGetCurrentUserQuery } from "@/redux/services/AuthApiSlice";
 import { useGetCartProductsQuery } from "@/redux/services/CartApiSlice";
 import { useGetApprovedProductsQuery } from "@/redux/services/ProductApi";
 import { useRouter } from "next/navigation";
+import { formatDistanceToNow } from "date-fns";
+import { useSocket } from "@/redux/SocketContext";
+import {
+  useDeleteNotificationMutation,
+  useGetNotificationsQuery,
+  useGetUnreadCountQuery,
+  useMarkAllAsReadMutation,
+  useMarkAsReadMutation,
+} from "@/redux/services/NotificationApiSlice";
+import { useGetUnreadMessagesCountQuery } from "@/redux/services/MessageApiSlice";
 
 const NavBar = () => {
   const { data: userData, isLoading: isLoadingUser } = useGetCurrentUserQuery(null);
@@ -21,34 +31,68 @@ const NavBar = () => {
   const cartState = useSelector((store: RootState) => store.cartSlice);
   const dispatch = useDispatch();
   const router = useRouter();
+  const { socket } = useSocket();
 
   const user = userData?.user || localUser;
-  const [isClient, setIsClient] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [unreadNotifications, setUnreadNotifications] = useState(0);
+
+  // Check if user is authenticated
+  const isUserLoggedIn = !!user;
+
+  // Fetch notifications and unread counts
+  const {
+    data: unreadCountData,
+    refetch: refetchUnreadCount,
+    isError: unreadCountError,
+  } = useGetUnreadCountQuery(undefined, {
+    skip: !isUserLoggedIn,
+  });
+
+  const {
+    data: unreadMessagesData,
+    refetch: refetchUnreadMessages,
+    isError: unreadMessagesError,
+  } = useGetUnreadMessagesCountQuery(undefined, {
+    skip: !isUserLoggedIn,
+  });
+
+  const {
+    data: notificationsData,
+    isLoading: isLoadingNotifications,
+    refetch: refetchNotifications,
+    isError: notificationsError,
+  } = useGetNotificationsQuery(
+    { page: 1, limit: 5 },
+    {
+      skip: !isUserLoggedIn,
+    },
+  );
+
+  const [markAsRead] = useMarkAsReadMutation();
+  const [markAllAsRead] = useMarkAllAsReadMutation();
+  const [deleteNotification] = useDeleteNotificationMutation();
+
+  const unreadNotifications = unreadCountError ? 0 : unreadCountData?.count || 0;
+  const unreadMessages = unreadMessagesError ? 0 : unreadMessagesData?.count || 0;
+  const notifications = notificationsError ? [] : notificationsData?.notifications || [];
 
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
   const [showSearchResults, setShowSearchResults] = useState(false);
-  const [showMobileSearch, setShowMobileSearch] = useState(false); // Separate state for mobile
+  const [showMobileSearch, setShowMobileSearch] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const mobileSearchRef = useRef<HTMLDivElement>(null);
+  const notificationRef = useRef<HTMLDivElement>(null);
 
-  // CRITICAL FIX: Only fetch cart if user is logged in AND has token
-  const isUserLoggedIn = !!user;
+  // Cart query
   const { data: cartData, isLoading: isLoadingCart } = useGetCartProductsQuery(undefined, {
     skip: !isUserLoggedIn,
-    refetchOnMountOrArgChange: false,
   });
 
-  // Fetch products for search
-  const {
-    data: searchData,
-    isLoading: isLoadingSearch,
-    isFetching,
-  } = useGetApprovedProductsQuery(
+  // Search query
+  const { data: searchData, isFetching: isSearchFetching } = useGetApprovedProductsQuery(
     {
       name: searchQuery.trim(),
       limit: 5,
@@ -56,54 +100,219 @@ const NavBar = () => {
     },
     {
       skip: !searchQuery.trim() || searchQuery.trim().length < 2,
-    }
+    },
   );
 
-  // Use Redux cart state for immediate updates
-  const cartItemsCount = cartState.itemCount || 0;
+  // Calculate cart items count
+  const cartItemsCount = useMemo(() => {
+    if (!isUserLoggedIn) {
+      return cartState.itemCount || 0;
+    }
 
-  // For stylist/admin orders count
-  const ordersCount = 3;
+    if (cartData?.data?.items) {
+      return cartData.data.items.reduce((total: number, item: any) => {
+        return total + (item.quantity || 1);
+      }, 0);
+    }
 
+    return cartState.itemCount || 0;
+  }, [isUserLoggedIn, cartData, cartState.itemCount]);
+
+  // Socket listener for unread message count updates
   useEffect(() => {
-    setIsClient(true);
-    setUnreadNotifications(3);
-  }, []);
+    if (!socket || !isUserLoggedIn) {
+      return;
+    }
 
-  // Update search results when data changes -
+    const handleUnreadCountUpdate = (data: { count: number }) => {
+      refetchUnreadMessages();
+    };
+
+    socket.on("unreadCountUpdate", handleUnreadCountUpdate);
+
+    return () => {
+      socket.off("unreadCountUpdate", handleUnreadCountUpdate);
+    };
+  }, [socket, isUserLoggedIn, refetchUnreadMessages]);
+
+  // Socket listener for notifications
   useEffect(() => {
-    if (searchQuery.trim().length >= 2) {
-      if (searchData?.products) {
-        // Backend returns products directly
-        setSearchResults(searchData.products);
-        setShowSearchResults(true);
-        setIsSearching(false);
-      } else if (searchData?.data?.products) {
-        // Or if it's nested in data property
-        setSearchResults(searchData.data.products);
-        setShowSearchResults(true);
-        setIsSearching(false);
-      } else if (searchData && searchQuery.trim().length >= 2) {
-        // Data returned but no products property - means empty results
-        setSearchResults([]);
-        setShowSearchResults(true);
-        setIsSearching(false);
-      }
+    if (!socket || !isUserLoggedIn) {
+      return;
+    }
+
+    const handleNewNotification = (notification: any) => {
+      console.log("🔔 REAL-TIME NOTIFICATION RECEIVED:", {
+        type: notification.type,
+        message: notification.message,
+        timestamp: new Date().toISOString(),
+      });
+
+      refetchNotifications();
+      refetchUnreadCount();
+    };
+
+    socket.on("newNotification", handleNewNotification);
+
+    return () => {
+      socket.off("newNotification", handleNewNotification);
+    };
+  }, [socket, isUserLoggedIn, refetchNotifications, refetchUnreadCount]);
+
+  // Update search results
+  useEffect(() => {
+    if (searchQuery.trim().length >= 2 && searchData?.products) {
+      setSearchResults(searchData.products);
+      setIsSearching(false);
     } else if (searchQuery.trim().length < 2) {
       setSearchResults([]);
       setShowSearchResults(false);
-      setIsSearching(false);
     }
   }, [searchData, searchQuery]);
 
-  // Set searching state when fetching
+  // Set searching state
   useEffect(() => {
-    if (searchQuery.trim().length >= 2 && isFetching) {
+    if (searchQuery.trim().length >= 2 && isSearchFetching) {
       setIsSearching(true);
     }
-  }, [isFetching, searchQuery]);
+  }, [isSearchFetching, searchQuery]);
 
-  // Handle search input change
+  // Notification handlers
+  const handleBellClickNotLoggedIn = () => {
+    router.push("/login?redirect=/notifications");
+    setShowNotifications(false);
+  };
+
+  const handleMarkAsRead = async (notificationId: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    try {
+      await markAsRead(notificationId).unwrap();
+      refetchUnreadCount();
+    } catch (error) {
+      console.error("Failed to mark notification as read:", error);
+    }
+  };
+
+  const handleDeleteNotification = async (notificationId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await deleteNotification(notificationId).unwrap();
+      refetchUnreadCount();
+      refetchNotifications();
+    } catch (error) {
+      console.error("Failed to delete notification:", error);
+    }
+  };
+
+  const handleNotificationClick = (notification: any) => {
+    if (!notification.read) {
+      handleMarkAsRead(notification._id);
+    }
+
+    switch (notification.type) {
+      case "new_order":
+      case "order_status_update":
+      case "order_delivered":
+      case "order_cancelled":
+        if (notification.data?.orderId) {
+          router.push(`/orders/${notification.data.orderId}`);
+        } else {
+          router.push("/orders");
+        }
+        break;
+
+      case "product_approved":
+      case "product_rejected":
+      case "product_approval_request":
+        if (notification.data?.productId) {
+          router.push(`/products/${notification.data.productId}`);
+        } else if (user?.role === "stylist") {
+          router.push("/products/my-products");
+        } else if (user?.role === "admin") {
+          router.push("/admin/products");
+        }
+        break;
+
+      case "message_received":
+        router.push("/chats");
+        break;
+
+      case "stylist_verification_request":
+        if (user?.role === "admin") {
+          router.push("/admin/stylists");
+        }
+        break;
+
+      case "stylist_approved":
+      case "stylist_rejected":
+      case "stylist_suspended":
+      case "stylist_activated":
+        if (user?.role === "stylist") {
+          router.push("/stylist/profile");
+        } else if (user?.role === "admin") {
+          router.push("/admin/stylists");
+        }
+        break;
+
+      case "credit_wallet":
+      case "debit_wallet":
+        router.push("/wallet");
+        break;
+
+      default:
+        break;
+    }
+
+    setShowNotifications(false);
+  };
+
+  const handleMarkAllAsRead = async () => {
+    if (notifications.length === 0 || unreadNotifications === 0) return;
+
+    try {
+      await markAllAsRead().unwrap();
+      refetchUnreadCount();
+      refetchNotifications();
+    } catch (error) {
+      console.error("Failed to mark all as read:", error);
+    }
+  };
+
+  const getNotificationIcon = (type: string) => {
+    switch (type) {
+      case "new_order":
+      case "order_status_update":
+        return "🛍️";
+      case "product_approved":
+      case "product_approval_request":
+        return "📦";
+      case "product_rejected":
+        return "❌";
+      case "message_received":
+        return "💬";
+      case "credit_wallet":
+        return "💰";
+      case "stylist_approved":
+      case "stylist_verification_request":
+        return "✂️";
+      case "stylist_rejected":
+        return "⚠️";
+      case "system_alert":
+        return "🔔";
+      default:
+        return "📢";
+    }
+  };
+
+  const formatTime = (dateString: string) => {
+    try {
+      return formatDistanceToNow(new Date(dateString), { addSuffix: true });
+    } catch (error) {
+      return "Just now";
+    }
+  };
+
+  // Search handlers
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchQuery(value);
@@ -114,11 +323,9 @@ const NavBar = () => {
     } else {
       setShowSearchResults(false);
       setSearchResults([]);
-      setIsSearching(false);
     }
   };
 
-  // Handle search form submission
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const trimmedQuery = searchQuery.trim();
@@ -127,66 +334,63 @@ const NavBar = () => {
       setShowSearchResults(false);
       setShowMobileSearch(false);
       setSearchQuery("");
-      setIsSearching(false);
     }
   };
 
-  // Handle clicking on a search result
   const handleResultClick = (productId: string) => {
     router.push(`/products/${productId}`);
     setShowSearchResults(false);
     setShowMobileSearch(false);
     setSearchQuery("");
-    setIsSearching(false);
   };
 
-  // Clear search input
   const handleClearSearch = () => {
     setSearchQuery("");
     setSearchResults([]);
     setShowSearchResults(false);
-    setIsSearching(false);
-    // Don't close mobile modal when clearing
   };
 
-  // Close mobile search modal
   const handleCloseMobileSearch = () => {
     setShowMobileSearch(false);
     setSearchQuery("");
     setSearchResults([]);
-    setIsSearching(false);
   };
 
-  // Toggle mobile search
   const handleMobileSearchToggle = () => {
     setShowMobileSearch(!showMobileSearch);
     if (!showMobileSearch) {
       setSearchQuery("");
       setSearchResults([]);
-      setIsSearching(false);
     }
   };
 
-  // Close search results when clicking outside (desktop only)
+  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      // For desktop search dropdown
+      const target = event.target as HTMLElement;
+
       if (
         searchContainerRef.current &&
-        !searchContainerRef.current.contains(event.target as Node)
+        !searchContainerRef.current.contains(target) &&
+        !target.closest(".search-result-item")
       ) {
         setShowSearchResults(false);
       }
 
-      // For mobile search overlay
       if (
-        mobileSearchRef.current &&
-        !mobileSearchRef.current.contains(event.target as Node) &&
-        showMobileSearch
+        notificationRef.current &&
+        !notificationRef.current.contains(target) &&
+        showNotifications
       ) {
-        // Check if click is on the close/cancel button
-        const target = event.target as HTMLElement;
-        if (!target.closest(".mobile-search-close")) {
+        setShowNotifications(false);
+      }
+
+      if (
+        showMobileSearch &&
+        mobileSearchRef.current &&
+        !mobileSearchRef.current.contains(target)
+      ) {
+        if (!target.closest('[aria-label="Search"]')) {
           handleCloseMobileSearch();
         }
       }
@@ -196,24 +400,11 @@ const NavBar = () => {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [showMobileSearch]);
+  }, [showNotifications, showMobileSearch]);
 
-  // Focus search input when mobile modal opens
-  useEffect(() => {
-    if (showMobileSearch) {
-      setTimeout(() => {
-        const input = document.getElementById("mobile-search-input");
-        if (input) input.focus();
-      }, 100);
-    }
-  }, [showMobileSearch]);
-
-  if (!isClient || isLoadingUser) {
+  if (isLoadingUser) {
     return <NaveBarSkeleton />;
   }
-
-  const authStatus = !!user;
-
   return (
     <nav className="w-full px-6 lg:px-12 py-3 flex justify-between items-center shadow-sm bg-white sticky top-0 z-50 border-b border-gray-100">
       {/* Logo Section */}
@@ -287,7 +478,6 @@ const NavBar = () => {
               ) : searchResults.length > 0 ? (
                 <div>
                   {searchResults.slice(0, 5).map((product: any) => {
-                    // console.log(product);
                     const productId = product.id || product._id;
                     const productName = product.name || product.title || "Unnamed Product";
                     const productPrice = product.price || product.priceInCents / 100 || 0;
@@ -298,7 +488,7 @@ const NavBar = () => {
                       <button
                         key={productId}
                         onClick={() => handleResultClick(productId)}
-                        className="w-full px-4 py-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0 flex items-center gap-3 text-left">
+                        className="w-full px-4 py-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0 flex items-center gap-3 text-left search-result-item">
                         <div className="flex-shrink-0 w-10 h-10 bg-gray-100 rounded overflow-hidden">
                           {productImage ? (
                             <img
@@ -350,7 +540,8 @@ const NavBar = () => {
         <div className="md:hidden relative">
           <button
             onClick={handleMobileSearchToggle}
-            className="p-2 rounded-full hover:bg-gray-100 transition-colors">
+            className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+            aria-label="Search">
             <BsSearch size={20} className="text-gray-600 hover:text-blue-500" />
           </button>
 
@@ -372,6 +563,7 @@ const NavBar = () => {
                     />
                     {searchQuery && (
                       <button
+                        title="Clear search"
                         type="button"
                         onClick={handleClearSearch}
                         className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">
@@ -462,101 +654,184 @@ const NavBar = () => {
         {/* Icons */}
         <div className="hidden md:flex items-center gap-4 md:gap-5">
           {/* Notification Bell */}
-          {authStatus && (
-            <div className="relative">
-              <button
-                onClick={() => setShowNotifications(!showNotifications)}
-                className="p-2 rounded-full hover:bg-gray-100 transition-colors relative">
-                <BsBellFill
-                  size={20}
-                  className={unreadNotifications > 0 ? "text-yellow-500" : "text-gray-600"}
-                />
-                {unreadNotifications > 0 && (
-                  <span className="absolute top-0 right-0 w-5 h-5 bg-red-500 text-white text-xs flex items-center justify-center rounded-full transform translate-x-1 -translate-y-1">
-                    {unreadNotifications > 9 ? "9+" : unreadNotifications}
-                  </span>
-                )}
-              </button>
+          <div ref={notificationRef} className="relative">
+            <button
+              onClick={() => {
+                if (isUserLoggedIn) {
+                  setShowNotifications(!showNotifications);
+                } else {
+                  handleBellClickNotLoggedIn();
+                }
+              }}
+              className="p-2 rounded-full hover:bg-gray-100 transition-colors relative group"
+              aria-label="Notifications">
+              <BsBellFill
+                size={20}
+                className={
+                  isUserLoggedIn && unreadNotifications > 0 ? "text-yellow-500" : "text-gray-600"
+                }
+              />
+              {/* Notification count badge */}
+              {isUserLoggedIn && unreadNotifications > 0 && (
+                <span className="absolute top-0 right-0 w-5 h-5 bg-red-500 text-white text-xs flex items-center justify-center rounded-full transform translate-x-1 -translate-y-1">
+                  {unreadNotifications > 9 ? "9+" : unreadNotifications}
+                </span>
+              )}
+              {/* Tooltip for non-logged in users */}
+              {!isUserLoggedIn && (
+                <div className="absolute -bottom-10 right-0 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                  Login to see notifications
+                </div>
+              )}
+            </button>
 
-              {/* Notification Dropdown */}
-              {showNotifications && (
-                <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg py-1 z-50 border border-gray-200">
-                  <div className="px-4 py-3 border-b border-gray-200 bg-gray-50 rounded-t-lg">
-                    <h3 className="font-semibold text-gray-800">Notifications</h3>
+            {/* Notification Dropdown */}
+            {isUserLoggedIn && showNotifications && (
+              <div className="absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-xl py-2 z-50 border border-gray-200 max-h-96 overflow-y-auto">
+                <div className="px-4 py-3 border-b border-gray-200 bg-gray-50 rounded-t-lg flex justify-between items-center">
+                  <h3 className="font-semibold text-gray-800">Notifications</h3>
+                  {notifications.length > 0 && unreadNotifications > 0 && (
+                    <button
+                      onClick={handleMarkAllAsRead}
+                      className="text-xs text-blue-600 hover:text-blue-800 font-medium">
+                      Mark all as read
+                    </button>
+                  )}
+                </div>
+
+                {isLoadingNotifications ? (
+                  <div className="px-4 py-6 flex justify-center">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
                   </div>
-                  <div className="max-h-60 overflow-y-auto">
-                    <div className="px-4 py-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100">
-                      <p className="text-sm font-medium text-gray-800">
-                        Your order #1234 has been shipped
-                      </p>
-                      <p className="text-xs text-gray-500 mt-1">2 hours ago</p>
-                    </div>
-                    <div className="px-4 py-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100">
-                      <p className="text-sm font-medium text-gray-800">
-                        New stylist available in your area
-                      </p>
-                      <p className="text-xs text-gray-500 mt-1">1 day ago</p>
-                    </div>
-                    <div className="px-4 py-3 hover:bg-blue-50 cursor-pointer">
-                      <p className="text-sm font-medium text-gray-800">
-                        Special discount on summer collection
-                      </p>
-                      <p className="text-xs text-gray-500 mt-1">3 days ago</p>
-                    </div>
+                ) : notifications.length > 0 ? (
+                  <div className="max-h-80 overflow-y-auto">
+                    {notifications.map((notification) => (
+                      <div
+                        key={notification._id}
+                        onClick={() => handleNotificationClick(notification)}
+                        className={`px-4 py-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0 group ${
+                          !notification.read ? "bg-blue-50" : ""
+                        }`}>
+                        <div className="flex justify-between items-start">
+                          <div className="flex items-start gap-3 flex-1">
+                            <span className="text-lg mt-0.5 flex-shrink-0">
+                              {getNotificationIcon(notification.type)}
+                            </span>
+                            <div className="flex-1 min-w-0">
+                              <p
+                                className={`text-sm font-medium ${
+                                  !notification.read ? "text-gray-900" : "text-gray-700"
+                                }`}>
+                                {notification.message}
+                              </p>
+                              <p className="text-xs text-gray-500 mt-1">
+                                {formatTime(notification.createdAt)}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex gap-1 ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            {!notification.read && (
+                              <button
+                                onClick={(e) => handleMarkAsRead(notification._id, e)}
+                                className="text-gray-400 hover:text-green-600 p-1"
+                                title="Mark as read">
+                                <BsCheck size={14} />
+                              </button>
+                            )}
+                            <button
+                              onClick={(e) => handleDeleteNotification(notification._id, e)}
+                              className="text-gray-400 hover:text-red-600 p-1"
+                              title="Delete">
+                              <BsX size={14} />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
+                ) : (
+                  <div className="px-4 py-6 text-center text-gray-500">
+                    <p>No notifications yet</p>
+                    <p className="text-sm mt-1">You're all caught up!</p>
+                  </div>
+                )}
+                {notifications.length > 0 && (
                   <div className="px-4 py-2 border-t border-gray-200 text-center bg-gray-50 rounded-b-lg">
                     <Link
                       href="/notifications"
-                      className="text-sm text-blue-600 hover:underline font-medium">
+                      className="text-sm text-blue-600 hover:underline font-medium"
+                      onClick={() => setShowNotifications(false)}>
                       View All Notifications
                     </Link>
                   </div>
-                </div>
-              )}
-            </div>
-          )}
-
+                )}
+              </div>
+            )}
+          </div>
           {/* Chat Icon */}
           <Link
-            href="/chats"
-            className="p-2 rounded-full hover:bg-gray-100 transition-colors relative">
-            <BsChatDots size={20} className="text-gray-600 hover:text-blue-500" />
+            href={isUserLoggedIn ? "/chats" : "/login?redirect=/chats"}
+            className="p-2 rounded-full hover:bg-gray-100 transition-colors relative group"
+            aria-label="Chats">
+            <BsChatDots
+              size={20}
+              className={
+                isUserLoggedIn && unreadMessages > 0
+                  ? "text-blue-500"
+                  : "text-gray-600 hover:text-blue-500"
+              }
+            />
+
+            {/* Unread messages badge */}
+            {isUserLoggedIn && unreadMessages > 0 && (
+              <span className="absolute top-0 right-0 w-5 h-5 bg-blue-500 text-white text-xs flex items-center justify-center rounded-full transform translate-x-1 -translate-y-1 animate-pulse">
+                {unreadMessages > 9 ? "9+" : unreadMessages}
+              </span>
+            )}
+
+            {/* Tooltip */}
+            {!isUserLoggedIn ? (
+              <div className="absolute -bottom-10 right-0 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                Login to access chats
+              </div>
+            ) : (
+              <div className="absolute -bottom-10 right-0 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                {unreadMessages === 0
+                  ? "No unread messages"
+                  : `${unreadMessages} unread message${unreadMessages !== 1 ? "s" : ""}`}
+              </div>
+            )}
           </Link>
 
           {/* Cart/Orders Icon */}
-          {authStatus ? (
+          {isUserLoggedIn ? (
             <>
               {user?.role === "stylist" || user?.role === "admin" ? (
                 <Link
                   href="/orders"
-                  className="p-2 rounded-full hover:bg-gray-100 transition-colors relative group">
+                  className="p-2 rounded-full hover:bg-gray-100 transition-colors relative group"
+                  aria-label="Orders">
                   <BsBoxSeam size={20} className="text-gray-600 hover:text-blue-500" />
-                  {ordersCount > 0 && (
-                    <span className="absolute top-0 right-0 w-5 h-5 bg-red-500 text-white text-xs flex items-center justify-center rounded-full transform translate-x-1 -translate-y-1">
-                      {ordersCount > 9 ? "9+" : ordersCount}
-                    </span>
-                  )}
-                  <div className="absolute -bottom-10 right-0 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                  <div className="absolute -bottom-10 right-0 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
                     View Orders
                   </div>
                 </Link>
               ) : (
                 <Link
                   href="/cart"
-                  className="p-2 rounded-full hover:bg-gray-100 transition-colors relative group">
+                  className="p-2 rounded-full hover:bg-gray-100 transition-colors relative group"
+                  aria-label="Cart">
                   {isLoadingCart ? (
                     <div className="w-5 h-5 rounded-full border-2 border-gray-300 border-t-blue-500 animate-spin"></div>
                   ) : (
                     <>
                       <BsCart size={20} className="text-gray-600 hover:text-blue-500" />
                       {cartItemsCount > 0 && (
-                        <span
-                          key={cartState.lastUpdated}
-                          className="absolute top-0 right-0 w-5 h-5 bg-red-500 text-white text-xs flex items-center justify-center rounded-full transform translate-x-1 -translate-y-1 animate-pulse transition-all duration-300">
+                        <span className="absolute top-0 right-0 w-5 h-5 bg-red-500 text-white text-xs flex items-center justify-center rounded-full transform translate-x-1 -translate-y-1">
                           {cartItemsCount > 9 ? "9+" : cartItemsCount}
                         </span>
                       )}
-                      <div className="absolute -bottom-10 right-0 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                      <div className="absolute -bottom-10 right-0 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
                         {cartItemsCount === 0
                           ? "Cart is empty"
                           : `${cartItemsCount} item${cartItemsCount !== 1 ? "s" : ""} in cart`}
@@ -569,9 +844,15 @@ const NavBar = () => {
           ) : (
             <Link
               href="/cart"
-              className="p-2 rounded-full hover:bg-gray-100 transition-colors relative group">
+              className="p-2 rounded-full hover:bg-gray-100 transition-colors relative group"
+              aria-label="Cart">
               <BsCart size={20} className="text-gray-600 hover:text-blue-500" />
-              <div className="absolute -bottom-10 right-0 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+              {cartItemsCount > 0 && (
+                <span className="absolute top-0 right-0 w-5 h-5 bg-red-500 text-white text-xs flex items-center justify-center rounded-full transform translate-x-1 -translate-y-1">
+                  {cartItemsCount > 9 ? "9+" : cartItemsCount}
+                </span>
+              )}
+              <div className="absolute -bottom-10 right-0 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
                 View Cart
               </div>
             </Link>
@@ -585,12 +866,12 @@ const NavBar = () => {
         <button
           title="menu"
           onClick={() => dispatch(openMobileMenu())}
-          className="md:hidden p-2 rounded-full hover:bg-gray-100 transition-colors">
+          className="md:hidden p-2 rounded-full hover:bg-gray-100 transition-colors"
+          aria-label="Menu">
           <HiMenu size={24} className="text-gray-600" />
         </button>
       </div>
     </nav>
   );
 };
-
 export default NavBar;

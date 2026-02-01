@@ -4,41 +4,73 @@ import { baseQueryWithReauth } from "../BaseUrl";
 export const messageApi = createApi({
   reducerPath: "messageApi",
   baseQuery: baseQueryWithReauth,
-  tagTypes: ["Message", "Chat"],
-  endpoints: (build) => ({
-    // Get chat history (paginated)
-    getMessages: build.query({
+  tagTypes: ["Messages", "Chats", "UnreadCount"],
+  endpoints: (builder) => ({
+    getMessages: builder.query({
       query: ({ senderId, receiverId, page = 1, limit = 50 }) => ({
-        url: `messages`,
+        url: "/messages",
         params: { senderId, receiverId, page, limit },
       }),
-      providesTags: ["Message"],
+      providesTags: (result, error, { senderId, receiverId }) => [
+        { type: "Messages", id: `${senderId}-${receiverId}` },
+      ],
     }),
 
-    // Get user's chat list/conversations
-    getChats: build.query({
-      query: () => ({
-        url: `messages/chats`,       }),
-      providesTags: ["Chat"],
+    getChats: builder.query({
+      query: () => "/messages/chats",
+      providesTags: ["Chats"],
     }),
 
-    // Upload message image
-    uploadMessageImage: build.mutation({
+    sendMessage: builder.mutation({
+      query: (data) => ({
+        url: "/messages/send",
+        method: "POST",
+        body: data,
+      }),
+      // Invalidate all related caches when a message is sent
+      invalidatesTags: (result, error, { sender, receiver }) => [
+        "Chats",
+        "UnreadCount",
+        { type: "Messages", id: `${sender}-${receiver}` },
+        { type: "Messages", id: `${receiver}-${sender}` },
+      ],
+    }),
+
+    markAsRead: builder.mutation({
+      query: (messageIds) => ({
+        url: "/messages/mark-read",
+        method: "PATCH",
+        body: { messageIds },
+      }),
+      // Invalidate caches to update unread badges
+      invalidatesTags: ["Chats", "UnreadCount"],
+    }),
+
+    createChat: builder.mutation({
+      query: (data) => ({
+        url: "/messages/start-chat",
+        method: "POST",
+        body: data,
+      }),
+      invalidatesTags: ["Chats"],
+    }),
+
+    uploadMessageImage: builder.mutation({
       query: (formData) => ({
-        url: `messages/upload-image`,
+        url: "/messages/upload-image",
         method: "POST",
         body: formData,
       }),
     }),
 
-    // Mark messages as read (batch)
-    markAsRead: build.mutation({
-      query: (messageIds) => ({
-        url: `messages/read`,
-        method: "PATCH",
-        body: { messageIds },
-      }),
-      invalidatesTags: ["Message"],
+    getUnreadMessagesCount: builder.query({
+      query: () => "/messages/unread-count",
+      providesTags: ["UnreadCount"],
+    }),
+
+    getUnreadCountByChat: builder.query({
+      query: () => "/messages/unread-by-chat",
+      providesTags: ["UnreadCount"],
     }),
   }),
 });
@@ -46,6 +78,10 @@ export const messageApi = createApi({
 export const {
   useGetMessagesQuery,
   useGetChatsQuery,
-  useUploadMessageImageMutation,
+  useSendMessageMutation,
   useMarkAsReadMutation,
+  useCreateChatMutation,
+  useUploadMessageImageMutation,
+  useGetUnreadMessagesCountQuery,
+  useGetUnreadCountByChatQuery,
 } = messageApi;

@@ -1,6 +1,7 @@
+// @/redux/services/AuthApiSlice.ts
 import { createApi } from "@reduxjs/toolkit/query/react";
 import { baseQueryWithReauth } from "../BaseUrl";
-import { logoutUser, setUser } from "../features/authSlice";
+import { setCredentials, setUser, logoutUser } from "../features/authSlice"; // Added setUser
 
 export const authApi = createApi({
   reducerPath: "authApi",
@@ -15,6 +16,16 @@ export const authApi = createApi({
         method: "POST",
         body: userData,
       }),
+      async onQueryStarted(arg, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+          if (data?.user && data?.token) {
+            dispatch(setCredentials({ user: data.user, token: data.token }));
+          }
+        } catch (error) {
+          console.error("Registration mutation failed:", error);
+        }
+      },
     }),
 
     login: builder.mutation({
@@ -26,13 +37,15 @@ export const authApi = createApi({
       async onQueryStarted(arg, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
-          dispatch(setUser(data.user));
-          // dispatch(authApi.endpoints.getCurrentUser.initiate(undefined, { forceRefetch: true }));
+          if (data?.user && data?.token) {
+            dispatch(setCredentials({ user: data.user, token: data.token }));
+          }
         } catch (error) {
           console.error("Login mutation failed:", error);
         }
       },
     }),
+
     logout: builder.mutation({
       query: () => ({
         url: "auth/logout",
@@ -45,23 +58,31 @@ export const authApi = createApi({
           dispatch(logoutUser());
         } catch (error) {
           console.error("Logout mutation failed:", error);
+          // Even if API call fails, logout locally
+          dispatch(logoutUser());
         }
       },
     }),
+
     getCurrentUser: builder.query({
       query: () => "auth/me",
       providesTags: ["User"],
       async onQueryStarted(args, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
-          dispatch(setUser(data.user));
-        } catch (error) {
+          if (data?.user) {
+            dispatch(setUser(data.user));
+          }
+        } catch (error: any) {
           console.error("getCurrentUser query failed:", error);
-
-          dispatch(logoutUser());
+          // Only logout if it's an authentication error
+          if (error?.status === 401 || error?.error?.status === 401) {
+            dispatch(logoutUser());
+          }
         }
       },
     }),
+
     verifyEmail: builder.mutation({
       query: ({ verificationToken, email }) => ({
         url: "auth/verify-email",

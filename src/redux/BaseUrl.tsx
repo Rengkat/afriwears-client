@@ -20,7 +20,7 @@ const refreshToken = async (api: any, extraOptions: any) => {
     refreshPromise = baseQuery(
       { url: "auth/refresh-token", method: "POST" },
       api,
-      extraOptions
+      extraOptions,
     ).finally(() => {
       isRefreshing = false;
       refreshPromise = null;
@@ -33,7 +33,7 @@ const refreshToken = async (api: any, extraOptions: any) => {
 const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError> = async (
   args,
   api,
-  extraOptions
+  extraOptions,
 ) => {
   let result = await baseQuery(args, api, extraOptions);
 

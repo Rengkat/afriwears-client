@@ -11,6 +11,7 @@ import {
 import toast from "react-hot-toast";
 import EmptyCart from "./EmptyCart";
 import CartItem from "./CartItem";
+import { useMoveToCartMutation } from "@/redux/services/WishlistApiSlice";
 
 interface CartProduct {
   id: string;
@@ -28,6 +29,7 @@ interface CartProduct {
 const CartPage = () => {
   const { data: cartData, isLoading, isError, error, refetch } = useGetCartProductsQuery(null);
   const [removeFromCart] = useRemoveFromCartMutation();
+  const [moveToWishlist] = useMoveToCartMutation();
   const [updateCart] = useUpdateCartMutation();
   const [clearCart] = useClearCartMutation();
   console.log(cartData);

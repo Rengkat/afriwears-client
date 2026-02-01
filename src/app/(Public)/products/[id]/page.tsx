@@ -76,7 +76,7 @@ const ProductPage = ({ params }: ProductPageProps) => {
     if (wishlistData?.success && wishlistData.data && data?.product) {
       const wishlistItems = wishlistData.data.items || wishlistData.data.wishlist?.items || [];
       const isWishlisted = wishlistItems.some(
-        (item: any) => item.product?._id === data.product._id || item.product === data.product._id
+        (item: any) => item.product?._id === data.product._id || item.product === data.product._id,
       );
       setIsInWishlist(isWishlisted);
     }
@@ -87,7 +87,7 @@ const ProductPage = ({ params }: ProductPageProps) => {
     if (data?.product) {
       const productId = data.product._id;
       const localItem = cartState.items.find(
-        (item) => item.product === productId || item.product?._id === productId
+        (item) => item.product === productId || item.product?._id === productId,
       );
 
       if (localItem) {
@@ -213,6 +213,7 @@ const ProductPage = ({ params }: ProductPageProps) => {
     } else {
       try {
         await addToWishlist({ productId: product._id }).unwrap();
+        console.log(product?._id);
         setIsInWishlist(true);
         toast.success("Added to wishlist!");
         await refetchWishlist();

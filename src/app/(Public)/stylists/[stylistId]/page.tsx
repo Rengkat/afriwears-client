@@ -20,6 +20,9 @@ import {
 } from "@/redux/services/StylistApiSlice";
 import { formatCurrency } from "@/Utils/utils";
 import { Skeleton } from "@mui/material";
+import { useRouter } from "next/navigation";
+import { useSelector } from "react-redux";
+import { RootState } from "@/redux/Store";
 
 interface SellerPageProps {
   params: Promise<{
@@ -28,7 +31,8 @@ interface SellerPageProps {
 }
 
 const SellerPage = ({ params }: SellerPageProps) => {
-  // Unwrap params with React.use() for Next.js 15
+  const router = useRouter();
+  const { user } = useSelector((store: RootState) => store.authSlice);
   const { stylistId } = use(params);
 
   // Fetch stylist data
@@ -39,21 +43,22 @@ const SellerPage = ({ params }: SellerPageProps) => {
   } = useGetStylistDetailQuery(stylistId, {
     skip: !stylistId,
   });
-
+  // console.log(stylistData);
   // Fetch products by this stylist
   const { data: productsData, isLoading: isLoadingProducts } = useGetStylistProductsQuery(
     stylistId,
     {
       skip: !stylistId,
-    }
+    },
   );
-
+  console.log(productsData);
   const stylist = stylistData?.stylist;
   const products = productsData?.products || [];
   const totalProducts = productsData?.total || 0;
   const hasProducts = !isLoadingProducts && products.length > 0;
   const hasPortfolio = stylist?.portfolio && stylist.portfolio.length > 0;
-
+  // console.log(stylist);
+  // console.log(stylist?.owner?.id);
   // Format specialties
   const specialties = Array.isArray(stylist?.specialty) ? stylist.specialty : [];
 
@@ -91,6 +96,29 @@ const SellerPage = ({ params }: SellerPageProps) => {
       ? socialMedia.pinterest
       : `https://pinterest.com/${socialMedia.pinterest}`
     : null;
+
+  const handleChatClick = () => {
+    if (!user) {
+      router.push(`/login?redirect=/chats&stylist=${stylistId}`);
+      return;
+    }
+
+    if (!stylist) {
+      alert("Stylist information not available.");
+      return;
+    }
+
+    //  Use owner ID, not stylist ID for chat
+    const ownerId = stylist?.owner?._id || stylist?.owner?.id;
+
+    if (!ownerId) {
+      alert("Unable to chat with this stylist: Owner information missing.");
+      return;
+    }
+
+    // Pass BOTH owner and stylist IDs
+    router.push(`/chats?owner=${ownerId}&stylist=${stylistId}`);
+  };
 
   // Loading state
   if (isLoadingStylist) {
@@ -134,13 +162,6 @@ const SellerPage = ({ params }: SellerPageProps) => {
       </div>
     );
   }
-
-  // Handle chat click (placeholder for now)
-  const handleChatClick = () => {
-    // TODO: Implement chat functionality
-    // For now, show a message that chat is coming soon
-    alert("Chat functionality is coming soon! You'll be able to message this stylist directly.");
-  };
 
   return (
     <div className="bg-gray-50 min-h-screen pb-16">
@@ -215,6 +236,12 @@ const SellerPage = ({ params }: SellerPageProps) => {
                         </span>
                       )}
                     </div>
+                    <button
+                      onClick={handleChatClick}
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-medium">
+                      <BsChatDots />
+                      Message
+                    </button>
                   </div>
 
                   <p className="text-amber-600 font-medium mb-3 mt-2">

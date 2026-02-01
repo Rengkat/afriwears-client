@@ -43,8 +43,8 @@ interface ApiStylist {
 interface UIStylist {
   id: string;
   company: string;
-  specialty: string; // Keep as string for display (comma-separated)
-  specialtyArray: string[]; // Add array version for filtering
+  specialty: string;
+  specialtyArray: string[];
   rating: number;
   reviews: number;
   location: string;
@@ -90,7 +90,7 @@ const StylistsPage = () => {
       setDebouncedSearchTerm(value);
       setPage(1);
     }, 500),
-    []
+    [],
   );
 
   useEffect(() => {
@@ -131,8 +131,8 @@ const StylistsPage = () => {
       const specialtyArray = Array.isArray(stylist.specialty)
         ? stylist.specialty
         : stylist.specialty
-        ? [stylist.specialty]
-        : [];
+          ? [stylist.specialty]
+          : [];
 
       return {
         id: stylist._id,

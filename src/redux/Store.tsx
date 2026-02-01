@@ -1,6 +1,7 @@
+// @/redux/Store.ts
 import { configureStore } from "@reduxjs/toolkit";
-import appSlice from "../redux/features/appSlice";
-import cartSlice from "../redux/features/cartSlice";
+import appSlice from "./features/appSlice";
+import cartSlice from "./features/cartSlice";
 import { authApi } from "./services/AuthApiSlice";
 import authReducer from "./features/authSlice";
 import { userApiSlice } from "./services/UserApiSlice";
@@ -10,6 +11,8 @@ import { orderApi } from "./services/OrderApiSlice";
 import { wishlistApi } from "./services/WishlistApiSlice";
 import { cartApi } from "./services/CartApiSlice";
 import { stylistApi } from "./services/StylistApiSlice";
+import { notificationApi } from "./services/NotificationApiSlice";
+import { messageApi } from "./services/MessageApiSlice";
 
 export const store = configureStore({
   reducer: {
@@ -24,6 +27,8 @@ export const store = configureStore({
     [wishlistApi.reducerPath]: wishlistApi.reducer,
     [cartApi.reducerPath]: cartApi.reducer,
     [stylistApi.reducerPath]: stylistApi.reducer,
+    [notificationApi.reducerPath]: notificationApi.reducer,
+    [messageApi.reducerPath]: messageApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware()
@@ -34,7 +39,10 @@ export const store = configureStore({
       .concat(orderApi.middleware)
       .concat(wishlistApi.middleware)
       .concat(cartApi.middleware)
-      .concat(stylistApi.middleware),
+      .concat(stylistApi.middleware)
+      .concat(notificationApi.middleware)
+      .concat(messageApi.middleware),
 });
+
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
