@@ -173,12 +173,12 @@ const ChatPage = () => {
 
     // Find unread messages where current user is receiver
     const unreadMessageIds = messages
-      .filter((msg) => {
+      .filter((msg: any) => {
         const receiverId = msg.receiver.id || msg.receiver._id;
         return receiverId === userId && !msg.read;
       })
-      .map((msg) => msg._id)
-      .filter((id) => !id.startsWith("temp-")); // Don't try to mark temp messages as read
+      .map((msg: any) => msg._id)
+      .filter((id: any) => !id.startsWith("temp-")); // Don't try to mark temp messages as read
 
     if (unreadMessageIds.length > 0) {
       // Mark as read after a short delay (so user has time to see the messages)

@@ -12,8 +12,6 @@ export const cartApi = createApi({
         url: `cart`,
       }),
       providesTags: ["Cart"],
-      // REMOVE onQueryStarted entirely - let RTK Query handle cache
-      // This prevents state conflicts with auth
     }),
 
     addToCart: build.mutation({
@@ -36,8 +34,17 @@ export const cartApi = createApi({
 
     removeFromCart: build.mutation({
       query: (productId) => ({
-        url: `cart`,
+        url: `cart/${productId}`,
         method: "DELETE",
+        body: { productId },
+      }),
+      invalidatesTags: ["Cart"],
+    }),
+    // Move product from cart to wishlistnpm
+    moveToWishlist: build.mutation({
+      query: (productId: string) => ({
+        url: "cart/move-to-wishlist",
+        method: "POST",
         body: { productId },
       }),
       invalidatesTags: ["Cart"],
@@ -69,4 +76,5 @@ export const {
   useRemoveFromCartMutation,
   useUpdateCartMutation,
   useClearCartMutation,
+  useMoveToWishlistMutation,
 } = cartApi;

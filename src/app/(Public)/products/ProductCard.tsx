@@ -39,7 +39,7 @@ const ProductCard = ({ product }) => {
           <BsStarFill key={i} className="w-3 h-3 text-amber-400" />
         ) : (
           <BsStar key={i} className="w-3 h-3 text-gray-300" />
-        )
+        ),
       );
     }
     return stars;
@@ -92,7 +92,7 @@ const ProductCard = ({ product }) => {
           />
 
           {/* Badges */}
-          <div className="absolute top-3 left-3 flex flex-col gap-1">
+          <div className="absolute top-3 left-3 flex flex-col gap-1 z-10 ">
             {isProductNew() && (
               <span className="bg-green-600 text-white px-2 py-1 rounded text-xs font-bold shadow-md">
                 NEW
@@ -150,7 +150,7 @@ const ProductCard = ({ product }) => {
           <div className="mb-2">
             <span
               className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${getCategoryColor(
-                product.category
+                product.category,
               )}`}>
               <BsTag className="w-3 h-3 mr-1" />
               {product.category?.charAt(0).toUpperCase() + product.category?.slice(1)}
@@ -217,8 +217,8 @@ const ProductCard = ({ product }) => {
                     product.stock > 10
                       ? "bg-green-500"
                       : product.stock > 5
-                      ? "bg-amber-500"
-                      : "bg-red-500"
+                        ? "bg-amber-500"
+                        : "bg-red-500"
                   }`}
                   style={{ width: `${(product.stock / 20) * 100}%` }}></div>
               </div>
