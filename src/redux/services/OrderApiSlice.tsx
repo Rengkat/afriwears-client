@@ -35,7 +35,7 @@ export interface Order {
   orderItems: OrderItem[];
   shippingAddress: ShippingAddress;
   paymentInfo: {
-    paymentMethod: "credit_card" | "bank_transfer" | "cash_on_delivery" | "wallet" | "online";
+    paymentMethod: "credit_card" | "bank_transfer" | "cash_on_delivery" | "wallet";
     paymentStatus: "pending" | "completed" | "failed" | "refunded" | "partially_paid";
     transactionId?: string;
     reference?: string;
@@ -58,7 +58,7 @@ export interface Order {
 
 export interface CreateOrderRequest {
   shippingAddress: ShippingAddress;
-  paymentMethod: "online" | "wallet" | "cash_on_delivery";
+  paymentMethod: "credit_card" | "bank_transfer" | "wallet" | "cash_on_delivery";
   orderType: "standard" | "custom";
   measurements?: any;
   materialSample?: string;
@@ -99,12 +99,13 @@ export const orderApi = createApi({
     }),
 
     // Verify payment for an order
-    verifyPayment: build.mutation<SingleOrderResponse, { orderId: string; reference: string }>({
-      query: ({ orderId, reference }) => ({
-        url: `orders/verify-payment?orderId=${orderId}&reference=${reference}`,
+    verifyPayment: build.mutation<SingleOrderResponse, { reference: string; orderId?: string }>({
+      query: ({ reference }) => ({
+        url: `orders/verify-payment?reference=${reference}`,
         method: "GET",
       }),
-      invalidatesTags: (result, error, { orderId }) => [{ type: "Order", id: orderId }, "Orders"],
+      invalidatesTags: (result, error, { orderId }) => 
+        result?.order?._id ? [{ type: "Order", id: result.order._id }, "Orders"] : ["Orders"],
     }),
 
     // Complete custom order payment

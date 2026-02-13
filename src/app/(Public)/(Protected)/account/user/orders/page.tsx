@@ -1,7 +1,7 @@
 "use client";
 import { useGetMyOrdersQuery } from "@/redux/services/OrderApiSlice";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   FiPackage,
   FiCalendar,
@@ -10,6 +10,7 @@ import {
   FiTruck,
   FiChevronLeft,
   FiChevronRight,
+  FiXCircle,
 } from "react-icons/fi";
 
 interface OrderItem {
@@ -20,14 +21,15 @@ interface OrderItem {
     mainImage: string;
   };
   quantity: number;
-  price: number;
+  priceAtPurchase: number;
+  price?: number;
 }
 
 interface Order {
   _id: string;
   orderItems: OrderItem[];
   totalPrice: number;
-  status: "delivered" | "shipped" | "processing";
+  orderStatus: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
   createdAt: string;
   updatedAt: string;
   deliveredAt?: string;
@@ -36,17 +38,11 @@ interface Order {
 }
 
 const statusStyles = {
-  delivered: {
-    bg: "bg-green-50",
-    text: "text-green-800",
-    icon: FiCheckCircle,
-    label: "Delivered",
-  },
-  shipped: {
-    bg: "bg-blue-50",
-    text: "text-blue-800",
-    icon: FiTruck,
-    label: "Shipped",
+  pending: {
+    bg: "bg-gray-50",
+    text: "text-gray-800",
+    icon: FiClock,
+    label: "Pending",
   },
   processing: {
     bg: "bg-amber-50",
@@ -54,6 +50,36 @@ const statusStyles = {
     icon: FiClock,
     label: "Processing",
   },
+  shipped: {
+    bg: "bg-blue-50",
+    text: "text-blue-800",
+    icon: FiTruck,
+    label: "Shipped",
+  },
+  delivered: {
+    bg: "bg-green-50",
+    text: "text-green-800",
+    icon: FiCheckCircle,
+    label: "Delivered",
+  },
+  cancelled: {
+    bg: "bg-red-50",
+    text: "text-red-800",
+    icon: FiXCircle,
+    label: "Cancelled",
+  },
+};
+
+const getStatusStyle = (status: string) => {
+  return statusStyles[status as keyof typeof statusStyles] || statusStyles.pending;
+};
+
+const getItemPrice = (item: OrderItem) => {
+  return item.priceAtPurchase || item.price || 0;
+};
+
+const getTotalPrice = (order: Order) => {
+  return order.totalPrice || 0;
 };
 
 const OrdersPage = () => {
@@ -65,6 +91,13 @@ const OrdersPage = () => {
   const orders = ordersData?.orders || [];
   const totalOrders = ordersData?.count || 0;
   const totalPages = Math.ceil(totalOrders / limit);
+
+  useEffect(() => {
+    if (ordersData && ordersData.orders?.length > 0) {
+      console.log("Orders API response:", ordersData);
+      console.log("First order items:", ordersData.orders[0].orderItems);
+    }
+  }, [ordersData]);
 
   const handlePrevPage = () => {
     if (page > 1) setPage(page - 1);
@@ -163,7 +196,8 @@ const OrdersPage = () => {
         <>
           <div className="space-y-6">
             {orders.map((order: Order) => {
-              const StatusIcon = statusStyles[order.status].icon;
+              const statusStyle = getStatusStyle(order.orderStatus);
+              const StatusIcon = statusStyle.icon;
               return (
                 <div
                   key={order._id}
@@ -175,11 +209,9 @@ const OrdersPage = () => {
                         Order #{order._id.slice(-6).toUpperCase()}
                       </h3>
                       <span
-                        className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-                          statusStyles[order.status].bg
-                        } ${statusStyles[order.status].text}`}>
+                        className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${statusStyle.bg} ${statusStyle.text}`}>
                         <StatusIcon className="mr-1.5 h-3.5 w-3.5" />
-                        {statusStyles[order.status].label}
+                        {statusStyle.label}
                       </span>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-gray-500">
@@ -215,7 +247,7 @@ const OrdersPage = () => {
                         </div>
                         <div className="sm:text-right">
                           <p className="font-medium text-gray-900">
-                            ₦{item.price.toLocaleString()}
+                            ₦{getItemPrice(item).toLocaleString()}
                           </p>
                         </div>
                       </div>
@@ -225,16 +257,16 @@ const OrdersPage = () => {
                   {/* Order Footer */}
                   <div className="border-t border-gray-100 px-6 py-4 flex flex-wrap items-center justify-between gap-4">
                     <div className="space-y-1">
-                      {order.status === "shipped" && order.trackingNumber && (
+                      {order.orderStatus === "shipped" && order.trackingNumber && (
                         <p className="text-sm text-gray-500">
                           <span className="font-medium">Tracking #:</span> {order.trackingNumber}
                         </p>
                       )}
-                      {order.status === "delivered" && order.deliveredAt ? (
+                      {order.orderStatus === "delivered" && order.deliveredAt ? (
                         <p className="text-sm text-gray-500">
                           Delivered on {formatDate(order.deliveredAt)}
                         </p>
-                      ) : order.status === "shipped" && order.estimatedDelivery ? (
+                      ) : order.orderStatus === "shipped" && order.estimatedDelivery ? (
                         <p className="text-sm text-gray-500">
                           Estimated delivery: {formatDate(order.estimatedDelivery)}
                         </p>
@@ -247,7 +279,7 @@ const OrdersPage = () => {
                     <div className="flex items-baseline gap-2">
                       <p className="text-sm text-gray-500">Total:</p>
                       <p className="text-lg font-bold text-gray-900">
-                        ₦{order.totalPrice.toLocaleString()}
+                        ₦{getTotalPrice(order).toLocaleString()}
                       </p>
                     </div>
                   </div>

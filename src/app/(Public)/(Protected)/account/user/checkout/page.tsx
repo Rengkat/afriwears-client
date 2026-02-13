@@ -56,8 +56,8 @@ const CheckoutPage = () => {
     phone: "",
   });
 
-  const [paymentMethod, setPaymentMethod] = useState<"online" | "wallet" | "cash_on_delivery">(
-    "online",
+  const [paymentMethod, setPaymentMethod] = useState<"credit_card" | "wallet" | "cash_on_delivery">(
+    "credit_card",
   );
   const [orderType] = useState<"standard" | "custom">("standard");
   const [agreedToTerms, setAgreedToTerms] = useState(false);
@@ -174,7 +174,7 @@ const CheckoutPage = () => {
       const response = await createOrder(orderData).unwrap();
 
       // Handle different payment methods
-      if (paymentMethod === "online" && response.authorizationUrl) {
+      if (paymentMethod === "credit_card" && response.authorizationUrl) {
         // Redirect to Paystack payment page
         toast.success("Redirecting to payment gateway...");
         window.location.href = response.authorizationUrl;
@@ -234,6 +234,7 @@ const CheckoutPage = () => {
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Country</label>
                   <input
+                    title="country"
                     type="text"
                     name="country"
                     value={shippingAddress.country}
@@ -247,6 +248,7 @@ const CheckoutPage = () => {
                     State <span className="text-red-500">*</span>
                   </label>
                   <select
+                    title="state"
                     name="state"
                     value={shippingAddress.state}
                     onChange={handleInputChange}
@@ -373,15 +375,15 @@ const CheckoutPage = () => {
                 {/* Online Payment */}
                 <label
                   className={`flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                    paymentMethod === "online"
+                    paymentMethod === "credit_card"
                       ? "border-amber-500 bg-amber-50"
                       : "border-gray-200 hover:border-gray-300"
                   }`}>
                   <input
                     type="radio"
                     name="paymentMethod"
-                    value="online"
-                    checked={paymentMethod === "online"}
+                    value="credit_card"
+                    checked={paymentMethod === "credit_card"}
                     onChange={(e) => setPaymentMethod(e.target.value as any)}
                     className="h-4 w-4 text-amber-600 focus:ring-amber-500"
                   />
