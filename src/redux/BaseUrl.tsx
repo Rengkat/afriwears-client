@@ -3,7 +3,7 @@ import type { BaseQueryFn, FetchArgs, FetchBaseQueryError } from "@reduxjs/toolk
 import { logoutUser, setUser } from "./features/authSlice";
 import { RootState } from "./Store";
 
-const baseUrl = 'https://afrikan-wears-backend.onrender.com/api'|| "http://localhost:5000/api";
+const baseUrl =  "http://localhost:5000/api";
 
 const baseQuery = fetchBaseQuery({
   baseUrl,

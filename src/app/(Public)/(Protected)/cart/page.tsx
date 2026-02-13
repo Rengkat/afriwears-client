@@ -106,8 +106,8 @@ const CartPage = () => {
   }
 
   const cartProducts = cartData?.data?.items || [];
-  // console.log(cartData);
-  const subtotal = cartData?.total || 0;
+  console.log(cartData);
+  const subtotal = cartData?.data?.total || 0;
   const shipping = subtotal > 0 ? 2500 : 0; // Free shipping on empty cart
   const tax = subtotal > 0 ? Math.round(subtotal * 0.075) : 0; // 7.5% VAT
   const total = subtotal + shipping + tax;

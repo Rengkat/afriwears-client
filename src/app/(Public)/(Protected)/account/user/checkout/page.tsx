@@ -62,7 +62,6 @@ const CheckoutPage = () => {
   const [orderType] = useState<"standard" | "custom">("standard");
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
-
   // Cart calculations
   const cartProducts = cartData?.data?.items || [];
   const subtotal = cartData?.total || 0;
