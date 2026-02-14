@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
 import { useEffect, useState } from "react";
 
-const AccountRoleLayout = ({ children }: { children: React.ReactNode }) => {
+export default function AccountRoleLayout({ children }: { children: React.ReactNode }) {
   const { user } = useSelector((state: RootState) => state.authSlice);
   const router = useRouter();
   const [isChecking, setIsChecking] = useState(true);
@@ -35,6 +35,4 @@ const AccountRoleLayout = ({ children }: { children: React.ReactNode }) => {
   }
 
   return <div>{children}</div>;
-};
-
-export default AccountRoleLayout;
+}
