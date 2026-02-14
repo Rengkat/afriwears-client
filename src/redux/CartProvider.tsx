@@ -10,11 +10,21 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   const dispatch = useDispatch();
   const user = useSelector((store: RootState) => store.authSlice.user);
   const token = useSelector((store: RootState) => store.authSlice.token);
-
+  
+  // Add mounted state to prevent hydration mismatch
+  const [mounted, setMounted] = useState(false);
   const [hasValidAuth, setHasValidAuth] = useState(false);
   const hasFetchedRef = useRef(false);
 
+  // Set mounted after hydration
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    // Only run auth validation after mount
+    if (!mounted) return;
+    
     if (user && token) {
       const timer = setTimeout(() => {
         setHasValidAuth(true);
@@ -25,28 +35,32 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
       setHasValidAuth(false);
       hasFetchedRef.current = false;
     }
-  }, [user, token]);
+  }, [user, token, mounted]);
 
+  // Skip API calls during SSR and before auth validation
   const { isLoading, data, error } = useGetCartProductsQuery(undefined, {
-    skip: !hasValidAuth || hasFetchedRef.current,
+    skip: !mounted || !hasValidAuth || hasFetchedRef.current,
   });
 
   useEffect(() => {
-    if (data && hasValidAuth) {
+    if (data && hasValidAuth && mounted) {
       hasFetchedRef.current = true;
     }
 
     console.log("CartProvider:", {
+      mounted,
       hasValidAuth,
       isLoading,
       hasData: !!data,
       itemsCount: data?.data?.items?.length || 0,
     });
-  }, [hasValidAuth, isLoading, data]);
+  }, [hasValidAuth, isLoading, data, mounted]);
 
   useEffect(() => {
-    dispatch(setCartLoading(isLoading));
-  }, [isLoading, dispatch]);
+    if (mounted) {
+      dispatch(setCartLoading(isLoading));
+    }
+  }, [isLoading, dispatch, mounted]);
 
   return <>{children}</>;
 };

@@ -32,17 +32,25 @@ import {
 import { useGetUnreadMessagesCountQuery } from "@/redux/services/MessageApiSlice";
 
 const MobileNav = () => {
+  const [mounted, setMounted] = useState(false);
   const dispatch = useDispatch();
   const router = useRouter();
   const isMobileMenuOpen = useSelector(
-    (state: RootState) => state.shopReducer?.isMobileMenuOpen ?? false
+    (state: RootState) => state.shopReducer?.isMobileMenuOpen ?? false,
   );
-  
+
   // Auth state
-  const { data: userData, isLoading: isLoadingUser } = useGetCurrentUserQuery(null);
+  const { data: userData, isLoading: isLoadingUser } = useGetCurrentUserQuery(null, {
+    skip: !mounted, // Skip during SSR
+  });
   const { user: localUser } = useSelector((store: RootState) => store.authSlice);
   const user = userData?.user || localUser;
   const isUserLoggedIn = !!user;
+
+  // Set mounted after hydration
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
@@ -55,28 +63,20 @@ const MobileNav = () => {
   const [showNotifications, setShowNotifications] = useState(false);
   const notificationRef = useRef<HTMLDivElement>(null);
 
-  // Fetch notifications and unread counts
-  const {
-    data: unreadCountData,
-    refetch: refetchUnreadCount,
-  } = useGetUnreadCountQuery(undefined, {
-    skip: !isUserLoggedIn,
+  // Fetch notifications and unread counts - skip during SSR
+  const { data: unreadCountData, refetch: refetchUnreadCount } = useGetUnreadCountQuery(undefined, {
+    skip: !mounted || !isUserLoggedIn,
   });
 
-  const {
-    data: unreadMessagesData,
-  } = useGetUnreadMessagesCountQuery(undefined, {
-    skip: !isUserLoggedIn,
+  const { data: unreadMessagesData } = useGetUnreadMessagesCountQuery(undefined, {
+    skip: !mounted || !isUserLoggedIn,
   });
 
   const {
     data: notificationsData,
     isLoading: isLoadingNotifications,
     refetch: refetchNotifications,
-  } = useGetNotificationsQuery(
-    { page: 1, limit: 5 },
-    { skip: !isUserLoggedIn }
-  );
+  } = useGetNotificationsQuery({ page: 1, limit: 5 }, { skip: !mounted || !isUserLoggedIn });
 
   const [markAsRead] = useMarkAsReadMutation();
   const [markAllAsRead] = useMarkAllAsReadMutation();
@@ -86,15 +86,15 @@ const MobileNav = () => {
   const unreadMessages = unreadMessagesData?.count || 0;
   const notifications = notificationsData?.notifications || [];
 
-  // Cart query
+  // Cart query - skip during SSR
   const { data: cartData, isLoading: isLoadingCart } = useGetCartProductsQuery(undefined, {
-    skip: !isUserLoggedIn,
+    skip: !mounted || !isUserLoggedIn,
   });
 
   // Cart state from Redux
   const cartState = useSelector((store: RootState) => store.cartSlice);
 
-  // Search query
+  // Search query - skip during SSR
   const { data: searchData, isFetching: isSearchFetching } = useGetApprovedProductsQuery(
     {
       name: searchQuery.trim(),
@@ -102,12 +102,14 @@ const MobileNav = () => {
       page: 1,
     },
     {
-      skip: !searchQuery.trim() || searchQuery.trim().length < 2,
-    }
+      skip: !mounted || !searchQuery.trim() || searchQuery.trim().length < 2,
+    },
   );
 
   // Calculate cart items count
   const cartItemsCount = (() => {
+    if (!mounted) return 0; // Return 0 during SSR
+
     if (!isUserLoggedIn) {
       return cartState.itemCount || 0;
     }
@@ -123,6 +125,8 @@ const MobileNav = () => {
 
   // Update search results
   useEffect(() => {
+    if (!mounted) return;
+
     if (searchQuery.trim().length >= 2 && searchData?.products) {
       setSearchResults(searchData.products);
       setIsSearching(false);
@@ -130,14 +134,16 @@ const MobileNav = () => {
       setSearchResults([]);
       setShowSearchResults(false);
     }
-  }, [searchData, searchQuery]);
+  }, [searchData, searchQuery, mounted]);
 
   // Set searching state
   useEffect(() => {
+    if (!mounted) return;
+
     if (searchQuery.trim().length >= 2 && isSearchFetching) {
       setIsSearching(true);
     }
-  }, [isSearchFetching, searchQuery]);
+  }, [isSearchFetching, searchQuery, mounted]);
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -333,6 +339,7 @@ const MobileNav = () => {
   };
 
   const formatTime = (dateString: string) => {
+    if (!mounted) return ""; // Return empty during SSR
     try {
       return formatDistanceToNow(new Date(dateString), { addSuffix: true });
     } catch (error) {
@@ -340,6 +347,20 @@ const MobileNav = () => {
     }
   };
 
+  // During SSR and initial hydration, render a minimal placeholder
+  if (!mounted) {
+    return (
+      <div className="fixed inset-0 opacity-0 invisible bg-[#000000b8] backdrop-blur-[1px] z-50">
+        <div className="transform translate-x-[-100%] bg-white z-50 w-[85%] sm:w-[75%] md:w-[65%] h-[100vh] relative overflow-y-auto">
+          <div className="pt-16 px-6">
+            <div className="mb-6">
+              <div className="h-12 bg-gray-200 rounded-lg animate-pulse"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
   return (
     <div
       onClick={closeSidebar}
@@ -351,9 +372,9 @@ const MobileNav = () => {
         className={`transform transition-transform duration-300 ${
           isMobileMenuOpen ? "translate-x-0" : "translate-x-[-100%]"
         } bg-white z-50 w-[85%] sm:w-[75%] md:w-[65%] h-[100vh] relative overflow-y-auto`}>
-        
         {/* Close Button */}
         <button
+          title="close slide-over menu"
           onClick={closeSidebar}
           className="absolute top-5 right-5 w-10 h-10 rounded-full flex items-center justify-center bg-gray-100 hover:bg-gray-200 transition-colors">
           <GrClose fontSize={20} className="text-gray-600" />
@@ -367,7 +388,9 @@ const MobileNav = () => {
                 <FaUserAlt className="text-blue-600 text-2xl" />
               </div>
               <div>
-                <h3 className="font-semibold text-gray-800">{user?.firstName} {user?.surname}</h3>
+                <h3 className="font-semibold text-gray-800">
+                  {user?.firstName} {user?.surname}
+                </h3>
                 <p className="text-sm text-gray-500">{user?.email}</p>
                 {user?.role === "stylist" && (
                   <span className="text-xs text-purple-600 flex items-center mt-1">
@@ -390,10 +413,7 @@ const MobileNav = () => {
 
         {/* Quick Access Icons */}
         <div className="flex justify-around px-6 py-5 border-t border-b border-gray-100 bg-gray-50">
-          <Link
-            href="/account"
-            onClick={closeSidebar}
-            className="flex flex-col items-center group">
+          <Link href="/account" onClick={closeSidebar} className="flex flex-col items-center group">
             <div className="p-2 rounded-full group-hover:bg-blue-100 transition-colors">
               <FaUserAlt className="text-xl text-blue-600" />
             </div>
@@ -420,7 +440,9 @@ const MobileNav = () => {
               onClick={() => setShowNotifications(!showNotifications)}
               className="flex flex-col items-center group relative">
               <div className="p-2 rounded-full group-hover:bg-blue-100 transition-colors">
-                <BsBellFill className={`text-xl ${unreadNotifications > 0 ? "text-yellow-500" : "text-blue-600"}`} />
+                <BsBellFill
+                  className={`text-xl ${unreadNotifications > 0 ? "text-yellow-500" : "text-blue-600"}`}
+                />
               </div>
               <span className="text-xs mt-1 text-gray-600">Notifications</span>
               {isUserLoggedIn && unreadNotifications > 0 && (
@@ -450,7 +472,7 @@ const MobileNav = () => {
                   </div>
                 ) : notifications.length > 0 ? (
                   <div className="max-h-80 overflow-y-auto">
-                    {notifications.map((notification) => (
+                    {notifications.map((notification: any) => (
                       <div
                         key={notification._id}
                         onClick={() => handleNotificationClick(notification)}
@@ -463,9 +485,10 @@ const MobileNav = () => {
                               {getNotificationIcon(notification.type)}
                             </span>
                             <div className="flex-1 min-w-0">
-                              <p className={`text-sm font-medium ${
-                                !notification.read ? "text-gray-900" : "text-gray-700"
-                              }`}>
+                              <p
+                                className={`text-sm font-medium ${
+                                  !notification.read ? "text-gray-900" : "text-gray-700"
+                                }`}>
                                 {notification.message}
                               </p>
                               <p className="text-xs text-gray-500 mt-1">
@@ -514,7 +537,13 @@ const MobileNav = () => {
           </div>
 
           <Link
-            href={isUserLoggedIn ? (user?.role === "stylist" || user?.role === "admin" ? "/orders" : "/cart") : "/cart"}
+            href={
+              isUserLoggedIn
+                ? user?.role === "stylist" || user?.role === "admin"
+                  ? "/orders"
+                  : "/cart"
+                : "/cart"
+            }
             onClick={closeSidebar}
             className="flex flex-col items-center group relative">
             <div className="p-2 rounded-full group-hover:bg-blue-100 transition-colors">
@@ -525,15 +554,17 @@ const MobileNav = () => {
               )}
             </div>
             <span className="text-xs mt-1 text-gray-600">
-              {isUserLoggedIn && (user?.role === "stylist" || user?.role === "admin") ? "Orders" : "Cart"}
+              {isUserLoggedIn && (user?.role === "stylist" || user?.role === "admin")
+                ? "Orders"
+                : "Cart"}
             </span>
-            {!isUserLoggedIn || (user?.role !== "stylist" && user?.role !== "admin") ? (
-              cartItemsCount > 0 && (
-                <span className="absolute top-0 right-2 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
-                  {cartItemsCount > 9 ? "9+" : cartItemsCount}
-                </span>
-              )
-            ) : null}
+            {!isUserLoggedIn || (user?.role !== "stylist" && user?.role !== "admin")
+              ? cartItemsCount > 0 && (
+                  <span className="absolute top-0 right-2 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                    {cartItemsCount > 9 ? "9+" : cartItemsCount}
+                  </span>
+                )
+              : null}
           </Link>
         </div>
 
@@ -657,7 +688,8 @@ const MobileNav = () => {
                         const productId = product.id || product._id;
                         const productName = product.name || product.title || "Unnamed Product";
                         const productPrice = product.price || product.priceInCents / 100 || 0;
-                        const productImage = product.mainImage || product.image || product.images?.[0];
+                        const productImage =
+                          product.mainImage || product.image || product.images?.[0];
                         const productCategory = product.category || product.type || "Uncategorized";
 
                         return (
