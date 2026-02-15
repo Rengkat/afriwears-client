@@ -24,7 +24,25 @@ import {
   useMarkAsReadMutation,
 } from "@/redux/services/NotificationApiSlice";
 import { useGetUnreadMessagesCountQuery } from "@/redux/services/MessageApiSlice";
-
+interface CartState {
+  items: Array<{
+    id: string;
+    quantity: number;
+  }>;
+  itemCount: number;
+  totalAmount: number;
+}
+interface Notification {
+  _id: string;
+  id: string;
+  type: "order" | "message" | "alert" | "promotion";
+  title: string;
+  message: string;
+  isRead: boolean;
+  createdAt: string;
+  data?: any;
+  read?: boolean;
+}
 const NavBar = () => {
   const { data: userData, isLoading: isLoadingUser } = useGetCurrentUserQuery(null);
   const { user: localUser } = useSelector((store: RootState) => store.authSlice);
@@ -270,7 +288,7 @@ const NavBar = () => {
     if (notifications.length === 0 || unreadNotifications === 0) return;
 
     try {
-      await markAllAsRead().unwrap();
+      await markAllAsRead({}).unwrap();
       refetchUnreadCount();
       refetchNotifications();
     } catch (error) {
@@ -705,7 +723,7 @@ const NavBar = () => {
                   </div>
                 ) : notifications.length > 0 ? (
                   <div className="max-h-80 overflow-y-auto">
-                    {notifications.map((notification) => (
+                    {notifications.map((notification: Notification) => (
                       <div
                         key={notification._id}
                         onClick={() => handleNotificationClick(notification)}
