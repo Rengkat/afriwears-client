@@ -23,6 +23,7 @@ import { Skeleton } from "@mui/material";
 import { useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
 import { RootState } from "@/redux/Store";
+import { Product } from "@/Utils/Types";
 
 interface SellerPageProps {
   params: Promise<{
@@ -254,7 +255,7 @@ const SellerPage = ({ params }: SellerPageProps) => {
 
                   {specialties.length > 0 && (
                     <div className="flex flex-wrap gap-2">
-                      {specialties.map((specialty, i) => (
+                      {specialties.map((specialty: string, i: string) => (
                         <span
                           key={i}
                           className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
@@ -291,7 +292,7 @@ const SellerPage = ({ params }: SellerPageProps) => {
                 ) : hasProducts ? (
                   <>
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                      {products.slice(0, 8).map((product) => (
+                      {products.slice(0, 8).map((product: Product) => (
                         <Link
                           key={product._id}
                           href={`/products/${product._id}`}
@@ -372,7 +373,7 @@ const SellerPage = ({ params }: SellerPageProps) => {
 
                 {hasPortfolio ? (
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    {stylist.portfolio.map((item, index) => (
+                    {stylist.portfolio.map((item: any, index: string) => (
                       <div key={index} className="group relative rounded-lg overflow-hidden h-48">
                         <Image
                           src={item.image || "/portfolio-placeholder.jpg"}
@@ -574,7 +575,7 @@ const SellerPage = ({ params }: SellerPageProps) => {
                 <div className="p-6 md:p-8">
                   <h3 className="text-xl font-bold text-gray-900 mb-6">Services Offered</h3>
                   <div className="flex flex-wrap gap-2">
-                    {stylist.services.map((service, index) => (
+                    {stylist.services.map((service: any, index: string) => (
                       <span
                         key={index}
                         className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium bg-blue-50 text-blue-700 border border-blue-100">

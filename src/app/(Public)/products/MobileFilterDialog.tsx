@@ -1,6 +1,17 @@
 import React from "react";
 import { FiX } from "react-icons/fi";
+type FilterType = "category" | "type" | "price";
 
+interface FilterOption {
+  value: string;
+  label: string;
+}
+
+interface Filter {
+  id: FilterType;
+  name: string;
+  options: FilterOption[];
+}
 const MobileFilterDialog = ({
   setMobileFiltersOpen,
   selectedFilters,
@@ -28,7 +39,7 @@ const MobileFilterDialog = ({
           </div>
 
           <div className="mt-4">
-            {filters.map((filter) => (
+            {filters.map((filter: Filter) => (
               <div key={filter.id} className="border-t border-gray-200 pt-4 pb-4">
                 <fieldset>
                   <legend className="block text-sm font-medium text-gray-900">{filter.name}</legend>

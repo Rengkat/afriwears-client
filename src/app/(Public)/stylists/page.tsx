@@ -257,7 +257,7 @@ const StylistsPage = () => {
             <div className="bg-red-50 border border-red-200 rounded-lg p-8 max-w-md mx-auto">
               <h3 className="text-lg font-semibold text-red-800 mb-2">Unable to load stylists</h3>
               <p className="text-red-600 mb-4">
-                {error?.data?.message || "Please try again later"}
+                {(error as any)?.data?.message || "Please try again later"}
               </p>
               <button
                 onClick={() => window.location.reload()}

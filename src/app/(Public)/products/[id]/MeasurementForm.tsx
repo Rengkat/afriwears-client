@@ -154,7 +154,7 @@ const MeasurementsForm: React.FC<MeasurementsFormProps> = ({
       };
 
       // Call the create order mutation
-      const result = await createOrder(orderData).unwrap();
+      const result = await createOrder(orderData as any).unwrap();
 
       if (result.success && result.authorizationUrl) {
         // Redirect to payment page
