@@ -2,7 +2,7 @@ import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
   isProfileOpen: false,
-  isMobileMenuOpen: true,
+  isMobileMenuOpen: false,
 };
 
 const appSlice = createSlice({

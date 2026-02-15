@@ -4,12 +4,15 @@ import Link from "next/link";
 import { useState } from "react";
 import { BsHeart, BsHeartFill, BsEye, BsStarFill, BsStar, BsTag } from "react-icons/bs";
 import { motion } from "framer-motion";
-
-const ProductCard = ({ product }) => {
+import { Product } from "@/Utils/Types";
+interface ProductCardProps {
+  product: Product;
+}
+const ProductCard = ({ product }: ProductCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isWishlisted, setIsWishlisted] = useState(false);
 
-  const toggleWishlist = (e) => {
+  const toggleWishlist = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setIsWishlisted(!isWishlisted);
@@ -17,7 +20,7 @@ const ProductCard = ({ product }) => {
   };
 
   // Format price to Nigerian Naira
-  const formatPrice = (price) => {
+  const formatPrice = (price: number) => {
     return new Intl.NumberFormat("en-NG", {
       style: "currency",
       currency: "NGN",
@@ -31,7 +34,7 @@ const ProductCard = ({ product }) => {
   };
 
   // Render star rating
-  const renderRating = (rating) => {
+  const renderRating = (rating: number) => {
     const stars = [];
     for (let i = 1; i <= 5; i++) {
       stars.push(
@@ -48,14 +51,14 @@ const ProductCard = ({ product }) => {
   // Check if product is new (less than 7 days old)
   const isProductNew = () => {
     if (product.isNewProduct) return true;
-    const createdAt = new Date(product.createdAt);
-    const now = new Date();
+    const createdAt: any = new Date(product.createdAt);
+    const now: any = new Date();
     const diffDays = Math.floor((now - createdAt) / (1000 * 60 * 60 * 24));
     return diffDays < 7;
   };
 
   // Get category color
-  const getCategoryColor = (category) => {
+  const getCategoryColor = (category: string) => {
     switch (category) {
       case "men":
         return "bg-blue-50 text-blue-700 border-blue-200";

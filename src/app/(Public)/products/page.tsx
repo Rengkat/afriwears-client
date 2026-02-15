@@ -1,12 +1,12 @@
 "use client";
 import { useState, useEffect } from "react";
 import ShopBanner from "./ShopBanner";
-import NavigationCategory from "./NavigationCategory";
 import FilterAndSort from "./FilterAndSort";
 import MobileFilterDialog from "./MobileFilterDialog";
 import DesktopFilter from "./DesktopFilter";
 import ProductGrid from "./ProductGrid";
 import { useGetApprovedProductsQuery } from "@/redux/services/ProductApi";
+import { Product } from "@/Utils/Types";
 
 // Define types
 type FilterType = "category" | "type" | "price";
@@ -25,35 +25,6 @@ interface Filter {
 interface SortOption {
   value: string;
   label: string;
-}
-
-interface Product {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  minPrice?: number;
-  maxPrice?: number;
-  mainImage: string;
-  subImages: string[];
-  category: string;
-  type: string;
-  rating: number;
-  reviewCount: number;
-  featured?: boolean;
-  isBestSeller?: boolean;
-  isNewProduct?: boolean;
-  stock: number;
-  sku?: string;
-  slug: string;
-  attributes: Record<string, any>;
-  stylist: any;
-  stylistName?: string;
-  tags: string[];
-  status: string;
-  createdAt: string;
-  updatedAt: string;
-  isNew: boolean;
 }
 
 interface SelectedFilters {
@@ -332,8 +303,6 @@ const ShopPage = () => {
     <div className="bg-white">
       <ShopBanner />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <NavigationCategory />
-
         <FilterAndSort
           setMobileFiltersOpen={setMobileFiltersOpen}
           sortOptions={sortOptions}

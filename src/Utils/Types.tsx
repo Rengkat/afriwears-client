@@ -1,29 +1,30 @@
 export interface Product {
-  _id?: string;
+  id: string;
   name: string;
+  description: string;
   price: number;
   minPrice?: number;
   maxPrice?: number;
-  description: string;
-  category: "men" | "women" | "unisex" | "material";
-  type: "native" | "corporate" | "casual" | "traditional";
   mainImage: string;
-  subImages?: string[];
+  subImages: string[];
+  category: string;
+  type: string;
+  rating: number;
+  reviewCount: number;
+  featured?: boolean;
+  isBestSeller?: boolean;
+  isNewProduct?: boolean;
   stock: number;
-  attributes?: {
-    color?: string;
-    size?: string;
-    material?: string;
-  };
-  productDetails?: string;
-  materials?: string;
-  careInstructions?: string;
-  deliveryInfo?: string;
-  status?: "draft" | "published" | "archived";
-  isAdminApproved?: boolean;
-  stylist?: string;
-  stylistName?: string;
   sku?: string;
+  slug: string;
+  attributes: Record<string, any>;
+  stylist: any;
+  stylistName?: string;
+  tags: string[];
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  isNew: boolean;
 }
 
 export interface CreateProductRequest {

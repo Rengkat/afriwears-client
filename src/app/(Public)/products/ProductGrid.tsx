@@ -72,24 +72,6 @@ const ProductGrid: React.FC<ProductGridProps> = ({
 
   return (
     <div className="lg:col-span-3">
-      {/* <div className="mb-6">
-        <p className="text-sm text-gray-700">
-          Showing <span className="font-medium">{totalProducts}</span>{" "}
-          {totalProducts === 1 ? "product" : "products"}
-          {activeFilters.length > 0 ? (
-            <>
-              {" "}
-              filtered by: <span className="font-medium">{activeFilters.join(", ")}</span>
-            </>
-          ) : (
-            <>
-              {" "}
-              in total stock of <span className="font-medium">{totalStock}</span> items
-            </>
-          )}
-        </p>
-      </div> */}
-
       {sortedProducts.length > 0 ? (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mt-10">
