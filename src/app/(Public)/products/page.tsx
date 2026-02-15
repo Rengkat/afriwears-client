@@ -8,7 +8,69 @@ import DesktopFilter from "./DesktopFilter";
 import ProductGrid from "./ProductGrid";
 import { useGetApprovedProductsQuery } from "@/redux/services/ProductApi";
 
-const filters = [
+// Define types
+type FilterType = "category" | "type" | "price";
+
+interface FilterOption {
+  value: string;
+  label: string;
+}
+
+interface Filter {
+  id: FilterType;
+  name: string;
+  options: FilterOption[];
+}
+
+interface SortOption {
+  value: string;
+  label: string;
+}
+
+interface Product {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  minPrice?: number;
+  maxPrice?: number;
+  mainImage: string;
+  subImages: string[];
+  category: string;
+  type: string;
+  rating: number;
+  reviewCount: number;
+  featured?: boolean;
+  isBestSeller?: boolean;
+  isNewProduct?: boolean;
+  stock: number;
+  sku?: string;
+  slug: string;
+  attributes: Record<string, any>;
+  stylist: any;
+  stylistName?: string;
+  tags: string[];
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  isNew: boolean;
+}
+
+interface SelectedFilters {
+  category: string[];
+  type: string[];
+  price: string[];
+}
+
+interface ApiResponse {
+  success: boolean;
+  products: any[];
+  data?: {
+    products: any[];
+  };
+}
+
+const filters: Filter[] = [
   {
     id: "category",
     name: "Category",
@@ -42,7 +104,7 @@ const filters = [
   },
 ];
 
-const sortOptions = [
+const sortOptions: SortOption[] = [
   { value: "featured", label: "Featured" },
   { value: "newest", label: "Newest" },
   { value: "bestseller", label: "Best Sellers" },
@@ -52,22 +114,22 @@ const sortOptions = [
 ];
 
 const ShopPage = () => {
-  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
-  const [activeFilters, setActiveFilters] = useState([]);
-  const [sortOption, setSortOption] = useState("featured");
-  const [selectedFilters, setSelectedFilters] = useState({
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState<boolean>(false);
+  const [activeFilters, setActiveFilters] = useState<string[]>([]);
+  const [sortOption, setSortOption] = useState<string>("featured");
+  const [selectedFilters, setSelectedFilters] = useState<SelectedFilters>({
     category: [],
     type: [],
     price: [],
   });
-  const [showSortOptions, setShowSortOptions] = useState(false);
-  const [products, setProducts] = useState([]);
+  const [showSortOptions, setShowSortOptions] = useState<boolean>(false);
+  const [products, setProducts] = useState<Product[]>([]);
 
   const { data, isLoading, error } = useGetApprovedProductsQuery({ page: 1, limit: 100 });
 
   useEffect(() => {
-    if (data?.success && data.products) {
-      const formattedProducts = data.products.map((product) => ({
+    if (data?.success && (data as ApiResponse).products) {
+      const formattedProducts: Product[] = (data as ApiResponse).products.map((product: any) => ({
         id: product._id,
         name: product.name,
         description: product.description,
@@ -102,11 +164,11 @@ const ShopPage = () => {
     }
   }, [data]);
 
-  const toggleFilter = (filterType, value) => {
-    setSelectedFilters((prev) => {
+  const toggleFilter = (filterType: FilterType, value: string): void => {
+    setSelectedFilters((prev: SelectedFilters) => {
       const newFilters = { ...prev };
       if (newFilters[filterType].includes(value)) {
-        newFilters[filterType] = newFilters[filterType].filter((v) => v !== value);
+        newFilters[filterType] = newFilters[filterType].filter((v: string) => v !== value);
       } else {
         newFilters[filterType] = [...newFilters[filterType], value];
       }
@@ -114,19 +176,23 @@ const ShopPage = () => {
     });
   };
 
-  const removeFilter = (filterType, value) => {
-    const filter = filters.find((f) => f.id === filterType);
-    const option = filter?.options.find((opt) => opt.value === value);
+  const removeFilter = (filterType: FilterType, value: string): void => {
+    const filter = filters.find((f: Filter) => f.id === filterType);
+    const option = filter?.options.find((opt: FilterOption) => opt.value === value);
 
-    setActiveFilters((prev) => prev.filter((filterLabel) => filterLabel !== option?.label));
+    if (option) {
+      setActiveFilters((prev: string[]) =>
+        prev.filter((filterLabel: string) => filterLabel !== option.label),
+      );
+    }
 
-    setSelectedFilters((prev) => ({
+    setSelectedFilters((prev: SelectedFilters) => ({
       ...prev,
-      [filterType]: prev[filterType].filter((v) => v !== value),
+      [filterType]: prev[filterType].filter((v: string) => v !== value),
     }));
   };
 
-  const clearAllFilters = () => {
+  const clearAllFilters = (): void => {
     setSelectedFilters({
       category: [],
       type: [],
@@ -135,24 +201,26 @@ const ShopPage = () => {
     setActiveFilters([]);
   };
 
-  const applyFilters = () => {
-    const active = [];
-    Object.entries(selectedFilters).forEach(([key, values]) => {
+  const applyFilters = (): void => {
+    const active: string[] = [];
+    Object.entries(selectedFilters).forEach(([key, values]: [string, string[]]) => {
       if (values.length > 0) {
-        const filter = filters.find((f) => f.id === key);
-        values.forEach((value) => {
-          const option = filter.options.find((opt) => opt.value === value);
-          if (option) {
-            active.push(option.label);
-          }
-        });
+        const filter = filters.find((f: Filter) => f.id === (key as FilterType));
+        if (filter) {
+          values.forEach((value: string) => {
+            const option = filter.options.find((opt: FilterOption) => opt.value === value);
+            if (option) {
+              active.push(option.label);
+            }
+          });
+        }
       }
     });
     setActiveFilters(active);
     setMobileFiltersOpen(false);
   };
 
-  const sortProducts = (productsToSort) => {
+  const sortProducts = (productsToSort: Product[]): Product[] => {
     if (!productsToSort || productsToSort.length === 0) return [];
 
     const sorted = [...productsToSort];
@@ -160,22 +228,23 @@ const ShopPage = () => {
     switch (sortOption) {
       case "newest":
         return sorted.sort(
-          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          (a: Product, b: Product) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
         );
       case "price-low":
-        return sorted.sort((a, b) => a.price - b.price);
+        return sorted.sort((a: Product, b: Product) => a.price - b.price);
       case "price-high":
-        return sorted.sort((a, b) => b.price - a.price);
+        return sorted.sort((a: Product, b: Product) => b.price - a.price);
       case "rating":
-        return sorted.sort((a, b) => b.rating - a.rating);
+        return sorted.sort((a: Product, b: Product) => b.rating - a.rating);
       case "bestseller":
-        return sorted.sort((a, b) => {
+        return sorted.sort((a: Product, b: Product) => {
           if (b.isBestSeller && !a.isBestSeller) return 1;
           if (a.isBestSeller && !b.isBestSeller) return -1;
           return 0;
         });
       case "featured":
-        return sorted.sort((a, b) => {
+        return sorted.sort((a: Product, b: Product) => {
           if (b.featured && !a.featured) return 1;
           if (a.featured && !b.featured) return -1;
           return 0;
@@ -185,10 +254,10 @@ const ShopPage = () => {
     }
   };
 
-  const filterProducts = (productsToFilter) => {
+  const filterProducts = (productsToFilter: Product[]): Product[] => {
     if (!productsToFilter || productsToFilter.length === 0) return [];
 
-    return productsToFilter.filter((product) => {
+    return productsToFilter.filter((product: Product) => {
       // Category filter
       if (
         selectedFilters.category.length > 0 &&
@@ -207,7 +276,7 @@ const ShopPage = () => {
         let priceMatch = false;
         const productPrice = product.price || product.minPrice || 0;
 
-        selectedFilters.price.forEach((range) => {
+        selectedFilters.price.forEach((range: string) => {
           if (range.endsWith("+")) {
             const min = parseInt(range);
             if (productPrice >= min) priceMatch = true;
@@ -228,8 +297,8 @@ const ShopPage = () => {
     });
   };
 
-  const filteredProducts = filterProducts(products);
-  const sortedProducts = sortProducts(filteredProducts);
+  const filteredProducts: Product[] = filterProducts(products);
+  const sortedProducts: Product[] = sortProducts(filteredProducts);
 
   if (isLoading) {
     return (
