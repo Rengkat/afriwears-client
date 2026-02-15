@@ -369,9 +369,9 @@ const ShopPage = () => {
           />
 
           <ProductGrid
-            sortedProducts={sortedProducts}
+            sortedProducts={sortedProducts as any}
             clearAllFilters={clearAllFilters}
-            filteredProducts={filteredProducts}
+            filteredProducts={filteredProducts as any}
             activeFilters={activeFilters}
             isLoading={isLoading}
           />

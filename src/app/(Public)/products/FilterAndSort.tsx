@@ -1,5 +1,6 @@
 import React from "react";
 import { FiChevronDown, FiChevronUp, FiFilter, FiX } from "react-icons/fi";
+type FilterType = "category" | "type" | "price";
 
 interface FilterAndSortProps {
   setMobileFiltersOpen: (open: boolean) => void;
@@ -10,14 +11,14 @@ interface FilterAndSortProps {
   showSortOptions: boolean;
   setSortOption: (option: string) => void;
   sortOption: string;
-  removeFilter: (filterType: string, value: string) => void;
+  removeFilter: (filterType: FilterType, value: string) => void;
   selectedFilters: {
     category: string[];
     type: string[];
     price: string[];
   };
   filters: Array<{
-    id: string;
+    id: FilterType;
     name: string;
     options: Array<{ value: string; label: string }>;
   }>;
