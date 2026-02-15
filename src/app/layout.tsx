@@ -24,9 +24,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    // ✅ Font classes go on <html> tag
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
-      {/* ✅ Body has only styling classes, not font variables */}
       <body className="antialiased">
         <AppProvider>{children}</AppProvider>
       </body>

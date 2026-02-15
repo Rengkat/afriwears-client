@@ -16,8 +16,7 @@ const RecentProducts = () => {
     limit: 8,
     category: "women",
   });
-  // console.log(productsData);
-  // Loading state
+
   if (isLoading) {
     return (
       <section className="py-16 px-4 sm:px-6 lg:px-8">
@@ -119,7 +118,6 @@ const RecentProducts = () => {
 
   // Transform API data to match ProductCard expected format
   const transformProductData = (product: any) => {
-    // console.log(first)
     return {
       id: product._id || product.id,
       name: product.name,

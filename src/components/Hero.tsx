@@ -2,38 +2,12 @@
 import React from "react";
 import SubHero from "./SubHero";
 import Image from "next/image";
-import Slider from "./Slider";
+
 import { motion } from "framer-motion";
-import { HeroSkeleton } from "./Skeleton";
+
 import Link from "next/link";
-import RecentProducts from "./RecentProducts";
 
 const Hero = () => {
-  const collections = [
-    {
-      id: 1,
-      title: "Premium African Attire",
-      subtitle: "Authentic Designs for the Modern Man",
-      link: "/products/men-native-wears",
-      image: "/men-native.png",
-      cta: "Shop Men's Collection",
-      bgColor: "bg-amber-50",
-      textColor: "text-amber-900",
-      overlay: "bg-amber-900/10",
-    },
-    {
-      id: 2,
-      title: "Elegant Women's Wear",
-      subtitle: "Celebrating African Heritage in Style",
-      link: "/products/ladies-native-wears",
-      image: "/women-native2.png",
-      cta: "Shop Women's Collection",
-      bgColor: "bg-indigo-50",
-      textColor: "text-indigo-900",
-      overlay: "bg-indigo-900/10",
-    },
-  ];
-
   const categories = [
     {
       id: 1,
@@ -93,7 +67,7 @@ const Hero = () => {
 
         <div className="relative h-full w-full flex items-center">
           <Image
-            src="/woman-hero.png" // Your most striking hero image
+            src="/woman-hero.png"
             alt="African Fashion Collection"
             fill
             className="object-contain"

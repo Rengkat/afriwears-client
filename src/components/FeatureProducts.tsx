@@ -5,8 +5,58 @@ import { BsArrowRight, BsStarFill, BsStarHalf } from "react-icons/bs";
 import { motion } from "framer-motion";
 import { useGetApprovedProductsQuery } from "@/redux/services/ProductApi";
 
-const FeaturedProductCard = ({ product }) => {
-  console.log(product);
+interface Product {
+  _id: string;
+  id?: string; // Optional in case API returns id instead of _id
+  name: string;
+  slug: string;
+  description: string;
+  productDetails?: string;
+  materials?: string;
+  careInstructions?: string;
+  deliveryInfo?: string;
+  price: number;
+  minPrice?: number;
+  maxPrice?: number;
+  mainImage: string;
+  subImages?: string[];
+  attributes?: {
+    colors?: Array<{
+      name: string;
+      hexCode: string;
+    }>;
+    sizes?: string[];
+    material?: string;
+  };
+  stylist: string | { _id: string; businessName?: string; name?: string };
+  stylistName?: string;
+  rating: number;
+  reviews: Array<{
+    user: string;
+    name: string;
+    rating: number;
+    comment: string;
+    createdAt: Date;
+  }>;
+  reviewCount: number;
+  isBestSeller?: boolean;
+  isNewProduct?: boolean;
+  featured?: boolean;
+  isAdminApproved?: boolean;
+  createdBy?: "stylist" | "admin";
+  approvedBy?: string;
+  rejectionReason?: string;
+  stock: number;
+  sku?: string;
+  category: "men" | "women" | "unisex" | "material";
+  type: "native" | "corporate" | "casual" | "traditional";
+  tags?: string[];
+  status?: "pending" | "approved" | "rejected";
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+const FeaturedProductCard = ({ product }: { product: Product }) => {
   return (
     <motion.div
       initial={{ opacity: 0, y: 30 }}
@@ -21,7 +71,7 @@ const FeaturedProductCard = ({ product }) => {
             BESTSELLER
           </span>
         )}
-        {product.isNew && (
+        {product.isNewProduct && (
           <span className="bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full">
             NEW
           </span>
@@ -31,7 +81,7 @@ const FeaturedProductCard = ({ product }) => {
       {/* Product Image */}
       <div className="relative h-80 overflow-hidden">
         <Image
-          src={product.image || "/placeholder-product.jpg"}
+          src={product.mainImage || "/placeholder-product.jpg"}
           alt={product.name}
           fill
           className="object-cover transition-transform duration-500 group-hover:scale-105"
@@ -45,15 +95,21 @@ const FeaturedProductCard = ({ product }) => {
           <h3 className="font-bold text-lg text-gray-900 line-clamp-1">{product.name}</h3>
           <div className="flex flex-col items-end">
             <span className="font-bold text-gray-900">₦{product.price.toLocaleString()}</span>
-            {product.originalPrice > product.price && (
+            {product.minPrice && product.maxPrice && product.minPrice < product.maxPrice && (
               <span className="text-sm text-gray-400 line-through">
-                ₦{product.originalPrice.toLocaleString()}
+                ₦{product.maxPrice.toLocaleString()}
               </span>
             )}
           </div>
         </div>
 
-        <p className="text-gray-600 text-sm mb-3 line-clamp-1">{product.stylist}</p>
+        <p className="text-gray-600 text-sm mb-3 line-clamp-1">
+          {product.stylistName ||
+            (typeof product.stylist === "object"
+              ? product.stylist?.businessName || product.stylist?.name
+              : product.stylist) ||
+            "Unknown Stylist"}
+        </p>
         <p className="text-gray-500 text-sm mb-4 line-clamp-2">{product.description}</p>
 
         {/* Rating */}
@@ -69,30 +125,30 @@ const FeaturedProductCard = ({ product }) => {
               return <BsStarFill key={i} size={14} className="text-gray-300" />;
             })}
           </div>
-          <span className="text-xs text-gray-500">({product.reviews.toLocaleString()})</span>
+          <span className="text-xs text-gray-500">({product.reviewCount.toLocaleString()})</span>
         </div>
 
         {/* Color Options */}
-        {product.colors && product.colors.length > 0 && (
+        {product.attributes?.colors && product.attributes.colors.length > 0 && (
           <div className="flex gap-2 mb-5">
-            {product.colors.slice(0, 4).map((color: string, index: string) => (
+            {product.attributes.colors.slice(0, 4).map((color, index) => (
               <div
                 key={index}
                 className="w-4 h-4 rounded-full border border-gray-200"
-                style={{ backgroundColor: color }}
-                title={color}
+                style={{ backgroundColor: color.hexCode || color.name }}
+                title={color.name}
               />
             ))}
-            {product.colors.length > 4 && (
+            {product.attributes.colors.length > 4 && (
               <span className="text-xs text-gray-500 self-center">
-                +{product.colors.length - 4}
+                +{product.attributes.colors.length - 4}
               </span>
             )}
           </div>
         )}
 
         {/* CTA Button */}
-        <Link href={`/products/${product?.id}`}>
+        <Link href={`/products/${product._id || product.id}`}>
           <motion.button
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
@@ -104,6 +160,8 @@ const FeaturedProductCard = ({ product }) => {
     </motion.div>
   );
 };
+
+// ... rest of your FeaturedProducts component remains the same
 
 const FeaturedProducts = () => {
   const {
@@ -186,29 +244,53 @@ const FeaturedProducts = () => {
   const products = productsData?.data?.products || productsData?.products || [];
 
   // Transform API data
-  const transformProductData = (product: any) => {
+  const transformProductData = (product: any): Product => {
     return {
-      id: product._id || product.id,
+      _id: product._id || product.id,
+      id: product.id || product._id,
       name: product.name,
       slug: product.slug || `product-${product._id || product.id}`,
-      image: product.mainImage || product.images?.[0] || "/placeholder-product.jpg",
+      description: product.description || "Premium African fashion piece",
+      productDetails: product.productDetails,
+      materials: product.materials,
+      careInstructions: product.careInstructions,
+      deliveryInfo: product.deliveryInfo,
       price: product.price || 0,
-      originalPrice: product.originalPrice || product.price,
-      stylist:
+      minPrice: product.minPrice,
+      maxPrice: product.maxPrice,
+      mainImage: product.mainImage || product.images?.[0] || "/placeholder-product.jpg",
+      subImages: product.subImages || product.images?.slice(1),
+      attributes: product.attributes || {
+        colors: [
+          { name: "Indigo", hexCode: "#4B0082" },
+          { name: "Crimson", hexCode: "#DC143C" },
+          { name: "Gold", hexCode: "#FFD700" },
+        ],
+      },
+      stylist: product.stylist,
+      stylistName:
         product.stylistName ||
         product.stylist?.businessName ||
         product.stylist?.name ||
         "Unknown Stylist",
-      colors: product.attributes?.colors?.map((c: any) => c.hexCode || c.name) || [
-        "#4B0082",
-        "#DC143C",
-        "#FFD700",
-      ], // Indigo, Crimson, Gold as fallback
       rating: product.rating || 4.5,
-      reviews: product.reviewCount || product.reviews?.length || 0,
+      reviews: product.reviews || [],
+      reviewCount: product.reviewCount || product.reviews?.length || 0,
       isBestSeller: product.isBestSeller || false,
-      isNew: product.isNewProduct || false,
-      description: product.description || "Premium African fashion piece",
+      isNewProduct: product.isNewProduct || false,
+      featured: product.featured,
+      isAdminApproved: product.isAdminApproved,
+      createdBy: product.createdBy,
+      approvedBy: product.approvedBy,
+      rejectionReason: product.rejectionReason,
+      stock: product.stock || 0,
+      sku: product.sku,
+      category: product.category || "unisex",
+      type: product.type || "casual",
+      tags: product.tags,
+      status: product.status,
+      createdAt: product.createdAt,
+      updatedAt: product.updatedAt,
     };
   };
 
@@ -282,8 +364,8 @@ const FeaturedProducts = () => {
 
         {/* Featured Products Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {featuredProducts.map((product) => (
-            <FeaturedProductCard key={product.id} product={product} />
+          {featuredProducts.map((product: Product) => (
+            <FeaturedProductCard key={product._id} product={product} />
           ))}
         </div>
 

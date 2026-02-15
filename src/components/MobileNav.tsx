@@ -241,7 +241,7 @@ const MobileNav = () => {
     if (notifications.length === 0 || unreadNotifications === 0) return;
 
     try {
-      await markAllAsRead().unwrap();
+      await markAllAsRead(null).unwrap();
       refetchUnreadCount();
       refetchNotifications();
     } catch (error) {
@@ -656,6 +656,7 @@ const MobileNav = () => {
                 />
                 {searchQuery && (
                   <button
+                    title="clear search"
                     type="button"
                     onClick={handleClearSearch}
                     className="px-2 py-2.5 bg-gray-50 hover:bg-gray-100 transition-colors">
@@ -663,6 +664,7 @@ const MobileNav = () => {
                   </button>
                 )}
                 <button
+                  title="search"
                   type="submit"
                   className="px-4 py-2.5 bg-gray-50 hover:bg-gray-100 transition-colors">
                   <BsSearch className="text-gray-600" size={18} />

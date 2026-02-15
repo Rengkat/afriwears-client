@@ -3,7 +3,6 @@ import { RootState } from "@/redux/Store";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
-// import { selectCurrentUser } from "@/redux/features/authSlice";
 
 export default function UnauthorizedPage() {
   const router = useRouter();

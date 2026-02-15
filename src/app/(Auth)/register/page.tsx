@@ -111,6 +111,7 @@ const Register = () => {
                     <FiUser className="h-5 w-5 text-gray-400" />
                   </div>
                   <input
+                    title="surname"
                     id="surname"
                     name="surname"
                     type="text"

@@ -1,6 +1,5 @@
 "use client";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+
 import { FiUser, FiScissors } from "react-icons/fi";
 import NavLink from "./links";
 
