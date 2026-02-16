@@ -32,9 +32,7 @@ import {
 } from "@/redux/services/WishlistApiSlice";
 
 interface ProductPageProps {
-  params: {
-    id: string;
-  };
+  params: Promise<{ id: string }>;
 }
 
 const ProductPage = ({ params }: ProductPageProps) => {
@@ -48,7 +46,7 @@ const ProductPage = ({ params }: ProductPageProps) => {
 
   const { data, isLoading, isError } = useGetProductDetailQuery(id);
 
-  // Cart mutations - TEMPORARILY DISABLE CART FETCHING
+  // Cart mutations - we'll handle local cart updates optimistically and sync with server if user is logged in
   const [addToCart, { isLoading: isAddingToCart }] = useAddToCartMutation();
   const [updateCartItem] = useUpdateCartMutation();
   const { data: cartData, refetch: refetchCart } = useGetCartProductsQuery(undefined, {
@@ -73,8 +71,10 @@ const ProductPage = ({ params }: ProductPageProps) => {
 
   // Check if product is in wishlist
   useEffect(() => {
-    if (wishlistData?.success && wishlistData.data && data?.product) {
-      const wishlistItems = wishlistData.data.items || wishlistData.data.wishlist?.items || [];
+    const wishlistResponse = wishlistData as any;
+    if (wishlistResponse?.success && wishlistResponse.data && data?.product) {
+      const wishlistItems =
+        wishlistResponse.data.items || wishlistResponse.data.wishlist?.items || [];
       const isWishlisted = wishlistItems.some(
         (item: any) => item.product?._id === data.product._id || item.product === data.product._id,
       );
@@ -87,7 +87,7 @@ const ProductPage = ({ params }: ProductPageProps) => {
     if (data?.product) {
       const productId = data.product._id;
       const localItem = cartState.items.find(
-        (item) => item.product === productId || item.product?._id === productId,
+        (item: any) => item.product === productId || item.product?._id === productId,
       );
 
       if (localItem) {
@@ -103,6 +103,40 @@ const ProductPage = ({ params }: ProductPageProps) => {
     }
   }, [data?.product, cartState.items]);
 
+  // Add this function before handleAddToCart
+  const updateLocalCart = () => {
+    if (!data?.product) return;
+
+    const product = data.product;
+
+    if (isInCart && cartItemId) {
+      // Update existing cart item
+      dispatch(
+        updateCartItemQuantity({
+          productId: cartItemId,
+          quantity: quantity,
+        }),
+      );
+    } else {
+      // Add new item to cart
+      dispatch(
+        addCartItem({
+          _id: `temp_${Date.now()}`,
+          product: product._id,
+          name: product.name,
+          price: product.price,
+          quantity: quantity,
+          mainImage: product.mainImage,
+          selectedSize: selectedSize || undefined,
+          selectedColor: selectedColor || undefined,
+          stock: product.stock,
+        }),
+      );
+    }
+
+    toast.success(isInCart ? "Cart updated successfully!" : "Added to cart successfully!");
+    setIsInCart(true);
+  };
   // Handle cart addition/update - LOCAL ONLY FOR NOW
   const handleAddToCart = async () => {
     if (!data?.product) return;

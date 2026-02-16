@@ -8,6 +8,9 @@ interface CartItem {
   selectedColor?: string;
   price?: number;
   isBuyNow?: boolean;
+  name?: string;
+  mainImage?: string;
+  stock?: number;
 }
 
 interface CartState {
@@ -43,11 +46,11 @@ const loadCartFromStorage = (): CartState => {
         items: normalizedItems,
         itemCount: normalizedItems.reduce(
           (total: number, item: CartItem) => total + item.quantity,
-          0
+          0,
         ),
         totalPrice: normalizedItems.reduce(
           (total: number, item: CartItem) => total + (item.price || 0) * item.quantity,
-          0
+          0,
         ),
         lastUpdated: parsedCart.lastUpdated || Date.now(),
         isLoading: false,
@@ -77,7 +80,7 @@ const cartSlice = createSlice({
       state.itemCount = action.payload.reduce((total, item) => total + item.quantity, 0);
       state.totalPrice = action.payload.reduce(
         (total, item) => total + (item.price || 0) * item.quantity,
-        0
+        0,
       );
       state.lastUpdated = Date.now();
 
@@ -106,7 +109,7 @@ const cartSlice = createSlice({
       state.itemCount = state.items.reduce((total, item) => total + item.quantity, 0);
       state.totalPrice = state.items.reduce(
         (total, item) => total + (item.price || 0) * item.quantity,
-        0
+        0,
       );
       state.lastUpdated = Date.now();
 
@@ -117,13 +120,13 @@ const cartSlice = createSlice({
 
     removeCartItem: (state, action: PayloadAction<string>) => {
       state.items = state.items.filter(
-        (item) => item._id !== action.payload && item.product !== action.payload
+        (item) => item._id !== action.payload && item.product !== action.payload,
       );
 
       state.itemCount = state.items.reduce((total, item) => total + item.quantity, 0);
       state.totalPrice = state.items.reduce(
         (total, item) => total + (item.price || 0) * item.quantity,
-        0
+        0,
       );
       state.lastUpdated = Date.now();
 
@@ -134,7 +137,7 @@ const cartSlice = createSlice({
 
     updateCartItemQuantity: (
       state,
-      action: PayloadAction<{ productId: string; quantity: number }>
+      action: PayloadAction<{ productId: string; quantity: number }>,
     ) => {
       const item = state.items.find((item) => item.product === action.payload.productId);
       if (item) {
@@ -142,7 +145,7 @@ const cartSlice = createSlice({
         state.itemCount = state.items.reduce((total, item) => total + item.quantity, 0);
         state.totalPrice = state.items.reduce(
           (total, item) => total + (item.price || 0) * item.quantity,
-          0
+          0,
         );
         state.lastUpdated = Date.now();
 
