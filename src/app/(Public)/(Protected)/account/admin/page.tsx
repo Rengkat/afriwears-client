@@ -47,7 +47,6 @@ const mockData = {
     {
       id: 4,
       type: "user_registration",
-      type: "user_registration",
       message: "50 new users registered today",
       time: "1 hour ago",
       status: "completed",
@@ -197,7 +196,7 @@ const AdminDashboard = () => {
                       <p className="text-sm text-gray-500">{activity.time}</p>
                       <span
                         className={`text-xs px-2 py-1 rounded-full ${getStatusColor(
-                          activity.status
+                          activity.status,
                         )}`}>
                         {activity.status}
                       </span>

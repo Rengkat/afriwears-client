@@ -74,7 +74,7 @@ export const authApi = createApi({
             dispatch(setUser(data.user));
           }
         } catch (error: any) {
-          console.error("getCurrentUser query failed:", error);
+          // console.error("getCurrentUser query failed:", error);
           // Only logout if it's an authentication error
           if (error?.status === 401 || error?.error?.status === 401) {
             dispatch(logoutUser());
