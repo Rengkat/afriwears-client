@@ -61,7 +61,7 @@ const OrderTable = ({
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {currentOrders.map((order) => {
+            {currentOrders.map((order: any) => {
               return (
                 <OrderList
                   key={order?._id}
