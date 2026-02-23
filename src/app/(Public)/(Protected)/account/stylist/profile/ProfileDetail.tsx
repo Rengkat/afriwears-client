@@ -17,17 +17,35 @@ interface ProfileDetailProps {
   isEditing: boolean;
   formData: {
     specialty: string[];
-    // ... other fields
+    description: string;
+    experience: string;
+    services: string[];
+    phone: string;
+    email: string;
+    website: string;
+    cacCertificateNumber: string;
+    socialMedia: {
+      twitter: string;
+      facebook: string;
+      instagram: string;
+      pinterest: string;
+    };
+    location: {
+      state: string;
+      lga: string;
+      address: string;
+      branches: number;
+    };
   };
   documents: any;
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-  handleSpecialtyChange: (specialty: string) => void; // New prop
+  handleSpecialtyChange: (specialty: string) => void;
   handleServicesChange: (servicesString: string) => void;
   handleSocialMediaChange: (platform: string, value: string) => void;
   handleLocationChange: (field: string, value: string | number) => void;
   handleDocumentUpload: (documentType: string, file: File) => void;
   isUploading: boolean;
-  validSpecialties: string[]; // New prop
+  validSpecialties: string[];
 }
 
 const ProfileDetail = ({
