@@ -16,7 +16,7 @@ interface Address {
   updatedAt: string;
 }
 
-interface UserProfile {
+export interface UserProfile {
   _id: string;
   firstName: string;
   surname: string;
@@ -25,7 +25,7 @@ interface UserProfile {
   avatar?: string;
   walletAmount: number;
   subscribedToNewsLetter: boolean;
-  addresses: Address[];
+  addresses?: Address[];
   fullAddress?: string;
   role?: string;
   company?: string | null;
@@ -52,18 +52,14 @@ interface AddressListResponse {
   count: number;
 }
 
-// Add interface for paginated users response
 interface UsersListResponse {
   success: boolean;
-  data: UserProfile[];
+  fromCache: boolean;
   count: number;
-  pagination?: {
-    page: number;
-    limit: number;
-    totalPages: number;
-    hasNext: boolean;
-    hasPrev: boolean;
-  };
+  totalUsers: number;
+  page: number;
+  pages: number;
+  users: UserProfile[];
 }
 
 export const userApiSlice = createApi({
@@ -110,7 +106,7 @@ export const userApiSlice = createApi({
       },
       providesTags: (result) => [
         { type: "UsersList", id: "LIST" },
-        ...(result?.data?.map((user) => ({
+        ...(result?.users?.map((user) => ({
           type: "User" as const,
           id: user._id,
         })) || []),

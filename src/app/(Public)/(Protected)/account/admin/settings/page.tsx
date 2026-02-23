@@ -22,7 +22,7 @@ const AdminSettingsPage = () => {
     }));
   };
 
-  const handleNotificationChange = (type: any) => {
+  const handleNotificationChange = (type: keyof typeof formData.notifications) => {
     setFormData((prev) => ({
       ...prev,
       notifications: {

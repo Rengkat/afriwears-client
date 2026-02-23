@@ -70,7 +70,7 @@ const TransactionTable = ({
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {currentTransactions.map((transaction) => (
+            {currentTransactions.map((transaction: any) => (
               <tr key={transaction._id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap">
                   <input
@@ -118,7 +118,7 @@ const TransactionTable = ({
                     {getTypeIcon(transaction.type)}
                     <span
                       className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getTransactionTypeColor(
-                        transaction.type
+                        transaction.type,
                       )}`}>
                       {transaction.type}
                     </span>
@@ -129,7 +129,7 @@ const TransactionTable = ({
                     {getTransactionStatusIcon(transaction.status)}
                     <span
                       className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getTransactionStatusColor(
-                        transaction.status
+                        transaction.status,
                       )}`}>
                       {transaction.status}
                     </span>
@@ -201,7 +201,7 @@ const TransactionTable = ({
             </div>
             <div className="flex gap-2">
               <button
-                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                onClick={() => setCurrentPage((prev: number) => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
                 className="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
                 Previous
@@ -219,7 +219,7 @@ const TransactionTable = ({
                 </button>
               ))}
               <button
-                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                onClick={() => setCurrentPage((prev: number) => Math.min(prev + 1, totalPages))}
                 disabled={currentPage === totalPages}
                 className="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
                 Next

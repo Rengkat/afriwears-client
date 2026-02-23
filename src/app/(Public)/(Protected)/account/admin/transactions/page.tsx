@@ -3,12 +3,6 @@ import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "@/redux/Store";
 import {
-  FiSearch,
-  FiFilter,
-  FiEye,
-  FiDownload,
-  FiDollarSign,
-  FiUser,
   FiCreditCard,
   FiCheckCircle,
   FiXCircle,
@@ -267,7 +261,7 @@ const TransactionsPage = () => {
   const indexOfFirstTransaction = indexOfLastTransaction - transactionsPerPage;
   const currentTransactions = filteredTransactions.slice(
     indexOfFirstTransaction,
-    indexOfLastTransaction
+    indexOfLastTransaction,
   );
   const totalPages = Math.ceil(filteredTransactions.length / transactionsPerPage);
 
@@ -282,7 +276,7 @@ const TransactionsPage = () => {
     console.log("Retrying transaction:", transactionId);
     // Update transaction status to pending
     setTransactions(
-      transactions.map((t) => (t._id === transactionId ? { ...t, status: "pending" } : t))
+      transactions.map((t) => (t._id === transactionId ? { ...t, status: "pending" } : t)),
     );
   };
 
@@ -322,8 +316,8 @@ const TransactionsPage = () => {
           transactions.map((t) =>
             selectedTransactions.includes(t._id) && t.status === "failed"
               ? { ...t, status: "pending" }
-              : t
-          )
+              : t,
+          ),
         );
         setSelectedTransactions([]);
         break;

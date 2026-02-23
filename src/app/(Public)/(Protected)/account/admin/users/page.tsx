@@ -2,34 +2,19 @@
 import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "@/redux/Store";
-
 import StatCard from "./StatCard";
 import FilterAndSearch from "./FilterAndSearch";
 import CurrentUsersList from "./CurrentUsersList";
 import Pagination from "./Pagination";
 import ConfirmationModal from "./ConfirmationModal";
 import { useGetAllUsersQuery } from "@/redux/services/UserApiSlice";
+import type { UserProfile } from "@/redux/services/UserApiSlice";
 import SuspensionModal from "./SuspensionModel";
 import UserDetailModal from "./UserDetailModel";
 
-interface User {
-  _id: string;
-  firstName: string;
-  surname: string;
-  email: string;
-  role: string;
-  walletAmount: number;
-  isVerified: boolean;
-  createdAt: string;
-  updatedAt: string;
-  avatar?: string;
-  subscribedToNewsLetter?: boolean;
-  company?: string | null;
-}
-
 const UserManagementPage = () => {
   const { user: currentUser } = useSelector((store: RootState) => store.authSlice);
-  const [users, setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<UserProfile[]>([]);
   const [totalUsers, setTotalUsers] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
@@ -38,7 +23,7 @@ const UserManagementPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [usersPerPage] = useState(10);
   const [showUserModal, setShowUserModal] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [showSuspensionModal, setShowSuspensionModal] = useState(false);
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [confirmationConfig, setConfirmationConfig] = useState({
@@ -55,14 +40,13 @@ const UserManagementPage = () => {
 
   useEffect(() => {
     if (data?.users) {
-      setUsers(data.users.users || []);
-      setTotalUsers(data.users.totalUsers || 0);
-      setTotalPages(data.users.pages || 1);
+      setUsers(data.users || []);
+      setTotalUsers(data.totalUsers || 0);
+      setTotalPages(data.pages || 1);
     }
   }, [data]);
 
-  // Simple user data formatting for display
-  const formatUserForDisplay = (user: User) => ({
+  const formatUserForDisplay = (user: UserProfile) => ({
     _id: user._id,
     name: `${user.firstName} ${user.surname}`,
     email: user.email,
@@ -76,7 +60,6 @@ const UserManagementPage = () => {
     company: user.company,
   });
 
-  // Filter users based on search and filters
   const filteredUsers = users
     .filter((user) => {
       const matchesSearch =
@@ -94,8 +77,7 @@ const UserManagementPage = () => {
     })
     .map(formatUserForDisplay);
 
-  // Handle user actions
-  const handleViewUser = (user: any) => {
+  const handleViewUser = (user: ReturnType<typeof formatUserForDisplay>) => {
     const originalUser = users.find((u) => u._id === user._id);
     if (originalUser) {
       setSelectedUser(originalUser);
@@ -103,11 +85,11 @@ const UserManagementPage = () => {
     }
   };
 
-  const handleEditUser = (user: any) => {
+  const handleEditUser = (user: ReturnType<typeof formatUserForDisplay>) => {
     console.log("Edit user:", user);
   };
 
-  const handleSuspendUser = (user: any) => {
+  const handleSuspendUser = (user: ReturnType<typeof formatUserForDisplay>) => {
     const originalUser = users.find((u) => u._id === user._id);
     if (originalUser) {
       setSelectedUser(originalUser);
@@ -149,11 +131,10 @@ const UserManagementPage = () => {
 
   const handleBulkAction = (action: string) => {
     if (selectedUsers.length === 0) return;
-
     switch (action) {
       case "activate":
         setUsers(
-          users.map((u) => (selectedUsers.includes(u._id) ? { ...u, isVerified: true } : u))
+          users.map((u) => (selectedUsers.includes(u._id) ? { ...u, isVerified: true } : u)),
         );
         setSelectedUsers([]);
         break;
@@ -201,7 +182,6 @@ const UserManagementPage = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Header */}
       <div className="mb-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between">
           <div>
@@ -216,10 +196,8 @@ const UserManagementPage = () => {
         </div>
       </div>
 
-      {/* Stats Cards */}
       <StatCard users={users} />
 
-      {/* Filters and Search */}
       <FilterAndSearch
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
@@ -229,7 +207,6 @@ const UserManagementPage = () => {
         handleBulkAction={handleBulkAction}
       />
 
-      {/* Users Table */}
       <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
@@ -287,7 +264,6 @@ const UserManagementPage = () => {
           </table>
         </div>
 
-        {/* Empty State */}
         {filteredUsers.length === 0 && (
           <div className="text-center py-12">
             <div className="text-gray-400 mb-4">
@@ -309,7 +285,6 @@ const UserManagementPage = () => {
           </div>
         )}
 
-        {/* Pagination */}
         {totalPages > 1 && (
           <Pagination
             currentPage={currentPage}
@@ -321,7 +296,6 @@ const UserManagementPage = () => {
         )}
       </div>
 
-      {/* Modals */}
       {showUserModal && selectedUser && (
         <UserDetailModal
           userId={selectedUser._id}
