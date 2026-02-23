@@ -15,7 +15,7 @@ import {
 } from "react-icons/fi";
 
 interface UserDetailModalProps {
-  userId: string; // Pass userId instead of full user object
+  userId: string;
   onClose: () => void;
   onEdit: (user: any) => void;
   onSuspend: () => void;
@@ -31,9 +31,8 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
 }) => {
   // console.log(userId);
   const { data, isLoading, error, refetch } = useGetUserByIdQuery(userId);
-
   // Extract the user data from the response
-  const user = data?.user || data?.data || data?.users?.[0];
+  const user = data?.user;
   // console.log(user);
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -141,8 +140,8 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
                       user.role === "admin"
                         ? "bg-purple-100 text-purple-800"
                         : user.role === "stylist"
-                        ? "bg-amber-100 text-amber-800"
-                        : "bg-blue-100 text-blue-800"
+                          ? "bg-amber-100 text-amber-800"
+                          : "bg-blue-100 text-blue-800"
                     }`}>
                     {user.role}
                   </span>

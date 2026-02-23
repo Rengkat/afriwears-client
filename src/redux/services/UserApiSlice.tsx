@@ -32,6 +32,7 @@ export interface UserProfile {
   isVerified?: boolean;
   createdAt: string;
   updatedAt: string;
+  verificationTokenExpirationDate: any;
 }
 
 interface ApiResponse<T> {
@@ -113,17 +114,19 @@ export const userApiSlice = createApi({
       ],
     }),
 
-    // Optional: Get single user by ID (admin only)
-    getUserById: builder.query<ApiResponse<UserProfile>, string>({
-      query: (id) => `/users/${id}`,
-      providesTags: (result, error, id) => [
-        { type: "User", id },
-        ...(result?.data?.addresses?.map((addr) => ({
-          type: "Address" as const,
-          id: addr._id,
-        })) || []),
-      ],
-    }),
+    // UserApiSlice.ts
+    getUserById: builder.query<{ success: boolean; user: UserProfile; fromCache: boolean }, string>(
+      {
+        query: (id) => `/users/${id}`,
+        providesTags: (result, error, id) => [
+          { type: "User", id },
+          ...(result?.user?.addresses?.map((addr) => ({
+            type: "Address" as const,
+            id: addr._id,
+          })) || []),
+        ],
+      },
+    ),
 
     updateCurrentUser: builder.mutation<ApiResponse<UserProfile>, Partial<UserProfile>>({
       query: (body) => ({
