@@ -14,6 +14,7 @@ const Notification = ({ handleNotificationChange, formData }: any) => {
           </div>
           <label className="relative inline-flex items-center cursor-pointer">
             <input
+              title="notification"
               type="checkbox"
               checked={formData.notifications.newUsers}
               onChange={() => handleNotificationChange("newUsers")}
@@ -32,6 +33,7 @@ const Notification = ({ handleNotificationChange, formData }: any) => {
           </div>
           <label className="relative inline-flex items-center cursor-pointer">
             <input
+              title="notification"
               type="checkbox"
               checked={formData.notifications.newStylists}
               onChange={() => handleNotificationChange("newStylists")}
@@ -50,6 +52,7 @@ const Notification = ({ handleNotificationChange, formData }: any) => {
           </div>
           <label className="relative inline-flex items-center cursor-pointer">
             <input
+              title="notification"
               type="checkbox"
               checked={formData.notifications.productApprovals}
               onChange={() => handleNotificationChange("productApprovals")}
@@ -68,6 +71,7 @@ const Notification = ({ handleNotificationChange, formData }: any) => {
           </div>
           <label className="relative inline-flex items-center cursor-pointer">
             <input
+              title="notification"
               type="checkbox"
               checked={formData.notifications.highValueOrders}
               onChange={() => handleNotificationChange("highValueOrders")}
@@ -86,6 +90,7 @@ const Notification = ({ handleNotificationChange, formData }: any) => {
           </div>
           <label className="relative inline-flex items-center cursor-pointer">
             <input
+              title="notification"
               type="checkbox"
               checked={formData.notifications.systemAlerts}
               onChange={() => handleNotificationChange("systemAlerts")}

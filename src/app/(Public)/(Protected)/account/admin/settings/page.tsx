@@ -12,7 +12,9 @@ const AdminSettingsPage = () => {
   const [activeTab, setActiveTab] = useState("general");
   const [formData, setFormData] = useState(settingsDatat);
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
+  ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
@@ -20,7 +22,7 @@ const AdminSettingsPage = () => {
     }));
   };
 
-  const handleNotificationChange = (type) => {
+  const handleNotificationChange = (type: any) => {
     setFormData((prev) => ({
       ...prev,
       notifications: {
@@ -30,7 +32,7 @@ const AdminSettingsPage = () => {
     }));
   };
 
-  const handlePaymentSettingChange = (field, value) => {
+  const handlePaymentSettingChange = (field: any, value: any) => {
     setFormData((prev) => ({
       ...prev,
       paymentSettings: {
@@ -40,7 +42,7 @@ const AdminSettingsPage = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     // Handle form submission
     console.log("Settings updated:", formData);

@@ -110,7 +110,7 @@ const Security = ({
         <div>
           <h3 className="text-lg font-medium text-gray-900 mb-4">Recent Login Activity</h3>
           <div className="space-y-3">
-            {admin.security.loginHistory.map((login) => (
+            {admin.security.loginHistory.map((login:any) => (
               <div
                 key={login.id}
                 className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
