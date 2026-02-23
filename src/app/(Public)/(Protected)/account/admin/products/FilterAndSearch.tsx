@@ -57,6 +57,7 @@ const FilterAndSearch = ({
           </select>
 
           <select
+            title="filter"
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
             className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">

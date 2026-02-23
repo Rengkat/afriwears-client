@@ -9,6 +9,7 @@ import Pagination from "./Pagination";
 import ProductList from "./ProductList";
 import FilterAndSearch from "./FilterAndSearch";
 import { mockProducts } from "@/Utils/mockData";
+import { FetchBaseQueryError } from "@reduxjs/toolkit/query";
 import StatCard from "./StatCard";
 import {
   useVerifyProductMutation,
@@ -16,6 +17,10 @@ import {
   useGetAllProductsAdminQuery,
 } from "@/redux/services/ProductApi";
 import toast from "react-hot-toast";
+
+const isFetchBaseQueryError = (error: unknown): error is FetchBaseQueryError => {
+  return typeof error === "object" && error !== null && "status" in error;
+};
 
 const ProductApprovalPage = () => {
   const { user } = useSelector((store: RootState) => store.authSlice);
@@ -118,8 +123,8 @@ const ProductApprovalPage = () => {
             verifyProduct({
               productId,
               action: "approve",
-            }).unwrap()
-          )
+            }).unwrap(),
+          ),
         );
         toast.success(`${selectedProducts.length} product(s) approved successfully!`);
       } else if (action === "reject") {
@@ -131,8 +136,8 @@ const ProductApprovalPage = () => {
               productId,
               action: "reject",
               reason: "Bulk rejection - does not meet platform standards",
-            }).unwrap()
-          )
+            }).unwrap(),
+          ),
         );
         toast.success(`${selectedProducts.length} product(s) rejected successfully!`);
       }
@@ -194,7 +199,9 @@ const ProductApprovalPage = () => {
         <div className="bg-red-50 border border-red-200 rounded-xl p-6">
           <h3 className="text-lg font-medium text-red-800">Error loading products</h3>
           <p className="text-red-700 mt-2">
-            {error?.data?.message || "Failed to fetch products. Please try again."}
+            {isFetchBaseQueryError(error)
+              ? (error.data as any)?.message
+              : "Failed to fetch products. Please try again."}
           </p>
           <button
             onClick={() => refetch()}
