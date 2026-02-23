@@ -20,7 +20,15 @@ import {
 
 // Valid specialty options
 const VALID_SPECIALTIES = ["Traditional", "Corporate", "Casual Wear", "Bridal", "Formal Wear"];
-
+interface LocalUser {
+  id: string;
+  email: string;
+  role: string;
+  company?: {
+    id: string;
+    companyName: string;
+  } | null;
+}
 const StylistProfilePage = () => {
   const { user: localUser } = useSelector((store: RootState) => store.authSlice);
   const [isEditing, setIsEditing] = useState(false);
@@ -47,7 +55,7 @@ const StylistProfilePage = () => {
   const [formData, setFormData] = useState({
     companyName: "",
     description: "",
-    specialty: [] as string[], // Changed from string to array
+    specialty: [] as string[],
     experience: "",
     services: [] as string[],
     phone: "",
@@ -82,7 +90,7 @@ const StylistProfilePage = () => {
       setFormData({
         companyName: stylist.companyName || "",
         description: stylist.description || "",
-        specialty: Array.isArray(stylist.specialty) ? stylist.specialty : [], // Ensure array
+        specialty: Array.isArray(stylist.specialty) ? stylist.specialty : [],
         experience: stylist.experience || "",
         services: stylist.services || [],
         phone: stylist.phone || "",

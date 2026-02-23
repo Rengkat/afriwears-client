@@ -4,9 +4,24 @@ import { FiCheck, FiClock, FiX } from "react-icons/fi";
 interface VerificationSectionProps {
   stylist: any;
   isEditing: boolean;
+  formData: any;
+  documents: {
+    cacCertificate: string;
+    businessRegistration: string;
+    taxCertificate: string;
+  };
+  handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  handleDocumentUpload: (documentType: string, file: File) => void;
 }
 
-const VerificationSection = ({ stylist, isEditing }: VerificationSectionProps) => {
+const VerificationSection = ({
+  stylist,
+  isEditing,
+  formData,
+  documents,
+  handleInputChange,
+  handleDocumentUpload,
+}: VerificationSectionProps) => {
   if (stylist.verificationStatus === "verified") {
     return null; // Don't show if verified
   }

@@ -3,9 +3,10 @@ import { useRouter } from "next/navigation";
 
 interface Props {
   isSubmitting: boolean;
+  submitText: any;
 }
 
-const FormActions = ({ isSubmitting }: Props) => {
+const FormActions = ({ isSubmitting, submitText }: Props) => {
   const router = useRouter();
 
   return (

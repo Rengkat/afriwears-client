@@ -23,7 +23,7 @@ const AddProductPage = () => {
   const [createProduct, { isLoading }] = useCreateProductMutation();
   const [uploadProductImage, { isLoading: isUploading }] = useUploadProductImageMutation();
   const [deleteProductImage] = useDeleteProductImageMutation();
-  const { user: localUser } = useSelector((store: RootState) => store.authSlice);
+  const { user: localUser } = useSelector((store: any) => store.authSlice);
 
   const router = useRouter();
 
@@ -71,11 +71,11 @@ const AddProductPage = () => {
   const filteredColors = colorPalette.filter(
     (color) =>
       color.name.toLowerCase().includes(colorSearch.toLowerCase()) ||
-      color.hexCode.toLowerCase().includes(colorSearch.toLowerCase())
+      color.hexCode.toLowerCase().includes(colorSearch.toLowerCase()),
   );
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
   ) => {
     const { name, value, type } = e.target;
 
@@ -220,7 +220,6 @@ const AddProductPage = () => {
     }
   };
 
-  // Keep all your existing image handling functions exactly as they are
   const uploadImage = async (file: File): Promise<string> => {
     try {
       const response = await uploadProductImage(file).unwrap();
@@ -396,8 +395,8 @@ const AddProductPage = () => {
 
       // Remove empty attributes object if all are undefined
       if (
-        !productData.attributes?.colors &&
-        !productData.attributes?.sizes &&
+        !productData.attributes?.colors?.length &&
+        !productData.attributes?.sizes?.length &&
         !productData.attributes?.material
       ) {
         delete productData.attributes;
@@ -537,7 +536,7 @@ const AddProductPage = () => {
                   <div className="grid grid-cols-6 gap-2 max-h-60 overflow-y-auto">
                     {filteredColors.map((color, index) => {
                       const isSelected = formData.attributes.colors.some(
-                        (c) => c.hexCode === color.hexCode
+                        (c) => c.hexCode === color.hexCode,
                       );
                       return (
                         <button
@@ -695,6 +694,7 @@ const AddProductPage = () => {
                   <div className="flex items-center gap-2 bg-green-50 text-green-700 px-3 py-1.5 rounded-lg border border-green-200">
                     <span className="text-sm font-medium">{formData.attributes.material}</span>
                     <button
+                      title="materialBtn"
                       type="button"
                       onClick={() =>
                         setFormData((prev) => ({

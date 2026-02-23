@@ -70,7 +70,7 @@ const RightColumn = ({
           Additional Images (Optional)
         </label>
         <div className="grid grid-cols-3 gap-2">
-          {subImagePreviews.map((preview, index) => (
+          {subImagePreviews.map((preview: string, index: number) => (
             <div key={index} className="relative group">
               <img
                 src={preview}

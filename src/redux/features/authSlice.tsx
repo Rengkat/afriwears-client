@@ -7,7 +7,10 @@ interface UserType {
   firstName: string;
   surname: string;
   role: string;
-  company?: string;
+  company?: {
+    id: string;
+    companyName: string;
+  } | null;
   email?: string;
   avatar?: string;
 }

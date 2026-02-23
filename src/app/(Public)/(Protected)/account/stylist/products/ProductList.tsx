@@ -13,7 +13,7 @@ const ProductList = ({ product }: any) => {
   const [mounted, setMounted] = useState(false);
   const [deleteMyProduct, { isLoading, isError }] = useDeleteProductMutation();
 
-  // Ensure component is mounted before using portal (client-side only)
+  // component is mounted before using portal (client-side only)
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -87,8 +87,8 @@ const ProductList = ({ product }: any) => {
               product?.status === "approved"
                 ? "bg-green-100 text-green-800"
                 : product?.status === "rejected"
-                ? "bg-red-100 text-red-800"
-                : "bg-amber-100 text-amber-800"
+                  ? "bg-red-100 text-red-800"
+                  : "bg-amber-100 text-amber-800"
             }`}>
             {product?.status === "approved" ? (
               "Approved"
@@ -162,7 +162,7 @@ const ProductList = ({ product }: any) => {
             isLoading={isLoading}
             isDanger={true}
           />,
-          document.getElementById("modal-root")!
+          document.getElementById("modal-root")!,
         )}
     </>
   );
