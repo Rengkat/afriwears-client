@@ -436,7 +436,7 @@ const AllOrdersPage = () => {
     if (!newStatus) return;
 
     setOrders(
-      orders.map((o) =>
+      orders.map((o: any) =>
         o._id === selectedOrder._id
           ? {
               ...o,
@@ -444,8 +444,8 @@ const AllOrdersPage = () => {
               updatedAt: new Date().toISOString(),
               ...(newStatus === "delivered" && { deliveredAt: new Date().toISOString() }),
             }
-          : o
-      )
+          : o,
+      ),
     );
 
     setShowStatusModal(false);
@@ -466,8 +466,8 @@ const AllOrdersPage = () => {
                   orderStatus: "processing",
                   updatedAt: new Date().toISOString(),
                 }
-              : o
-          )
+              : o,
+          ),
         );
         setSelectedOrders([]);
         break;
@@ -480,14 +480,14 @@ const AllOrdersPage = () => {
                   orderStatus: "shipped",
                   updatedAt: new Date().toISOString(),
                 }
-              : o
-          )
+              : o,
+          ),
         );
         setSelectedOrders([]);
         break;
       case "delivered":
         setOrders(
-          orders.map((o) =>
+          orders.map((o: any) =>
             selectedOrders.includes(o._id)
               ? {
                   ...o,
@@ -495,8 +495,8 @@ const AllOrdersPage = () => {
                   deliveredAt: new Date().toISOString(),
                   updatedAt: new Date().toISOString(),
                 }
-              : o
-          )
+              : o,
+          ),
         );
         setSelectedOrders([]);
         break;
@@ -527,7 +527,7 @@ const AllOrdersPage = () => {
     .filter(
       (o) =>
         o.paymentInfo.paymentStatus === "completed" ||
-        o.paymentInfo.paymentStatus === "partially_paid"
+        o.paymentInfo.paymentStatus === "partially_paid",
     )
     .reduce((sum, o) => sum + o.paymentInfo.amountPaid, 0);
 
