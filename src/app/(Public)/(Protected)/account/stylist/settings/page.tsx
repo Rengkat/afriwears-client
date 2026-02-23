@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { useState } from "react";
 import { FiLock, FiBell, FiCreditCard, FiShield } from "react-icons/fi";
 
@@ -22,7 +23,7 @@ const StylistSettingsPage = () => {
     },
   });
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
@@ -30,7 +31,7 @@ const StylistSettingsPage = () => {
     }));
   };
 
-  const handleNotificationChange = (type) => {
+  const handleNotificationChange = (type: keyof typeof formData.notifications) => {
     setFormData((prev) => ({
       ...prev,
       notifications: {
@@ -39,15 +40,14 @@ const StylistSettingsPage = () => {
       },
     }));
   };
-
-  const handlePaymentMethodChange = (method) => {
+  const handlePaymentMethodChange = (method: string) => {
     setFormData((prev) => ({
       ...prev,
       paymentMethod: method,
     }));
   };
 
-  const handleBankDetailsChange = (field, value) => {
+  const handleBankDetailsChange = (field: string, value: string) => {
     setFormData((prev) => ({
       ...prev,
       bankDetails: {
@@ -57,7 +57,7 @@ const StylistSettingsPage = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Handle form submission
     console.log("Settings updated:", formData);
@@ -231,6 +231,7 @@ const StylistSettingsPage = () => {
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input
+                        title="notification"
                         type="checkbox"
                         checked={formData.notifications.newOrders}
                         onChange={() => handleNotificationChange("newOrders")}
@@ -249,6 +250,7 @@ const StylistSettingsPage = () => {
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input
+                        title="notification"
                         type="checkbox"
                         checked={formData.notifications.productApprovals}
                         onChange={() => handleNotificationChange("productApprovals")}
@@ -267,6 +269,7 @@ const StylistSettingsPage = () => {
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input
+                        title="notification"
                         type="checkbox"
                         checked={formData.notifications.reviews}
                         onChange={() => handleNotificationChange("reviews")}
@@ -285,6 +288,7 @@ const StylistSettingsPage = () => {
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input
+                        title="notification"
                         type="checkbox"
                         checked={formData.notifications.promotions}
                         onChange={() => handleNotificationChange("promotions")}
