@@ -5,14 +5,6 @@ import Image from "next/image";
 import React from "react";
 import { FiAlertTriangle, FiTrash2, FiUser } from "react-icons/fi";
 
-// interface DeleteConfirmationModelProps {
-//   isOpen: boolean;
-//   onClose: () => void;
-//   onConfirm: () => void;
-//   selectedStylist: any;
-//   isLoading?: boolean;
-// }
-
 const DeleteConfirmationModel = ({
   isOpen,
   onClose,

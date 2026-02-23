@@ -20,7 +20,7 @@ const Pagination = ({
         </div>
         <div className="flex gap-2">
           <button
-            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            onClick={() => setCurrentPage((prev: number) => Math.max(prev - 1, 1))}
             disabled={currentPage === 1}
             className="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
             Previous
@@ -38,7 +38,7 @@ const Pagination = ({
             </button>
           ))}
           <button
-            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+            onClick={() => setCurrentPage((prev: number) => Math.min(prev + 1, totalPages))}
             disabled={currentPage === totalPages}
             className="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
             Next
