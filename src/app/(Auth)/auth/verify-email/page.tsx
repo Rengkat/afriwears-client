@@ -41,7 +41,6 @@ const VerifyEmail = () => {
           setCountdown((prev) => {
             if (prev <= 1) {
               if (timerRef.current) {
-                // ← null check here
                 clearInterval(timerRef.current);
               }
               router.push("/login");

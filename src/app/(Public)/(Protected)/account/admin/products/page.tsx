@@ -347,7 +347,7 @@ const ProductApprovalPage = () => {
       {showProductModal && selectedProduct && (
         <ProductDetailModel
           setShowProductModal={setShowProductModal}
-          productId={selectedProduct}
+          productId={selectedProduct._id}
           handleApproveProduct={handleApproveProduct}
           handleRejectProduct={handleRejectProduct}
         />
