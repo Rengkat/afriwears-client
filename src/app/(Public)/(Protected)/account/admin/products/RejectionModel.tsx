@@ -1,18 +1,12 @@
-import {
-  FiSearch,
-  FiFilter,
-  FiEye,
-  FiCheckCircle,
-  FiXCircle,
-  FiClock,
-  FiPackage,
-  FiUser,
-  FiDollarSign,
-  FiTag,
-  FiShoppingBag,
-  FiAlertCircle,
-} from "react-icons/fi";
-
+import { FiAlertCircle } from "react-icons/fi";
+interface RejectionModelProps {
+  selectedProduct: { _id: string; name: string };
+  setRejectionReason: (reason: string) => void;
+  rejectionReason: string;
+  setShowRejectionModal: (show: boolean) => void;
+  handleConfirmRejection: () => void;
+  setSelectedProduct: (product: null) => void;
+}
 const RejectionModel = ({
   selectedProduct,
   setRejectionReason,
@@ -20,7 +14,7 @@ const RejectionModel = ({
   setShowRejectionModal,
   handleConfirmRejection,
   setSelectedProduct,
-}) => {
+}: RejectionModelProps) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-xl shadow-lg max-w-md w-full">
