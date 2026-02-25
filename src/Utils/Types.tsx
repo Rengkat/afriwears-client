@@ -41,8 +41,8 @@ export interface CreateProductRequest {
   isBestSeller?: boolean;
   isNewProduct?: boolean;
   attributes?: {
-    colors?: Array<{ name: string; hexCode: string }>; // ← plural
-    sizes?: string[]; // ← plural
+    colors?: Array<{ name: string; hexCode: string }>;
+    sizes?: string[];
     material?: string;
   };
   mainImage: string;

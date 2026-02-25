@@ -6,13 +6,6 @@ import { FiCheckCircle, FiXCircle, FiLoader } from "react-icons/fi";
 import { useVerifyEmailMutation } from "@/redux/services/AuthApiSlice";
 import toast from "react-hot-toast";
 
-interface ApiError {
-  data?: {
-    message?: string | undefined;
-  };
-  status?: number;
-}
-
 const VerifyEmail = () => {
   const [verify] = useVerifyEmailMutation();
   const router = useRouter();
@@ -22,10 +15,9 @@ const VerifyEmail = () => {
 
   const [status, setStatus] = useState<"verifying" | "success" | "error">("verifying");
   const [countdown, setCountdown] = useState(5);
-  const timerRef = useRef<NodeJS.Timeout>();
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    // Cleanup timer on unmount
     return () => {
       if (timerRef.current) {
         clearInterval(timerRef.current);
@@ -45,11 +37,13 @@ const VerifyEmail = () => {
         toast.success(res.message);
         setStatus("success");
 
-        // Start countdown to redirect
         timerRef.current = setInterval(() => {
           setCountdown((prev) => {
             if (prev <= 1) {
-              clearInterval(timerRef.current);
+              if (timerRef.current) {
+                // ← null check here
+                clearInterval(timerRef.current);
+              }
               router.push("/login");
               return 0;
             }
