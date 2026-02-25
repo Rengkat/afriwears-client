@@ -37,7 +37,7 @@ const StylistOrdersPage = () => {
     limit,
     status: filter !== "all" ? filter : undefined,
   });
-
+  const totalPages = data?.totalPages ?? 1;
   useEffect(() => {
     if (error) {
       toast.error("Failed to load orders");
@@ -55,12 +55,12 @@ const StylistOrdersPage = () => {
     return matchesSearch;
   });
 
-  const toggleOrderExpand = (orderId) => {
+  const toggleOrderExpand = (orderId: any) => {
     setExpandedOrder(expandedOrder === orderId ? null : orderId);
   };
 
   // Format date for display
-  const formatDate = (dateString) => {
+  const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
@@ -110,6 +110,7 @@ const StylistOrdersPage = () => {
                 <FiFilter className="text-gray-400" />
               </div>
               <select
+                title="Filter orders by status"
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}
                 className="appearance-none pl-10 pr-8 py-2 border border-gray-300 rounded-lg bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500">
@@ -199,60 +200,53 @@ const StylistOrdersPage = () => {
             </div>
 
             {/* Pagination */}
-            {data?.totalPages > 1 && (
+
+            {totalPages > 1 && (
               <div className="flex items-center justify-between px-6 py-3 border-t border-gray-200">
                 <div className="flex-1 flex justify-between sm:hidden">
                   <button
                     onClick={() => setPage(Math.max(1, page - 1))}
                     disabled={page === 1}
-                    className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50">
+                    className="...">
                     Previous
                   </button>
                   <button
-                    onClick={() => setPage(Math.min(data.totalPages, page + 1))}
-                    disabled={page === data.totalPages}
-                    className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50">
+                    onClick={() => setPage(Math.min(totalPages, page + 1))}
+                    disabled={page === totalPages}
+                    className="...">
                     Next
                   </button>
                 </div>
                 <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                  <div>
-                    <p className="text-sm text-gray-700">
-                      Showing page <span className="font-medium">{page}</span> of{" "}
-                      <span className="font-medium">{data.totalPages}</span>
-                    </p>
-                  </div>
-                  <div>
-                    <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-                      <button
-                        onClick={() => setPage(Math.max(1, page - 1))}
-                        disabled={page === 1}
-                        className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50">
-                        Previous
-                      </button>
-                      {[...Array(Math.min(5, data.totalPages))].map((_, i) => {
-                        const pageNum = i + 1;
-                        return (
-                          <button
-                            key={pageNum}
-                            onClick={() => setPage(pageNum)}
-                            className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                              page === pageNum
-                                ? "z-10 bg-amber-50 border-amber-500 text-amber-600"
-                                : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
-                            }`}>
-                            {pageNum}
-                          </button>
-                        );
-                      })}
-                      <button
-                        onClick={() => setPage(Math.min(data.totalPages, page + 1))}
-                        disabled={page === data.totalPages}
-                        className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50">
-                        Next
-                      </button>
-                    </nav>
-                  </div>
+                  <p className="text-sm text-gray-700">
+                    Showing page <span className="font-medium">{page}</span> of{" "}
+                    <span className="font-medium">{totalPages}</span>
+                  </p>
+                  <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                    <button
+                      onClick={() => setPage(Math.max(1, page - 1))}
+                      disabled={page === 1}
+                      className="...">
+                      Previous
+                    </button>
+                    {[...Array(Math.min(5, totalPages))].map((_, i) => {
+                      const pageNum = i + 1;
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => setPage(pageNum)}
+                          className={`... ${page === pageNum ? "z-10 bg-amber-50 border-amber-500 text-amber-600" : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"}`}>
+                          {pageNum}
+                        </button>
+                      );
+                    })}
+                    <button
+                      onClick={() => setPage(Math.min(totalPages, page + 1))}
+                      disabled={page === totalPages}
+                      className="...">
+                      Next
+                    </button>
+                  </nav>
                 </div>
               </div>
             )}

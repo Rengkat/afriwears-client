@@ -13,7 +13,12 @@ import { useSelector } from "react-redux";
 import { RootState } from "@/redux/Store";
 import { formatDistanceToNow } from "date-fns";
 import { useRouter } from "next/navigation";
+import { AnyCnameRecord } from "dns";
+import { FetchBaseQueryError } from "@reduxjs/toolkit/query";
 
+const isFetchBaseQueryError = (error: unknown): error is FetchBaseQueryError => {
+  return typeof error === "object" && error !== null && "status" in error;
+};
 // TypeScript interfaces
 interface NotificationData {
   orderId?: string;
@@ -196,7 +201,7 @@ const NotificationPage = () => {
 
   // Filter notifications based on active tab
   const filteredNotifications =
-    activeTab === "all" ? notifications : notifications.filter((n) => n.type === activeTab);
+    activeTab === "all" ? notifications : notifications.filter((n: any) => n.type === activeTab);
 
   // Get notification icon
   const getNotificationIcon = (type: string) => {
@@ -306,9 +311,12 @@ const NotificationPage = () => {
             <FiBell className="w-full h-full" />
           </div>
           <h3 className="mt-2 text-sm font-medium text-gray-900">Error loading notifications</h3>
-          <p className="mt-1 text-sm text-gray-500">
-            {error?.data?.message || "Unable to load notifications. Please try again."}
+          <p className="text-gray-500 max-w-md mx-auto mb-6">
+            {isFetchBaseQueryError(error)
+              ? (error.data as any)?.message
+              : "Unable to load notifications. Please try again."}
           </p>
+
           <button
             onClick={() => refetch()}
             className="mt-4 px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700">
@@ -382,7 +390,7 @@ const NotificationPage = () => {
             </p>
           </div>
         ) : (
-          filteredNotifications.map((notification) => {
+          filteredNotifications.map((notification: any) => {
             const title = getNotificationTitle(notification);
 
             return (

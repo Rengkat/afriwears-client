@@ -40,7 +40,7 @@ export const cartApi = createApi({
       }),
       invalidatesTags: ["Cart"],
     }),
-    // Move product from cart to wishlistnpm
+
     moveToWishlist: build.mutation({
       query: (productId: string) => ({
         url: "cart/move-to-wishlist",
@@ -50,7 +50,7 @@ export const cartApi = createApi({
       invalidatesTags: ["Cart"],
     }),
 
-    clearCart: build.mutation({
+    clearCart: build.mutation<void, void>({
       query: () => ({
         url: `cart/clear-cart`,
         method: "POST",

@@ -16,7 +16,6 @@ const ProductCard = ({ product }: ProductCardProps) => {
     e.preventDefault();
     e.stopPropagation();
     setIsWishlisted(!isWishlisted);
-    // Here you would typically make an API call to update wishlist
   };
 
   // Format price to Nigerian Naira

@@ -1,4 +1,3 @@
-// components/ProductTabs.tsx - Updated for stylist view
 "use client";
 
 import { useRouter } from "next/navigation";
@@ -32,7 +31,7 @@ const ProductTabs = ({ product, isOwner = true }: ProductTabsProps) => {
   if (isOwner) {
     tabs.push(
       { id: "management", label: "Management", icon: <FiSettings /> },
-      { id: "performance", label: "Performance", icon: <FiBarChart /> }
+      { id: "performance", label: "Performance", icon: <FiBarChart /> },
     );
   }
 

@@ -10,7 +10,7 @@ import {
 } from "react-icons/fi";
 
 const OrderList = ({ order, toggleOrderExpand, expandedOrder, updateOrderStatus }: any) => {
-  const getStatusBadge = (status) => {
+  const getStatusBadge = (status: string) => {
     const baseClasses = "px-3 py-1 inline-flex items-center text-sm font-medium rounded-full";
 
     switch (status) {
@@ -29,7 +29,7 @@ const OrderList = ({ order, toggleOrderExpand, expandedOrder, updateOrderStatus 
     }
   };
 
-  const getStatusIcon = (status) => {
+  const getStatusIcon = (status: string) => {
     switch (status) {
       case "pending":
         return <FiClock className="mr-2" size={14} />;
@@ -107,13 +107,13 @@ const OrderList = ({ order, toggleOrderExpand, expandedOrder, updateOrderStatus 
       </tr>
       {expandedOrder === order.id && (
         <tr className="bg-gray-50">
-          <td colSpan="6" className="px-6 py-4">
+          <td colSpan={6} className="px-6 py-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <h4 className="text-sm font-medium text-gray-900 mb-2">Items Ordered</h4>
                 <ul className="space-y-2">
                   {order.items &&
-                    order.items.map((item, index) => (
+                    order.items.map((item: any, index: number) => (
                       <li key={index} className="flex justify-between text-sm">
                         <span className="text-gray-600">
                           {item.quantity} × {item.name}
@@ -124,7 +124,7 @@ const OrderList = ({ order, toggleOrderExpand, expandedOrder, updateOrderStatus 
                       </li>
                     ))}
                 </ul>
-                {order.items?.some((item) => item.measurements) && (
+                {order.items?.some((item: any) => item.measurements) && (
                   <div className="mt-4">
                     <h5 className="text-sm font-medium text-gray-900 mb-2">Measurements</h5>
                     <div className="text-xs text-gray-600 bg-gray-100 p-2 rounded">

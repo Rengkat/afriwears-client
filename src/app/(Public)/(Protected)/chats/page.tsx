@@ -123,7 +123,7 @@ const ChatPage = () => {
 
     // Remove duplicates based on _id
     const uniqueMessages = allMessages.reduce((acc, current) => {
-      const exists = acc.find((msg) => msg._id === current._id);
+      const exists = acc.find((msg: any) => msg._id === current._id);
       if (!exists) {
         acc.push(current);
       }
@@ -132,7 +132,7 @@ const ChatPage = () => {
 
     // Sort by timestamp
     return uniqueMessages.sort(
-      (a, b) =>
+      (a: any, b: any) =>
         new Date(a.timestamp || a.createdAt).getTime() -
         new Date(b.timestamp || b.createdAt).getTime(),
     );

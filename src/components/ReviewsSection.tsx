@@ -1,6 +1,6 @@
 "use client";
 
-import { FiStar, FiUser } from "react-icons/fi";
+import { FiMessageSquare, FiStar, FiUser } from "react-icons/fi";
 import { useState } from "react";
 import Image from "next/image";
 import { useAddReviewMutation } from "@/redux/services/ProductApi";
@@ -120,7 +120,7 @@ const ReviewsSection = ({ reviews, averageRating, productId }: ReviewsSectionPro
               <label className="block text-gray-700 mb-2">Your Rating</label>
               <div className="flex gap-1">
                 {[1, 2, 3, 4, 5].map((star) => (
-                  <button key={star} type="button" onClick={() => setRating(star)} className="p-1">
+                  <button title="rating" key={star} type="button" onClick={() => setRating(star)} className="p-1">
                     <FiStar
                       className={`w-8 h-8 ${
                         star <= rating ? "text-amber-500 fill-amber-500" : "text-gray-300"

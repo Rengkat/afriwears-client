@@ -80,7 +80,7 @@ const AddAddress = () => {
         postalCode: address.postalCode,
         homeAddress: address.addressLine1,
         homeAddress2: address.addressLine2 || undefined,
-        isDefault: address.isDefault,
+        isDefault: address.isDefault ?? false,
       };
 
       await addAddress(addressData).unwrap();

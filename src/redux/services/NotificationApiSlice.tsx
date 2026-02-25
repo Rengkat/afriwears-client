@@ -25,7 +25,7 @@ export const notificationApi = createApi({
     }),
 
     // Mark notification as read
-    markAsRead: build.mutation({
+    markAsRead: build.mutation<void, string>({
       query: (notificationId) => ({
         url: `notifications/${notificationId}/read`,
         method: "PATCH",
@@ -34,7 +34,7 @@ export const notificationApi = createApi({
     }),
 
     // Mark all notifications as read
-    markAllAsRead: build.mutation({
+    markAllAsRead: build.mutation<void, void>({
       query: () => ({
         url: `notifications/read-all`,
         method: "PATCH",

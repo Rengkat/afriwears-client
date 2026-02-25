@@ -10,7 +10,7 @@ const VerifyFundingPage = () => {
   const reference = searchParams.get("reference");
   const [verifyFunding, { isLoading }] = useVerifyWalletFundingMutation();
   const [verificationStatus, setVerificationStatus] = useState<"pending" | "success" | "failed">(
-    "pending"
+    "pending",
   );
   const [error, setError] = useState<string | null>(null);
 
@@ -26,7 +26,6 @@ const VerifyFundingPage = () => {
       try {
         const res = await verifyFunding({ reference }).unwrap();
         setVerificationStatus("success");
-        // Optionally redirect after delay
         setTimeout(() => router.push("/account/user"), 3000);
       } catch (err: any) {
         setError(err.data?.message || "Payment verification failed");

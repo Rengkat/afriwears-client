@@ -31,9 +31,22 @@ export interface OrderItem {
 
 export interface Order {
   _id: string;
-  customer: string;
+
   orderItems: OrderItem[];
-  shippingAddress: ShippingAddress;
+  totalPages?: number;
+  orderNumber?: string;
+  customer: {
+    _id: string;
+    name: string;
+    email: string;
+  };
+  shippingAddress: ShippingAddress & {
+    address?: string;
+  };
+  shippingInfo?: {
+    courier?: string;
+    trackingNumber?: string;
+  };
   paymentInfo: {
     paymentMethod: "credit_card" | "bank_transfer" | "cash_on_delivery" | "wallet";
     paymentStatus: "pending" | "completed" | "failed" | "refunded" | "partially_paid";
@@ -75,12 +88,16 @@ export interface OrdersResponse {
   count: number;
   orders: Order[];
   fromCache?: boolean;
+  totalPages?: number;
+  currentPage?: number;
+  totalOrders?: number;
 }
 
 export interface SingleOrderResponse {
   success: boolean;
   order: Order;
   fromCache?: boolean;
+  message?: string;
 }
 
 export const orderApi = createApi({
@@ -104,7 +121,7 @@ export const orderApi = createApi({
         url: `orders/verify-payment?reference=${reference}`,
         method: "GET",
       }),
-      invalidatesTags: (result, error, { orderId }) => 
+      invalidatesTags: (result, error, { orderId }) =>
         result?.order?._id ? [{ type: "Order", id: result.order._id }, "Orders"] : ["Orders"],
     }),
 

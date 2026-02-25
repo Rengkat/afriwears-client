@@ -102,6 +102,7 @@ const ShopPage = () => {
     if (data?.success && (data as ApiResponse).products) {
       const formattedProducts: Product[] = (data as ApiResponse).products.map((product: any) => ({
         id: product._id,
+        _id: product._id,
         name: product.name,
         description: product.description,
         price: product.price,

@@ -11,12 +11,12 @@ const DesktopFilter = ({
   return (
     <div className="hidden lg:block">
       <div className="divide-y divide-gray-200 space-y-10 pb-8">
-        {filters.map((filter, filterIdx) => (
-          <div key={filter.id} className={filterIdx === 0 ? null : "pt-10"}>
+        {filters.map((filter: any, filterIdx: number) => (
+          <div key={filter.id} className={filterIdx === 0 ? "" : "pt-10"}>
             <fieldset>
               <legend className="block text-sm font-medium text-gray-900">{filter.name}</legend>
               <div className="space-y-3 pt-4">
-                {filter.options.map((option) => (
+                {filter.options.map((option: any) => (
                   <div key={option.value} className="flex items-center">
                     <input
                       id={`${filter.id}-${option.value}`}

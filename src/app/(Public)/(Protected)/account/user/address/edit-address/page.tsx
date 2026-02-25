@@ -13,26 +13,14 @@ import {
   useSetDefaultAddressMutation,
 } from "@/redux/services/UserApiSlice";
 
-type Address = {
-  _id: string;
-  country: string;
-  state: string;
-  city: string;
-  street: string;
-  postalCode: string;
-  homeAddress: string;
-  homeAddress2?: string;
-  isDefault?: boolean;
-};
-
 const Edit = () => {
   const { data, refetch } = useGetCurrentUserDetailsQuery();
-  const { data: addresses, isLoading } = useGetAddressesQuery();
+  const { data: addressData, isLoading } = useGetAddressesQuery();
   const [setDefault] = useSetDefaultAddressMutation();
   const [deleteAddress, { isLoading: isDeleting }] = useDeleteAddressMutation();
-  console.log(addresses);
+  const addressList = addressData?.addresses ?? [];
   const router = useRouter();
-  const user = data?.profile || {
+  const user = data?.data || {
     firstName: "",
     surname: "",
     phone: "",
@@ -104,8 +92,8 @@ const Edit = () => {
           </div>
 
           <div className="space-y-4">
-            {addresses?.addresses?.length > 0 ? (
-              addresses?.addresses?.map((address) => (
+            {addressList.length > 0 ? (
+              addressList.map((address) => (
                 <div
                   key={address._id}
                   className={`p-4 border rounded-lg transition-colors ${
@@ -176,7 +164,7 @@ const Edit = () => {
         </div>
       </div>
 
-      {addresses?.addresses?.length > 0 && (
+      {addressList.length > 0 && (
         <div className="flex justify-end">
           <button
             onClick={handleSaveSelection}

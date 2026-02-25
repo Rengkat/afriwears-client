@@ -37,8 +37,7 @@ const EditProfilePage = () => {
   const [uploadAvatar] = useUploadAvatarMutation();
   const router = useRouter();
 
-  const user = data?.profile || localUser;
-
+  const user = data?.data || localUser;
   const [formData, setFormData] = useState<FormData>({
     firstName: "",
     surname: "",
@@ -111,7 +110,12 @@ const EditProfilePage = () => {
         console.log(key, value);
       }
 
-      await updateProfile(formPayload).unwrap();
+      await updateProfile({
+        firstName: formData.firstName,
+        surname: formData.surname,
+        phone: formData.phone,
+        ...(tempAvatarUrl && { avatar: tempAvatarUrl }),
+      }).unwrap();
       toast.success("Profile updated successfully!");
       router.push("/account");
     } catch (error: any) {
@@ -148,9 +152,9 @@ const EditProfilePage = () => {
       formData.append("avatar", selectedFile);
 
       const uploadResponse = await uploadAvatar(formData).unwrap();
-      setTempAvatarUrl(uploadResponse.imageUrl);
+      setTempAvatarUrl(uploadResponse.data.avatarUrl);
       toast.success("Image uploaded successfully!");
-      setAvatarPreview(uploadResponse.imageUrl);
+      setAvatarPreview(uploadResponse.data.avatarUrl);
     } catch (error: any) {
       console.error("Failed to upload avatar:", error);
       toast.error(error.data?.message || "Failed to upload image. Please try again.");
@@ -232,6 +236,7 @@ const EditProfilePage = () => {
               className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 cursor-pointer">
               <FiCamera className="w-5 h-5 text-white" />
               <input
+                title="Upload new profile picture"
                 id="avatar-upload"
                 type="file"
                 accept="image/*"

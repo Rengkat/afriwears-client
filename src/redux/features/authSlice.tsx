@@ -1,6 +1,6 @@
-// @/redux/features/authSlice.ts
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
+// authSlice.ts
 interface UserType {
   _id: string;
   id?: string;
@@ -12,6 +12,7 @@ interface UserType {
     companyName: string;
   } | null;
   email?: string;
+  phone?: string;
   avatar?: string;
 }
 

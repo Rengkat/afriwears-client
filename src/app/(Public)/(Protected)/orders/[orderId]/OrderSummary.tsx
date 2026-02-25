@@ -11,7 +11,7 @@ const OrderSummary = ({ order }: any) => {
 
         <div className="p-6">
           <div className="space-y-6">
-            {order.items.map((item) => (
+            {order.items.map((item: any) => (
               <div
                 key={item.id}
                 className="flex flex-col sm:flex-row gap-4 py-4 border-b border-gray-100 last:border-0">

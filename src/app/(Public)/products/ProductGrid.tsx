@@ -3,6 +3,7 @@ import ProductCard from "./ProductCard";
 
 interface Product {
   id: string;
+  _id: string;
   name: string;
   description: string;
   price: number;
@@ -29,7 +30,6 @@ interface Product {
   updatedAt: string;
   isNew: boolean;
 }
-
 interface ProductGridProps {
   sortedProducts: Product[];
   clearAllFilters: () => void;

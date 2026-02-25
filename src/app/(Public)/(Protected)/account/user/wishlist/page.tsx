@@ -9,7 +9,11 @@ import {
   useRemoveFromWishlistMutation,
 } from "@/redux/services/WishlistApiSlice";
 import toast from "react-hot-toast";
+import { FetchBaseQueryError } from "@reduxjs/toolkit/query";
 
+const isFetchBaseQueryError = (error: unknown): error is FetchBaseQueryError => {
+  return typeof error === "object" && error !== null && "status" in error;
+};
 const WishlistPage = () => {
   const { data: wishlistData, isLoading, isError, error, refetch } = useGetMyWishlistQuery();
   const [removeFromWishlist, { isLoading: isRemoving }] = useRemoveFromWishlistMutation();
@@ -90,7 +94,9 @@ const WishlistPage = () => {
           </div>
           <h3 className="text-lg font-medium text-gray-900 mb-2">Error loading wishlist</h3>
           <p className="text-gray-500 max-w-md mx-auto mb-6">
-            {error?.data?.message || "We couldn't load your wishlist. Please try again."}
+            {isFetchBaseQueryError(error)
+              ? (error.data as any)?.message
+              : "We couldn't load your wishlist. Please try again."}
           </p>
           <button
             onClick={refetch}

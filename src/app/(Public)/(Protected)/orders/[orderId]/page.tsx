@@ -42,12 +42,12 @@ const mockOrder = {
   notes: "Please package carefully as this is a gift",
 };
 
-const OrderDetailPage = ({ params }) => {
+const OrderDetailPage = () => {
   const router = useRouter();
   const [order, setOrder] = useState(mockOrder);
   const [isUpdating, setIsUpdating] = useState(false);
 
-  const updateOrderStatus = async (newStatus) => {
+  const updateOrderStatus = async (newStatus: string) => {
     setIsUpdating(true);
     // In a real app, you would call an API to update the order status
     await new Promise((resolve) => setTimeout(resolve, 1000));

@@ -11,11 +11,12 @@ import AddressCard from "./AddressCard";
 const AddressPage = () => {
   const { data, isLoading, refetch } = useGetCurrentUserDetailsQuery();
   const { data: addresses } = useGetAddressesQuery();
-  const user = data?.profile;
+  const user = data?.data;
   // Calculate if user has addresses to show the "Add Another Address" section
-  const hasAddresses = addresses?.addresses?.length > 0;
+  const addressList = addresses?.addresses ?? [];
+  const hasAddresses = addressList.length > 0;
   const canAddMoreAddresses = hasAddresses;
-  console.log(user, hasAddresses, addresses);
+  // console.log(user, hasAddresses, addresses);
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
