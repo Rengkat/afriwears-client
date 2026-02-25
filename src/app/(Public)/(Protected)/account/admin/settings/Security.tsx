@@ -61,10 +61,11 @@ const Security = ({ handleSubmit, formData, handleInputChange, setFormData }: an
           </div>
           <label className="relative inline-flex items-center cursor-pointer">
             <input
+              title="2fo"
               type="checkbox"
               checked={formData.twoFactorAuth}
               onChange={() =>
-                setFormData((prev) => ({ ...prev, twoFactorAuth: !prev.twoFactorAuth }))
+                setFormData((prev: any) => ({ ...prev, twoFactorAuth: !prev.twoFactorAuth }))
               }
               className="sr-only peer"
             />

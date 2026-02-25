@@ -14,7 +14,6 @@ export default function AccountRoleLayout({ children }: { children: React.ReactN
   const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
-    // Wait until Redux/auth state is resolved (important if persisted)
     if (user === undefined) return;
 
     // Not logged in → go to login

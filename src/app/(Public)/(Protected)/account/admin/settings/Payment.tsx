@@ -67,12 +67,13 @@ const Payment = ({ handleSubmit, formData, handlePaymentSettingChange }: any) =>
           </div>
           <label className="relative inline-flex items-center cursor-pointer">
             <input
+              title="autoApprove"
               type="checkbox"
               checked={formData.paymentSettings.autoApprovePayments}
               onChange={() =>
                 handlePaymentSettingChange(
                   "autoApprovePayments",
-                  !formData.paymentSettings.autoApprovePayments
+                  !formData.paymentSettings.autoApprovePayments,
                 )
               }
               className="sr-only peer"
