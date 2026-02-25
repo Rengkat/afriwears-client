@@ -33,22 +33,24 @@ export interface CreateProductRequest {
   price: number;
   minPrice?: number;
   maxPrice?: number;
-  description: string;
-  stylist?: string;
-  stylistName?: string;
   category: "men" | "women" | "unisex" | "material";
   type: "native" | "corporate" | "casual" | "traditional";
-  mainImage: string;
-  subImages?: string[];
+  description: string;
   stock: number;
+  featured?: boolean;
+  isBestSeller?: boolean;
+  isNewProduct?: boolean;
   attributes?: {
-    color?: string;
-    size?: string;
+    colors?: Array<{ name: string; hexCode: string }>; // ← plural
+    sizes?: string[]; // ← plural
     material?: string;
   };
+  mainImage: string;
+  subImages?: string[];
   productDetails?: string;
-  materials?: string;
   careInstructions?: string;
   deliveryInfo?: string;
-  status?: "draft"; // Add status field
+  status?: "draft" | "published";
+  stylist?: string;
+  stylistName?: string;
 }

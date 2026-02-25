@@ -393,7 +393,6 @@ const AddProductPage = () => {
         ...(localUser?.company?.companyName && { stylistName: localUser.company.companyName }),
       };
 
-      // Remove empty attributes object if all are undefined
       if (
         !productData.attributes?.colors?.length &&
         !productData.attributes?.sizes?.length &&
