@@ -25,6 +25,7 @@ interface StylistDetailModelProps {
   handleSuspendStylist: (stylist: any) => void;
   handleActivateStylist: (stylistId: string) => void;
   handleApproveStylist: (stylistId: string) => void;
+  handleRejectStylist: (stylistId: string) => void;
 }
 
 const StylistDetailModel = ({
@@ -34,6 +35,7 @@ const StylistDetailModel = ({
   handleSuspendStylist,
   handleActivateStylist,
   handleApproveStylist,
+  handleRejectStylist,
 }: StylistDetailModelProps) => {
   // Fetch detailed stylist data
   const {
@@ -57,8 +59,8 @@ const StylistDetailModel = ({
   const specialtyArray = Array.isArray(stylistData?.specialty)
     ? stylistData.specialty
     : stylistData?.specialty
-    ? [stylistData.specialty]
-    : [];
+      ? [stylistData.specialty]
+      : [];
 
   const experience = stylistData?.experience || "Not specified";
   const description = stylistData?.description || "No description provided";
@@ -214,13 +216,13 @@ const StylistDetailModel = ({
                 <div className="flex items-center gap-4 mt-3">
                   <span
                     className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${getVerificationColor(
-                      verificationStatus
+                      verificationStatus,
                     )}`}>
                     {verificationStatus.toUpperCase()}
                   </span>
                   <span
                     className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${getStatusColor(
-                      status
+                      status,
                     )}`}>
                     {status.toUpperCase()}
                   </span>
