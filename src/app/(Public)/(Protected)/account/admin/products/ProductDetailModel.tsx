@@ -108,7 +108,7 @@ const ProductDetailModel = ({
   handleRejectProduct,
   handleApproveProduct,
 }: ProductDetailModelProps) => {
-  const { data, isLoading, error } = useGetProductDetailQuery(productId?._id);
+  const { data, isLoading, error } = useGetProductDetailQuery(productId);
   const [product, setProduct] = useState<Product | null>(null);
 
   useEffect(() => {
@@ -257,8 +257,8 @@ const ProductDetailModel = ({
                           product.stock > 10
                             ? "bg-green-100 text-green-800"
                             : product.stock > 0
-                            ? "bg-yellow-100 text-yellow-800"
-                            : "bg-red-100 text-red-800"
+                              ? "bg-yellow-100 text-yellow-800"
+                              : "bg-red-100 text-red-800"
                         }`}>
                         {product.stock} units
                       </span>
@@ -277,7 +277,7 @@ const ProductDetailModel = ({
                       <span className="text-sm text-gray-600">Status</span>
                       <span
                         className={`px-3 py-1 text-sm font-medium rounded-full ${getStatusColor(
-                          product.status
+                          product.status,
                         )}`}>
                         {product.status.charAt(0).toUpperCase() + product.status.slice(1)}
                       </span>
@@ -310,7 +310,7 @@ const ProductDetailModel = ({
                       <div className="flex flex-wrap gap-2 mb-6">
                         <span
                           className={`px-4 py-2 text-sm font-medium rounded-full ${getCategoryColor(
-                            product.category
+                            product.category,
                           )} border`}>
                           {product.category.toUpperCase()}
                         </span>
@@ -502,13 +502,15 @@ const ProductDetailModel = ({
                       <FiScissors className="text-blue-500" /> Available Sizes
                     </h4>
                     <div className="grid grid-cols-4 gap-3">
-                      {attributes.sizes?.filter(Boolean).map((size: string, index: number) => (
-                        <div
-                          key={index}
-                          className="px-4 py-3 bg-white text-center rounded-xl border border-blue-100 hover:border-blue-300 hover:bg-blue-50 transition-all duration-200">
-                          <span className="font-medium text-gray-900">{size}</span>
-                        </div>
-                      ))}
+                      {attributes.sizes
+                        ?.filter((size): size is string => Boolean(size))
+                        .map((size, index) => (
+                          <div
+                            key={index}
+                            className="px-4 py-3 bg-white text-center rounded-xl border border-blue-100 hover:border-blue-300 hover:bg-blue-50 transition-all duration-200">
+                            <span className="font-medium text-gray-900">{size}</span>
+                          </div>
+                        ))}
                     </div>
                     {attributes.material && (
                       <div className="mt-6 pt-6 border-t border-blue-100">
