@@ -16,6 +16,26 @@ import {
 } from "react-icons/fi";
 import Pagination from "./Pagination";
 import Image from "next/image";
+interface StylistTableProps {
+  handleSelectAll: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleSelectStylist: (stylistId: string, checked: boolean) => void;
+  selectedStylists: string[];
+  currentStylists: any[];
+  filteredStylists: any[];
+  indexOfLastStylist: number;
+  indexOfFirstStylist: number;
+  setCurrentPage: (page: number) => void;
+  currentPage: number;
+  totalPages: number;
+  handleViewStylist: (stylist: any) => void;
+  handleDeleteStylist: (stylist: any) => void;
+  handleSuspendStylist: (stylist: any) => void;
+  handleEditStylist: (stylist: any) => void;
+  handleApproveStylist: (stylistId: string) => void;
+  handleRejectStylist: (stylist: any) => void;
+  handleActivateStylist: (stylistId: string) => void;
+  isLoading?: boolean;
+}
 
 const StylistTable = ({
   handleSelectAll,
@@ -36,8 +56,7 @@ const StylistTable = ({
   handleRejectStylist,
   handleActivateStylist,
   isLoading = false,
-}: any) => {
-  // console.log(currentStylists);
+}: StylistTableProps) => {
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
       <div className="overflow-x-auto">
@@ -121,7 +140,7 @@ const StylistTable = ({
                     {getVerificationIcon(stylist.verificationStatus)}
                     <span
                       className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getVerificationColor(
-                        stylist.verificationStatus
+                        stylist.verificationStatus,
                       )}`}>
                       {stylist.verificationStatus}
                     </span>
@@ -137,7 +156,7 @@ const StylistTable = ({
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span
                     className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
-                      stylist.status || "active"
+                      stylist.status || "active",
                     )}`}>
                     {stylist.status || "active"}
                   </span>

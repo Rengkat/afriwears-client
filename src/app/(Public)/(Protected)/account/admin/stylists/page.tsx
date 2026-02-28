@@ -335,14 +335,13 @@ const StylistManagementPage = () => {
         handleSuspendStylist={handleSuspendStylist}
         handleEditStylist={handleEditStylist}
         handleApproveStylist={handleApproveStylist}
-        handleRejectStylist={() => {
-          setSelectedStylist(selectedStylist);
+        handleRejectStylist={(stylist) => {
+          setSelectedStylist(stylist);
           setShowVerificationModal(true);
         }}
         handleActivateStylist={handleActivateStylist}
         isLoading={isLoading || isVerifying || isDeleting || isUpdating || isSuspending}
       />
-
       {/* Single Delete Confirmation Modal */}
       {showDeleteModal && selectedStylist && (
         <DeleteConfirmationModel
