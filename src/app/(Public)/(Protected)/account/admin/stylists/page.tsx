@@ -110,7 +110,7 @@ const StylistManagementPage = () => {
       await Promise.all(
         selectedStylists.map(async (id) => {
           await deleteStylist(id).unwrap();
-        })
+        }),
       );
       toast.success(`${selectedStylists.length} stylist(s) deleted successfully`);
       setSelectedStylists([]);
@@ -138,7 +138,7 @@ const StylistManagementPage = () => {
                 action: "verify",
                 rejectionReason: "",
               }).unwrap();
-            })
+            }),
           );
           toast.success(`${selectedStylists.length} stylist(s) verified`);
           break;
@@ -149,7 +149,7 @@ const StylistManagementPage = () => {
                 id,
                 data: { status: "active", suspensionReason: "" },
               }).unwrap();
-            })
+            }),
           );
           toast.success(`${selectedStylists.length} stylist(s) activated`);
           break;
@@ -163,7 +163,7 @@ const StylistManagementPage = () => {
                   suspensionReason: "Bulk suspension - quality compliance review",
                 },
               }).unwrap();
-            })
+            }),
           );
           toast.success(`${selectedStylists.length} stylist(s) suspended`);
           break;
@@ -264,7 +264,7 @@ const StylistManagementPage = () => {
   const totalStylistsCount = totalStylists;
   const verifiedCount = stylists.filter((s: any) => s.verificationStatus === "verified").length;
   const pendingVerificationCount = stylists.filter(
-    (s: any) => s.verificationStatus === "pending"
+    (s: any) => s.verificationStatus === "pending",
   ).length;
   const suspendedCount = stylists.filter((s: any) => s.status === "suspended").length;
 
@@ -375,10 +375,8 @@ const StylistManagementPage = () => {
           handleSuspendStylist={handleSuspendStylist}
           handleActivateStylist={handleActivateStylist}
           handleApproveStylist={() => handleApproveStylist(selectedStylist._id)}
-          handleRejectStylist={() => {
-            setSelectedStylist(selectedStylist);
-            setShowVerificationModal(true);
-          }}
+          setShowVerificationModal={setShowVerificationModal}
+          setSelectedStylist={setSelectedStylist}
         />
       )}
 

@@ -17,7 +17,6 @@ import {
   FiFileText,
   FiTag,
 } from "react-icons/fi";
-
 interface StylistDetailModelProps {
   handleEditStylist: (stylist: any) => void;
   setShowStylistModal: (show: boolean) => void;
@@ -25,7 +24,8 @@ interface StylistDetailModelProps {
   handleSuspendStylist: (stylist: any) => void;
   handleActivateStylist: (stylistId: string) => void;
   handleApproveStylist: (stylistId: string) => void;
-  handleRejectStylist: (stylistId: string) => void;
+  setShowVerificationModal?: (show: boolean) => void;
+  setSelectedStylist?: (stylist: any) => void;
 }
 
 const StylistDetailModel = ({
@@ -35,7 +35,8 @@ const StylistDetailModel = ({
   handleSuspendStylist,
   handleActivateStylist,
   handleApproveStylist,
-  handleRejectStylist,
+  setShowVerificationModal,
+  setSelectedStylist,
 }: StylistDetailModelProps) => {
   // Fetch detailed stylist data
   const {
@@ -631,16 +632,26 @@ const StylistDetailModel = ({
                 className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors">
                 Edit Stylist
               </button>
+
               {verificationStatus === "pending" && (
                 <button
                   onClick={() => {
-                    handleApproveStylist(stylistData._id);
-                    setShowStylistModal(false);
+                    if (setShowVerificationModal && setSelectedStylist) {
+                      // Open verification modal for detailed review
+                      setSelectedStylist(stylistData);
+                      setShowVerificationModal(true);
+                      setShowStylistModal(false);
+                    } else {
+                      // Fallback to direct approval if modal props not provided
+                      handleApproveStylist(stylistData._id);
+                      setShowStylistModal(false);
+                    }
                   }}
-                  className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors">
-                  Verify Stylist
+                  className="flex-1 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors">
+                  {setShowVerificationModal ? "Review & Verify" : "Quick Approve"}
                 </button>
               )}
+
               {status === "active" || !status ? (
                 <button
                   onClick={() => {
