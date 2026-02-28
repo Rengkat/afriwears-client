@@ -1,17 +1,20 @@
-import {
-  FiSearch,
-  FiFilter,
-  FiEdit,
-  FiTrash2,
-  FiEye,
-  FiUserCheck,
-  FiUserX,
-  FiMail,
-  FiCalendar,
-  FiShoppingBag,
-} from "react-icons/fi";
+import { FiUserCheck, FiUserX, FiMail } from "react-icons/fi";
 
-const StatCard = ({ users }: any) => {
+// Define the User interface
+interface User {
+  _id: string;
+  name?: string;
+  email?: string;
+  status: "active" | "suspended" | "inactive";
+  isEmailVerified: boolean;
+  // others
+}
+
+interface StatCardProps {
+  users: User[];
+}
+
+const StatCard = ({ users }: StatCardProps) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
@@ -31,7 +34,7 @@ const StatCard = ({ users }: any) => {
           <div>
             <p className="text-sm text-gray-500">Active Users</p>
             <p className="text-2xl font-bold text-gray-900">
-              {users.filter((u) => u.status === "active").length}
+              {users.filter((u: User) => u.status === "active").length}
             </p>
           </div>
           <div className="bg-green-50 p-3 rounded-full">
@@ -45,7 +48,7 @@ const StatCard = ({ users }: any) => {
           <div>
             <p className="text-sm text-gray-500">Suspended</p>
             <p className="text-2xl font-bold text-gray-900">
-              {users.filter((u) => u.status === "suspended").length}
+              {users.filter((u: User) => u.status === "suspended").length}
             </p>
           </div>
           <div className="bg-red-50 p-3 rounded-full">
@@ -59,7 +62,7 @@ const StatCard = ({ users }: any) => {
           <div>
             <p className="text-sm text-gray-500">Pending Verification</p>
             <p className="text-2xl font-bold text-gray-900">
-              {users.filter((u) => !u.isEmailVerified).length}
+              {users.filter((u: User) => !u.isEmailVerified).length}
             </p>
           </div>
           <div className="bg-amber-50 p-3 rounded-full">
