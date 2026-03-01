@@ -16,7 +16,7 @@ const Logout = () => {
     setIsLoading(true);
 
     try {
-      await logout().unwrap();
+      await logout(undefined).unwrap();
 
       // Show success feedback
       toast.success("Logged out successfully!");
