@@ -11,7 +11,14 @@ import { useGetAllUsersQuery } from "@/redux/services/UserApiSlice";
 import type { UserProfile } from "@/redux/services/UserApiSlice";
 import SuspensionModal from "./SuspensionModel";
 import UserDetailModal from "./UserDetailModel";
-
+interface User {
+  _id: string;
+  name?: string;
+  email?: string;
+  status: "active" | "suspended" | "inactive";
+  isEmailVerified: boolean;
+  // others
+}
 const UserManagementPage = () => {
   const { user: currentUser } = useSelector((store: RootState) => store.authSlice);
   const [users, setUsers] = useState<UserProfile[]>([]);
@@ -60,6 +67,13 @@ const UserManagementPage = () => {
     company: user.company,
   });
 
+  const transformUserForStats = (user: UserProfile): User => ({
+    _id: user._id,
+    name: `${user.firstName} ${user.surname}`,
+    email: user.email,
+    status: user.isVerified ? "active" : "inactive",
+    isEmailVerified: user.isVerified || false,
+  });
   const filteredUsers = users
     .filter((user) => {
       const matchesSearch =
@@ -196,7 +210,7 @@ const UserManagementPage = () => {
         </div>
       </div>
 
-      <StatCard users={users} />
+      <StatCard users={users.map(transformUserForStats)} />
 
       <FilterAndSearch
         searchTerm={searchTerm}
