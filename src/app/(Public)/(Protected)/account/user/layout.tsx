@@ -19,7 +19,7 @@ const UserAccountLayout = ({ children }: { children: React.ReactNode }) => {
   const user = data?.user || localUser;
   const handleLogout = async () => {
     try {
-      await logout().unwrap();
+      await logout(undefined).unwrap();
       router.push("/");
     } catch (error) {
       console.error("Logout failed:", error);
