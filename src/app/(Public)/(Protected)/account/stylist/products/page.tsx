@@ -3,12 +3,13 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { FiPlus, FiEdit, FiTrash2, FiEye, FiClock, FiBox, FiFilter } from "react-icons/fi";
-import { useGetMyProductsQuery } from "@/redux/services/ProductApi";
+import { useDeleteProductMutation, useGetMyProductsQuery } from "@/redux/services/ProductApi";
 import Loading from "./Loading";
 import Error from "./Error";
 import EmptyProducts from "./EmptyProducts";
 import ProductList from "./ProductList";
 import Pagination from "./Pagination";
+import { Product } from "@/Utils/Types";
 
 const StylistProductsPage = () => {
   const [page, setPage] = useState(1);
@@ -32,6 +33,7 @@ const StylistProductsPage = () => {
     type,
     featured: featured?.toString(),
   });
+  const [deleteProduct, { isLoading: isDeleting }] = useDeleteProductMutation();
 
   const products = apiData?.products || [];
   const total = apiData?.total || 0;
@@ -201,7 +203,7 @@ const StylistProductsPage = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {products?.map((product) => {
+                  {products?.map((product: Product) => {
                     return (
                       <ProductList
                         key={product._id}
