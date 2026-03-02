@@ -3,7 +3,7 @@ import type { BaseQueryFn, FetchArgs, FetchBaseQueryError } from "@reduxjs/toolk
 import { logoutUser, setUser } from "./features/authSlice";
 import { RootState } from "./Store";
 
-const baseUrl = "http://localhost:5000/api";
+const baseUrl = process.env.BACKEND_URL || "http://localhost:5000/api";
 
 const baseQuery = fetchBaseQuery({
   baseUrl,

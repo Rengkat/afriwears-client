@@ -1,4 +1,3 @@
-// middleware.ts
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
@@ -43,7 +42,7 @@ const isAuthenticated = async (req: NextRequest): Promise<boolean> => {
           Cookie: req.headers.get("cookie") || "",
         },
         credentials: "include",
-      }
+      },
     );
 
     if (response.ok) {
@@ -68,25 +67,37 @@ const hasTokens = (req: NextRequest): boolean => {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // ✅ CRITICAL: Skip middleware for ALL static files
+  const isStaticFile =
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/static") ||
+    pathname === "/favicon.ico" ||
+    pathname.match(/\.(jpg|jpeg|png|gif|svg|webp|avif|ico|css|js|json|woff|woff2|ttf|eot)$/i); // All static file types
+
+  if (isStaticFile) {
+    console.log(`[Middleware] Skipping static file: ${pathname}`);
+    return NextResponse.next();
+  }
+
   // Check if user has valid tokens by calling backend
   const isAuth = await isAuthenticated(request);
   const hasAnyTokens = hasTokens(request);
 
   console.log(
-    `[Middleware] Path: ${pathname}, Authenticated: ${isAuth}, HasTokens: ${hasAnyTokens}`
+    `[Middleware] Path: ${pathname}, Authenticated: ${isAuth}, HasTokens: ${hasAnyTokens}`,
   );
 
   // 🔒 If user is authenticated and tries to access auth pages, redirect to home
   if (isAuth && AUTH_PATHS.some((path) => pathname.startsWith(path))) {
     console.log(
-      `[Middleware] Authenticated user accessing auth page ${pathname}. Redirecting to home.`
+      `[Middleware] Authenticated user accessing auth page ${pathname}. Redirecting to home.`,
     );
     return NextResponse.redirect(new URL("/", request.url));
   }
 
   // ✅ Allow public paths for everyone
   const isPublicPath = PUBLIC_PATHS.some(
-    (path) => pathname === path || pathname.startsWith(`${path}/`)
+    (path) => pathname === path || pathname.startsWith(`${path}/`),
   );
 
   if (isPublicPath) {
@@ -112,7 +123,7 @@ export async function middleware(request: NextRequest) {
             "content-type": "application/json",
             "Cache-Control": "no-store",
           },
-        }
+        },
       );
     }
 
@@ -137,6 +148,15 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  // Protect all routes except static files and well-known
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|.well-known).*)"],
+  // Update matcher to be more specific - exclude all static files
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - Any file with an extension (images, fonts, etc.)
+     */
+    "/((?!_next/static|_next/image|favicon\\.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|avif|ico|css|js)$).*)",
+  ],
 };

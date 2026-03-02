@@ -67,7 +67,7 @@ const Hero = () => {
 
         <div className="relative h-full w-full flex items-center">
           <Image
-            src="/woman-hero.png"
+            src="/women-native.png"
             alt="African Fashion Collection"
             fill
             className="object-contain"

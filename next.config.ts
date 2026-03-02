@@ -2,15 +2,24 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
-    // Keep your old domains in remotePatterns or domains
-    domains: ["cdn.sanity.io"],
     remotePatterns: [
       {
-        protocol: 'https',
-        hostname: 'images.example.com',
-        pathname: '/**', 
+        protocol: "https",
+        hostname: "res.cloudinary.com",
       },
-      // You can add more patterns here for other domains
+      {
+        protocol: "https",
+        hostname: "afrikan-wears-backend.onrender.com",
+      },
+      {
+        protocol: "https",
+        hostname: "cdn.sanity.io",
+      },
+      {
+        protocol: "http",
+        hostname: "localhost",
+        port: "5000",
+      },
     ],
   },
 };
