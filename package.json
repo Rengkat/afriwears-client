@@ -28,6 +28,7 @@
     "swiper": "^11.2.8"
   },
   "devDependencies": {
+    "@netlify/plugin-nextjs": "^5.15.8",
     "@tailwindcss/postcss": "^4",
     "@types/lodash": "^4.17.23",
     "@types/node": "^20",
