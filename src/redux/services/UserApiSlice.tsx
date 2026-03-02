@@ -166,7 +166,8 @@ export const userApiSlice = createApi({
       ],
     }),
 
-    uploadAvatar: builder.mutation<ApiResponse<{ avatarUrl: string }>, FormData>({
+    // In UserApiSlice.ts
+    uploadAvatar: builder.mutation<{ success: boolean; data: { avatarUrl: string } }, FormData>({
       query: (formData) => ({
         url: "/users/me/upload-avatar",
         method: "POST",
