@@ -37,7 +37,8 @@ export interface UserProfile {
 
 interface ApiResponse<T> {
   success: boolean;
-  data: T;
+  data?: T;
+  profile?: T;
   message?: string;
 }
 
@@ -72,8 +73,8 @@ export const userApiSlice = createApi({
     getCurrentUserDetails: builder.query<ApiResponse<UserProfile>, void>({
       query: () => "/users/me",
       providesTags: (result) => [
-        { type: "User", id: result?.data?._id || "CURRENT" },
-        ...(result?.data?.addresses?.map((addr) => ({
+        { type: "User", id: result?.profile?._id || "CURRENT" },
+        ...(result?.profile?.addresses?.map((addr) => ({
           type: "Address" as const,
           id: addr._id,
         })) || []),

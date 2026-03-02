@@ -39,7 +39,7 @@ const AccountOverview = () => {
   const [subscribeNewsletter, { isLoading: subscribing }] = useUpdateCurrentUserMutation();
   const { user: localUser } = useSelector((store: RootState) => store.authSlice);
   const { data, isLoading, isError, error: userDetailsError } = useGetCurrentUserDetailsQuery();
-
+  console.log(data);
   // Use API data if available, otherwise fall back to localUser
   const user: User | any = data?.profile || localUser;
   const handleSubscribe = async () => {
@@ -49,7 +49,7 @@ const AccountOverview = () => {
     } catch (err: any) {
       console.error("Subscription failed:", err);
       setSubscribeError(
-        err.data?.message || err.message || "Failed to subscribe. Please try again."
+        err.data?.message || err.message || "Failed to subscribe. Please try again.",
       );
     }
   };
