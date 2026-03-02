@@ -3,7 +3,7 @@ import type { BaseQueryFn, FetchArgs, FetchBaseQueryError } from "@reduxjs/toolk
 import { logoutUser, setUser } from "./features/authSlice";
 import { RootState } from "./Store";
 
-const baseUrl =  "http://localhost:5000/api";
+const baseUrl = "http://localhost:5000/api";
 
 const baseQuery = fetchBaseQuery({
   baseUrl,
@@ -13,14 +13,11 @@ const baseQuery = fetchBaseQuery({
 // --- Refresh Deduplication ---
 let isRefreshing = false;
 let refreshPromise: Promise<any> | null = null;
-
 const refreshToken = async (api: any, extraOptions: any) => {
   if (!isRefreshing) {
     isRefreshing = true;
-    refreshPromise = baseQuery(
-      { url: "auth/refresh-token", method: "POST" },
-      api,
-      extraOptions,
+    refreshPromise = Promise.resolve(
+      baseQuery({ url: "auth/refresh-token", method: "POST" }, api, extraOptions),
     ).finally(() => {
       isRefreshing = false;
       refreshPromise = null;
@@ -28,7 +25,6 @@ const refreshToken = async (api: any, extraOptions: any) => {
   }
   return refreshPromise;
 };
-
 // --- Main BaseQuery Wrapper ---
 const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError> = async (
   args,
@@ -43,7 +39,7 @@ const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQue
 
   // Get current state to check token
   const state = api.getState() as RootState;
-  const token = state.authSlice.token;
+  const token = state.authSlice?.token;
 
   // Handle 403 Forbidden - IMPORTANT FIX HERE
   if (result.error?.status === 403) {

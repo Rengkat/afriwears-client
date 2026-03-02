@@ -1,10 +1,11 @@
 "use client";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import { FiLock, FiCheck, FiArrowLeft } from "react-icons/fi";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useResetPasswordMutation } from "@/redux/services/AuthApiSlice";
 import toast from "react-hot-toast";
+import Loading from "@/app/(Public)/(Protected)/account/stylist/products/Loading";
 
 interface ApiError {
   data?: {
@@ -178,5 +179,11 @@ const ResetPassword = () => {
     </div>
   );
 };
-
-export default ResetPassword;
+const ResetPasswordPage = () => {
+  return (
+    <Suspense fallback={<Loading />}>
+      <ResetPassword />
+    </Suspense>
+  );
+};
+export default ResetPasswordPage;

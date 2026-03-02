@@ -1,10 +1,11 @@
 "use client";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FiCheckCircle, FiXCircle, FiLoader } from "react-icons/fi";
 import { useVerifyEmailMutation } from "@/redux/services/AuthApiSlice";
 import toast from "react-hot-toast";
+import Loading from "@/app/(Public)/(Protected)/account/stylist/products/Loading";
 
 const VerifyEmail = () => {
   const [verify] = useVerifyEmailMutation();
@@ -125,5 +126,11 @@ const VerifyEmail = () => {
     </div>
   );
 };
-
-export default VerifyEmail;
+const VerifyEmailPage = () => {
+  return (
+    <Suspense fallback={<Loading />}>
+      <VerifyEmail />
+    </Suspense>
+  );
+};
+export default VerifyEmailPage;

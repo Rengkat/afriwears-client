@@ -1,8 +1,9 @@
 "use client";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FiCheckCircle, FiXCircle, FiLoader } from "react-icons/fi";
 import { useVerifyWalletFundingMutation } from "@/redux/services/TransactionApiSlice";
+import Loading from "../../../stylist/products/Loading";
 
 const VerifyFundingPage = () => {
   const router = useRouter();
@@ -80,5 +81,11 @@ const VerifyFundingPage = () => {
     </div>
   );
 };
-
-export default VerifyFundingPage;
+const VerifyFundingPageWrapper = () => {
+  return (
+    <Suspense fallback={<Loading />}>
+      <VerifyFundingPage />
+    </Suspense>
+  );
+};
+export default VerifyFundingPageWrapper;

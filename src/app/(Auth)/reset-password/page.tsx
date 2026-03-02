@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FiLock, FiArrowLeft } from "react-icons/fi";
@@ -13,7 +13,7 @@ interface ApiError {
   status?: number;
 }
 
-const ResetPassword = () => {
+const ResetPasswordContent = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [resetPassword, { isLoading, isSuccess, error }] = useResetPasswordMutation();
@@ -250,4 +250,16 @@ const ResetPassword = () => {
   );
 };
 
-export default ResetPassword;
+const ResetPasswordPage = () => {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600"></div>
+        </div>
+      }>
+      <ResetPasswordContent />
+    </Suspense>
+  );
+};
+export default ResetPasswordPage;

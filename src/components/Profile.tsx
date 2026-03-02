@@ -18,7 +18,7 @@ const Profile = () => {
   const { user: localUser, isAuthenticated } = useSelector((state: RootState) => state.authSlice);
   const user = data?.user || localUser;
   const handleLogOut = async () => {
-    await logout().unwrap();
+    await logout(undefined).unwrap();
     if (typeof window !== "undefined") {
       window.location.reload();
     }

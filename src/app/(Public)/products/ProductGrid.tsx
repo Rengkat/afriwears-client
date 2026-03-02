@@ -1,35 +1,7 @@
 import React from "react";
 import ProductCard from "./ProductCard";
+import { Product } from "@/Utils/Types";
 
-interface Product {
-  id: string;
-  _id: string;
-  name: string;
-  description: string;
-  price: number;
-  minPrice?: number;
-  maxPrice?: number;
-  mainImage: string;
-  subImages: string[];
-  category: string;
-  type: string;
-  rating: number;
-  reviewCount: number;
-  featured: boolean;
-  isBestSeller: boolean;
-  isNewProduct: boolean;
-  stock: number;
-  sku: string;
-  slug: string;
-  attributes: any;
-  stylist: any;
-  stylistName?: string;
-  tags: string[];
-  status: string;
-  createdAt: string;
-  updatedAt: string;
-  isNew: boolean;
-}
 interface ProductGridProps {
   sortedProducts: Product[];
   clearAllFilters: () => void;

@@ -3,7 +3,7 @@
 import Loading from "@/app/(Public)/(Protected)/account/stylist/products/Loading";
 
 import ProductCard from "./ProductCard";
-import { useGetProductsQuery } from "@/redux/services/ProductApi";
+import { useGetApprovedProductsQuery } from "@/redux/services/ProductApi";
 
 interface RelatedProductsProps {
   category: string;
@@ -12,7 +12,7 @@ interface RelatedProductsProps {
 }
 
 const RelatedProducts = ({ category, currentProductId, stylistId }: RelatedProductsProps) => {
-  const { data, isLoading } = useGetProductsQuery({
+  const { data, isLoading } = useGetApprovedProductsQuery({
     category,
     limit: 4,
     featured: "true",

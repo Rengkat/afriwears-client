@@ -40,7 +40,7 @@ const MobileNav = () => {
   );
 
   // Auth state
-  const { data: userData, isLoading: isLoadingUser } = useGetCurrentUserQuery(null, {
+  const { data: userData, isLoading: isLoadingUser } = useGetCurrentUserQuery(undefined, {
     skip: !mounted, // Skip during SSR
   });
   const { user: localUser } = useSelector((store: RootState) => store.authSlice);
@@ -241,7 +241,7 @@ const MobileNav = () => {
     if (notifications.length === 0 || unreadNotifications === 0) return;
 
     try {
-      await markAllAsRead(null).unwrap();
+      await markAllAsRead().unwrap();
       refetchUnreadCount();
       refetchNotifications();
     } catch (error) {

@@ -4,6 +4,7 @@ import { BsArrowRight } from "react-icons/bs";
 import { motion } from "framer-motion";
 import ProductCard from "./ProductCard";
 import { useGetApprovedProductsQuery } from "@/redux/services/ProductApi";
+import { Product } from "@/Utils/Types";
 
 const RecentProducts = () => {
   const {
@@ -117,36 +118,37 @@ const RecentProducts = () => {
   }
 
   // Transform API data to match ProductCard expected format
-  const transformProductData = (product: any) => {
+  const transformProductData = (product: any): Product => {
     return {
       id: product._id || product.id,
+      _id: product._id || product.id,
       name: product.name,
       slug: product.slug || `product-${product._id || product.id}`,
-      image: product.mainImage || product.images?.[0] || "/placeholder-product.jpg",
+      description: product.description || "",
+      mainImage: product.mainImage || product.images?.[0] || "/placeholder-product.jpg",
+      subImages: product.subImages || [],
       price: product.price || 0,
-      originalPrice: product.originalPrice || product.price * 1.2, // 20% markup for display
-      discountPercentage:
-        product.discountPercentage ||
-        (product.originalPrice && product.price
-          ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
-          : 0),
-      stylist:
-        product.stylistName ||
-        product.stylist?.businessName ||
-        product.stylist?.name ||
-        "Unknown Stylist",
-      colors: product.attributes?.colors?.map((c: any) => c.name) ||
-        product.attributes?.colors?.map((c: any) => c.hexCode) || ["indigo", "crimson", "gold"],
-      sizes: product.attributes?.sizes || ["S", "M", "L", "XL"],
-      rating: product.rating || product.averageRating || 4.5,
-      reviews: product.reviewCount || product.reviews?.length || 0,
-      isNew: product.isNewProduct || false,
-      isFeatured: product.featured || false,
+      minPrice: product.minPrice,
+      maxPrice: product.maxPrice,
       category: product.category,
       type: product.type,
-      stock: product.stock || 0,
+      rating: product.rating || 4.5,
+      reviewCount: product.reviewCount || product.reviews?.length || 0,
+      featured: product.featured || false,
       isBestSeller: product.isBestSeller || false,
+      isNewProduct: product.isNewProduct || false,
+      isNew: product.isNewProduct || false,
+      stock: product.stock || 0,
+      sku: product.sku,
+      attributes: product.attributes || {},
+      stylist: product.stylist,
+      stylistName: product.stylistName,
       tags: product.tags || [],
+      status: product.status || "approved",
+      isAdminApproved: product.isAdminApproved ?? true,
+      createdBy: product.createdBy || "stylist",
+      createdAt: product.createdAt,
+      updatedAt: product.updatedAt,
     };
   };
 
@@ -183,7 +185,7 @@ const RecentProducts = () => {
 
         {/* Products Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-          {products.slice(0, 8).map((product: any) => (
+          {products.slice(0, 8).map((product: Product) => (
             <ProductCard key={product._id || product.id} product={transformProductData(product)} />
           ))}
         </div>

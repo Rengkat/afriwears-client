@@ -4,13 +4,16 @@ import Link from "next/link";
 import { useState } from "react";
 import { BsHeart, BsHeartFill, BsEye, BsStarFill, BsStar, BsTag } from "react-icons/bs";
 import { motion } from "framer-motion";
-
-const ProductCard = ({ product }) => {
+import { Product } from "@/Utils/Types";
+interface ProductCardProps {
+  product: Product;
+}
+const ProductCard = ({ product }: ProductCardProps) => {
   // console.log(product);
   const [isHovered, setIsHovered] = useState(false);
   const [isWishlisted, setIsWishlisted] = useState(false);
 
-  const toggleWishlist = (e) => {
+  const toggleWishlist = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setIsWishlisted(!isWishlisted);
@@ -18,7 +21,7 @@ const ProductCard = ({ product }) => {
   };
 
   // Format price to Nigerian Naira
-  const formatPrice = (price) => {
+  const formatPrice = (price: number) => {
     return new Intl.NumberFormat("en-NG", {
       style: "currency",
       currency: "NGN",
@@ -32,7 +35,7 @@ const ProductCard = ({ product }) => {
   };
 
   // Render star rating
-  const renderRating = (rating) => {
+  const renderRating = (rating: number) => {
     const stars = [];
     for (let i = 1; i <= 5; i++) {
       stars.push(
@@ -40,7 +43,7 @@ const ProductCard = ({ product }) => {
           <BsStarFill key={i} className="w-3 h-3 text-amber-400" />
         ) : (
           <BsStar key={i} className="w-3 h-3 text-gray-300" />
-        )
+        ),
       );
     }
     return stars;
@@ -51,12 +54,12 @@ const ProductCard = ({ product }) => {
     if (product.isNewProduct) return true;
     const createdAt = new Date(product.createdAt);
     const now = new Date();
-    const diffDays = Math.floor((now - createdAt) / (1000 * 60 * 60 * 24));
+    const diffDays = Math.floor((now.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24));
     return diffDays < 7;
   };
 
   // Get category color
-  const getCategoryColor = (category) => {
+  const getCategoryColor = (category: string) => {
     switch (category) {
       case "men":
         return "bg-blue-50 text-blue-700 border-blue-200";
@@ -85,7 +88,7 @@ const ProductCard = ({ product }) => {
         <div className="relative overflow-hidden bg-gray-100 aspect-square">
           {/* Product Image */}
           <Image
-            src={product.image || "/placeholder.jpg"}
+            src={product.mainImage || "/placeholder.jpg"}
             alt={product.name}
             fill
             className="object-cover transition-transform duration-500 group-hover:scale-110"
@@ -151,7 +154,7 @@ const ProductCard = ({ product }) => {
           <div className="mb-2">
             <span
               className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${getCategoryColor(
-                product.category
+                product.category,
               )}`}>
               <BsTag className="w-3 h-3 mr-1" />
               {product.category?.charAt(0).toUpperCase() + product.category?.slice(1)}
@@ -218,8 +221,8 @@ const ProductCard = ({ product }) => {
                     product.stock > 10
                       ? "bg-green-500"
                       : product.stock > 5
-                      ? "bg-amber-500"
-                      : "bg-red-500"
+                        ? "bg-amber-500"
+                        : "bg-red-500"
                   }`}
                   style={{ width: `${(product.stock / 20) * 100}%` }}></div>
               </div>

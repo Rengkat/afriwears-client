@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, Suspense } from "react";
 import { FiSearch } from "react-icons/fi";
 import { BsSendFill } from "react-icons/bs";
 import { useSelector } from "react-redux";
@@ -19,6 +19,7 @@ import { formatDistanceToNow } from "date-fns";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSocket } from "@/redux/SocketContext";
 import { ChatArea } from "./ChatArea";
+import Loading from "../account/stylist/products/Loading";
 
 // Types
 interface User {
@@ -557,5 +558,11 @@ const ChatPage = () => {
     </div>
   );
 };
-
-export default ChatPage;
+const ChatPageWrapper = () => {
+  return (
+    <Suspense fallback={<Loading />}>
+      <ChatPage />
+    </Suspense>
+  );
+};
+export default ChatPageWrapper;

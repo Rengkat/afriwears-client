@@ -19,7 +19,7 @@ const PaymentVerificationContent = () => {
       const reference = searchParams.get("reference");
       // orderId is optional now - we'll get it from the API response
       const orderIdParam = searchParams.get("orderId");
-      
+
       console.log("Reference:", reference, "OrderId param:", orderIdParam);
 
       if (!reference) {
@@ -31,10 +31,10 @@ const PaymentVerificationContent = () => {
       try {
         // We only need to pass the reference to the API
         // The API will find the order using the reference
-        const result = await verifyPayment({ 
-          reference, 
+        const result = await verifyPayment({
+          reference,
           // Pass orderId if available, otherwise the API will find by reference
-          orderId: orderIdParam || undefined 
+          orderId: orderIdParam || undefined,
         }).unwrap();
 
         if (result.success) {
@@ -153,7 +153,6 @@ const PaymentVerificationContent = () => {
   );
 };
 
-// Main component with Suspense boundary
 const PaymentVerificationPage = () => {
   return (
     <Suspense

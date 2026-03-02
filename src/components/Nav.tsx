@@ -288,7 +288,7 @@ const NavBar = () => {
     if (notifications.length === 0 || unreadNotifications === 0) return;
 
     try {
-      await markAllAsRead({}).unwrap();
+      await markAllAsRead().unwrap();
       refetchUnreadCount();
       refetchNotifications();
     } catch (error) {
