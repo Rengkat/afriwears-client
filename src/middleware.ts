@@ -34,14 +34,13 @@ const AUTH_PATHS = [
 // Check if user is authenticated by calling your backend
 const isAuthenticated = async (req: NextRequest): Promise<boolean> => {
   try {
-    const response = await fetch(`${process.env.BACKEND_URL}/auth/validate-tokens`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/validate-tokens`, {
       method: "GET",
       headers: {
         Cookie: req.headers.get("cookie") || "",
       },
       credentials: "include",
     });
-
     if (response.ok) {
       const data = await response.json();
       return data.valid === true;
@@ -64,7 +63,7 @@ const hasTokens = (req: NextRequest): boolean => {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // ✅ CRITICAL: Skip middleware for ALL static files
+  // CRITICAL: Skip middleware for ALL static files
   const isStaticFile =
     pathname.startsWith("/_next") ||
     pathname.startsWith("/static") ||
