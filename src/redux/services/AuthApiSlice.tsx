@@ -1,4 +1,3 @@
-// @/redux/services/AuthApiSlice.ts
 import { createApi } from "@reduxjs/toolkit/query/react";
 import { baseQueryWithReauth } from "../BaseUrl";
 import { setCredentials, setUser, logoutUser } from "../features/authSlice"; // Added setUser
@@ -41,7 +40,7 @@ export const authApi = createApi({
             dispatch(setCredentials({ user: data.user, token: data.token }));
           }
         } catch (error) {
-          console.error("Login mutation failed:", error);
+          // console.error("Login mutation failed:", error);
         }
       },
     }),
@@ -74,15 +73,18 @@ export const authApi = createApi({
             dispatch(setUser(data.user));
           }
         } catch (error: any) {
-          // console.error("getCurrentUser query failed:", error);
-          // Only logout if it's an authentication error
-          if (error?.status === 401 || error?.error?.status === 401) {
-            dispatch(logoutUser());
+          // Don't log 429 errors to console
+          if (error?.status !== 429) {
+            // Only logout if it's an authentication error
+            if (error?.status === 401 || error?.error?.status === 401) {
+              dispatch(logoutUser());
+            }
+          } else {
+            console.log("⚠️ Rate limited, skipping user fetch");
           }
         }
       },
     }),
-
     verifyEmail: builder.mutation({
       query: ({ verificationToken, email }) => ({
         url: "auth/verify-email",
