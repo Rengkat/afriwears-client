@@ -33,8 +33,9 @@ const AUTH_PATHS = [
 
 // Check if user is authenticated by calling your backend
 const isAuthenticated = async (req: NextRequest): Promise<boolean> => {
+  const apiUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/validate-tokens`, {
+    const response = await fetch(`${apiUrl}/auth/validate-tokens`, {
       method: "GET",
       headers: {
         Cookie: req.headers.get("cookie") || "",
