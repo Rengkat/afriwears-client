@@ -1,60 +1,26 @@
 "use client";
-import { useEffect, useState, useRef } from "react";
-import { useDispatch } from "react-redux";
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { setCartLoading } from "@/redux/features/cartSlice";
-import { useSelector } from "react-redux";
 import { RootState } from "@/redux/Store";
-import { useGetCartProductsQuery } from "./services/CartApiSlice";
+import { useGetCartProductsQuery } from "@/redux/services/CartApiSlice";
 
 export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   const dispatch = useDispatch();
   const user = useSelector((store: RootState) => store.authSlice.user);
-  const token = useSelector((store: RootState) => store.authSlice.token);
-  
-  // Add mounted state to prevent hydration mismatch
+
   const [mounted, setMounted] = useState(false);
-  const [hasValidAuth, setHasValidAuth] = useState(false);
-  const hasFetchedRef = useRef(false);
+  useEffect(() => setMounted(true), []);
 
-  // Set mounted after hydration
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  // KEY FIX: Only fetch cart for regular customers (role === "user").
+  // Stylists and admins hit the cart endpoint and get 403 (route is
+  // guarded with authorize("user")), which was incorrectly triggering logout.
+  // Guests (no user) use the localStorage-backed Redux cart — no fetch needed.
+  const isCustomer = user?.role === "user";
 
-  useEffect(() => {
-    // Only run auth validation after mount
-    if (!mounted) return;
-    
-    if (user && token) {
-      const timer = setTimeout(() => {
-        setHasValidAuth(true);
-        hasFetchedRef.current = false;
-      }, 500);
-      return () => clearTimeout(timer);
-    } else {
-      setHasValidAuth(false);
-      hasFetchedRef.current = false;
-    }
-  }, [user, token, mounted]);
-
-  // Skip API calls during SSR and before auth validation
-  const { isLoading, data, error } = useGetCartProductsQuery(undefined, {
-    skip: !mounted || !hasValidAuth || hasFetchedRef.current,
+  const { isLoading } = useGetCartProductsQuery(undefined, {
+    skip: !mounted || !isCustomer,
   });
-
-  useEffect(() => {
-    if (data && hasValidAuth && mounted) {
-      hasFetchedRef.current = true;
-    }
-
-    console.log("CartProvider:", {
-      mounted,
-      hasValidAuth,
-      isLoading,
-      hasData: !!data,
-      itemsCount: data?.data?.items?.length || 0,
-    });
-  }, [hasValidAuth, isLoading, data, mounted]);
 
   useEffect(() => {
     if (mounted) {

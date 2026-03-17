@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { BsBoxSeam, BsHeart } from "react-icons/bs";
 import { MdKeyboardArrowDown } from "react-icons/md";
@@ -11,12 +11,21 @@ import { useGetCurrentUserQuery, useLogoutMutation } from "@/redux/services/Auth
 
 const Profile = () => {
   const dispatch = useDispatch();
-  const { isProfileOpen } = useSelector((state: any) => state.shopReducer);
-  const { data } = useGetCurrentUserQuery(null);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
-  const [logout, { isLoading }] = useLogoutMutation();
+  const { isProfileOpen } = useSelector((state: any) => state.shopReducer);
   const { user: localUser, isAuthenticated } = useSelector((state: RootState) => state.authSlice);
+
+  const { data } = useGetCurrentUserQuery(undefined, {
+    skip: !mounted || !localUser,
+  });
+
+  // Prefer fresh server data, fall back to localStorage
   const user = data?.user || localUser;
+
+  const [logout] = useLogoutMutation();
+
   const handleLogOut = async () => {
     await logout(undefined).unwrap();
     if (typeof window !== "undefined") {
@@ -41,7 +50,6 @@ const Profile = () => {
         />
       </div>
 
-      {/* Profile Dropdown */}
       {isProfileOpen && (
         <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg py-1 z-50 border border-gray-200">
           {!isAuthenticated ? (

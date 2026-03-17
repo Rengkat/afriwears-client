@@ -161,7 +161,7 @@ const FeaturedProductCard = ({ product }: { product: Product }) => {
   );
 };
 
-// ... rest of your FeaturedProducts component remains the same
+//
 
 const FeaturedProducts = () => {
   const {
@@ -215,7 +215,6 @@ const FeaturedProducts = () => {
 
   // Error state
   if (isError) {
-    console.error("Error loading featured products:", error);
     return (
       <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50">
         <div className="max-w-7xl mx-auto">

@@ -15,21 +15,18 @@ import { useGetProductDetailQuery } from "@/redux/services/ProductApi";
 import ProductImages from "./ProductImages";
 import ProductInfo from "./ProductInfor";
 import ProductTabs from "@/components/ProductTabs";
-import {
-  useAddToCartMutation,
-  useGetCartProductsQuery,
-  useUpdateCartMutation,
-} from "@/redux/services/CartApiSlice";
+import { useUpdateCartMutation } from "@/redux/services/CartApiSlice";
 import { toast } from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
-import { addCartItem, updateCartItemQuantity } from "@/redux/features/cartSlice";
+import { updateCartItemQuantity } from "@/redux/features/cartSlice";
 import { RootState } from "@/redux/Store";
 import {
   useAddToWishlistMutation,
   useGetMyWishlistQuery,
   useRemoveFromWishlistMutation,
 } from "@/redux/services/WishlistApiSlice";
+import { useAddToCart } from "@/redux/UseAddToCart";
 
 interface ProductPageProps {
   params: Promise<{ id: string }>;
@@ -46,13 +43,12 @@ const ProductPage = ({ params }: ProductPageProps) => {
 
   const { data, isLoading, isError } = useGetProductDetailQuery(id);
 
-  // Cart mutations - we'll handle local cart updates optimistically and sync with server if user is logged in
-  const [addToCart, { isLoading: isAddingToCart }] = useAddToCartMutation();
+  // ── Cart ──────────────────────────────────────────────────────────────────
+  // useAddToCart handles guest (localStorage) and logged-in (DB) automatically
+  const { addToCart, isLoading: isAddingToCart } = useAddToCart();
   const [updateCartItem] = useUpdateCartMutation();
-  const { data: cartData, refetch: refetchCart } = useGetCartProductsQuery(undefined, {
-    skip: !isUserLoggedIn,
-  });
-  // Wishlist mutations
+
+  // ── Wishlist ──────────────────────────────────────────────────────────────
   const [addToWishlist, { isLoading: isAddingToWishlist }] = useAddToWishlistMutation();
   const [removeFromWishlist, { isLoading: isRemovingFromWishlist }] =
     useRemoveFromWishlistMutation();
@@ -60,6 +56,7 @@ const ProductPage = ({ params }: ProductPageProps) => {
     skip: !isUserLoggedIn,
   });
 
+  // ── Local State ───────────────────────────────────────────────────────────
   const [selectedImage, setSelectedImage] = useState(0);
   const [showMeasurements, setShowMeasurements] = useState(false);
   const [selectedSize, setSelectedSize] = useState("");
@@ -69,7 +66,7 @@ const ProductPage = ({ params }: ProductPageProps) => {
   const [isInCart, setIsInCart] = useState(false);
   const [cartItemId, setCartItemId] = useState<string | null>(null);
 
-  // Check if product is in wishlist
+  // ── Sync wishlist ─────────────────────────────────────────────────────────
   useEffect(() => {
     const wishlistResponse = wishlistData as any;
     if (wishlistResponse?.success && wishlistResponse.data && data?.product) {
@@ -82,7 +79,8 @@ const ProductPage = ({ params }: ProductPageProps) => {
     }
   }, [wishlistData, data]);
 
-  // Check if product is in cart (local only for now)
+  // ── Sync cart from Redux ──────────────────────────────────────────────────
+  // This works for both guest (localStorage) and logged-in (DB synced) carts
   useEffect(() => {
     if (data?.product) {
       const productId = data.product._id;
@@ -103,41 +101,7 @@ const ProductPage = ({ params }: ProductPageProps) => {
     }
   }, [data?.product, cartState.items]);
 
-  // Add this function before handleAddToCart
-  const updateLocalCart = () => {
-    if (!data?.product) return;
-
-    const product = data.product;
-
-    if (isInCart && cartItemId) {
-      // Update existing cart item
-      dispatch(
-        updateCartItemQuantity({
-          productId: cartItemId,
-          quantity: quantity,
-        }),
-      );
-    } else {
-      // Add new item to cart
-      dispatch(
-        addCartItem({
-          _id: `temp_${Date.now()}`,
-          product: product._id,
-          name: product.name,
-          price: product.price,
-          quantity: quantity,
-          mainImage: product.mainImage,
-          selectedSize: selectedSize || undefined,
-          selectedColor: selectedColor || undefined,
-          stock: product.stock,
-        }),
-      );
-    }
-
-    toast.success(isInCart ? "Cart updated successfully!" : "Added to cart successfully!");
-    setIsInCart(true);
-  };
-  // Handle cart addition/update - LOCAL ONLY FOR NOW
+  // ── Handle Add / Update Cart ──────────────────────────────────────────────
   const handleAddToCart = async () => {
     if (!data?.product) return;
 
@@ -153,49 +117,39 @@ const ProductPage = ({ params }: ProductPageProps) => {
       return;
     }
 
-    try {
-      const cartItemData = {
-        productId: product._id,
-        quantity,
-        selectedSize: selectedSize || undefined,
-        selectedColor: selectedColor || undefined,
-      };
-
-      // If user is logged in, update server cart
-      if (isUserLoggedIn) {
-        try {
-          if (isInCart && cartItemId && !cartItemId.startsWith("temp_")) {
-            // Update existing server cart item
-            await updateCartItem({
-              productId: product._id,
-              quantity,
-            }).unwrap();
-          } else {
-            // Add to server cart
-            await addToCart(cartItemData).unwrap();
-          }
-
-          // Refetch cart to update Redux state
-          await refetchCart();
-          toast.success(isInCart ? "Cart updated successfully!" : "Added to cart successfully!");
-          setIsInCart(true);
-        } catch (serverError: any) {
-          console.error("Server cart update failed:", serverError);
-          toast.error(serverError?.data?.message || "Failed to update cart on server");
-          // Fall back to local cart
-          updateLocalCart();
-        }
-      } else {
-        // User not logged in - update local cart only
-        updateLocalCart();
-        toast.success(isInCart ? "Cart updated successfully!" : "Added to cart successfully!");
-        setIsInCart(true);
+    // If already in cart + logged in + not a temp ID → PATCH quantity on server
+    if (isInCart && cartItemId && !cartItemId.startsWith("temp_") && isUserLoggedIn) {
+      try {
+        await updateCartItem({ productId: product._id, quantity }).unwrap();
+        dispatch(updateCartItemQuantity({ productId: product._id, quantity }));
+        toast.success("Cart updated successfully!");
+      } catch (error: any) {
+        toast.error(error?.data?.message || "Failed to update cart");
       }
-    } catch (error: any) {
-      console.error("Cart error:", error);
-      toast.error(error?.message || "Failed to add to cart");
+      return;
+    }
+
+    // Smart hook: guest → localStorage, logged in → DB
+    const result = await addToCart({
+      productId: product._id,
+      quantity,
+      price: product.price,
+      name: product.name,
+      mainImage: product.mainImage,
+      stock: product.stock,
+      selectedSize: selectedSize || undefined,
+      selectedColor: selectedColor || undefined,
+    });
+
+    if (result.success) {
+      toast.success(isInCart ? "Cart updated!" : "Added to cart!");
+      setIsInCart(true);
+    } else {
+      toast.error(result.error || "Failed to add to cart");
     }
   };
+
+  // ── Handle Buy Now ────────────────────────────────────────────────────────
   const handleBuyNow = async () => {
     if (!data?.product) return;
 
@@ -211,22 +165,13 @@ const ProductPage = ({ params }: ProductPageProps) => {
       return;
     }
 
-    try {
-      // Add to cart first
-      await handleAddToCart();
-
-      // Navigate to checkout
-      router.push("/checkout");
-    } catch (error) {
-      console.error("Buy now error:", error);
-      toast.error("Failed to proceed to checkout");
-    }
+    await handleAddToCart();
+    router.push("/checkout");
   };
 
+  // ── Handle Wishlist ───────────────────────────────────────────────────────
   const handleWishlistToggle = async () => {
     if (!data?.product) return;
-
-    const product = data.product;
 
     if (!isUserLoggedIn) {
       toast.error("Please login to manage your wishlist");
@@ -234,30 +179,25 @@ const ProductPage = ({ params }: ProductPageProps) => {
       return;
     }
 
-    if (isInWishlist) {
-      try {
+    const product = data.product;
+
+    try {
+      if (isInWishlist) {
         await removeFromWishlist(product._id).unwrap();
         setIsInWishlist(false);
         toast.success("Removed from wishlist");
-        await refetchWishlist();
-      } catch (error: any) {
-        console.error("Remove from wishlist error:", error);
-        toast.error(error?.data?.message || "Failed to remove from wishlist");
-      }
-    } else {
-      try {
+      } else {
         await addToWishlist({ productId: product._id }).unwrap();
-        console.log(product?._id);
         setIsInWishlist(true);
         toast.success("Added to wishlist!");
-        await refetchWishlist();
-      } catch (error: any) {
-        console.error("Add to wishlist error:", error);
-        toast.error(error?.data?.message || "Failed to add to wishlist");
       }
+      await refetchWishlist();
+    } catch (error: any) {
+      toast.error(error?.data?.message || "Failed to update wishlist");
     }
   };
 
+  // ── Handle Share ──────────────────────────────────────────────────────────
   const handleShare = () => {
     if (!data?.product) return;
 
@@ -275,17 +215,19 @@ const ProductPage = ({ params }: ProductPageProps) => {
     }
   };
 
+  // ── Loading ───────────────────────────────────────────────────────────────
   if (isLoading) {
     return (
       <div className="bg-gray-50 min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600 mx-auto mb-4" />
           <p className="text-gray-600">Loading product details...</p>
         </div>
       </div>
     );
   }
 
+  // ── Error ─────────────────────────────────────────────────────────────────
   if (isError || !data?.product) {
     return (
       <div className="bg-gray-50 min-h-screen flex items-center justify-center">
@@ -311,7 +253,7 @@ const ProductPage = ({ params }: ProductPageProps) => {
 
   return (
     <div className="bg-gray-50 min-h-screen">
-      {/* Breadcrumb Navigation */}
+      {/* Breadcrumb */}
       <div className="bg-white border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center text-sm text-gray-600">
@@ -334,10 +276,10 @@ const ProductPage = ({ params }: ProductPageProps) => {
         </div>
       </div>
 
-      {/* Main Content */}
+      {/* Main */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col lg:flex-row gap-8">
-          {/* Left Column - Product Images */}
+          {/* Images */}
           <div className="lg:w-1/2">
             <ProductImages
               images={images}
@@ -347,9 +289,8 @@ const ProductPage = ({ params }: ProductPageProps) => {
             />
           </div>
 
-          {/* Right Column - Product Info */}
+          {/* Info */}
           <div className="lg:w-1/2">
-            {/* Back Button for Mobile */}
             <div className="lg:hidden mb-4">
               <Link
                 href="/products"
@@ -378,13 +319,9 @@ const ProductPage = ({ params }: ProductPageProps) => {
                       isInWishlist
                         ? "text-red-500 hover:text-red-600"
                         : "text-gray-400 hover:text-red-500"
-                    } ${
-                      isAddingToWishlist || isRemovingFromWishlist
-                        ? "opacity-50 cursor-not-allowed"
-                        : ""
-                    }`}>
+                    } ${isAddingToWishlist || isRemovingFromWishlist ? "opacity-50 cursor-not-allowed" : ""}`}>
                     {isAddingToWishlist || isRemovingFromWishlist ? (
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-red-500"></div>
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-red-500" />
                     ) : isInWishlist ? (
                       <BsHeartFill size={20} />
                     ) : (
@@ -394,7 +331,7 @@ const ProductPage = ({ params }: ProductPageProps) => {
                 </div>
               </div>
 
-              {/* Stylist Info */}
+              {/* Stylist */}
               <div className="flex items-center gap-2 mb-4">
                 <span className="text-sm text-gray-500">By</span>
                 <Link
@@ -404,7 +341,7 @@ const ProductPage = ({ params }: ProductPageProps) => {
                 </Link>
               </div>
 
-              {/* Rating and Reviews */}
+              {/* Rating */}
               <div className="flex items-center gap-4 mb-6">
                 <div className="flex items-center">
                   {[1, 2, 3, 4, 5].map((star) => (
@@ -462,7 +399,7 @@ const ProductPage = ({ params }: ProductPageProps) => {
               </div>
             </div>
 
-            {/* Product Info Component */}
+            {/* Product Options */}
             <ProductInfo
               product={product}
               selectedSize={selectedSize}
@@ -475,7 +412,7 @@ const ProductPage = ({ params }: ProductPageProps) => {
               setShowMeasurements={setShowMeasurements}
             />
 
-            {/* Stock Status */}
+            {/* Stock Badge */}
             <div className="mb-6">
               {isOutOfStock ? (
                 <div className="inline-flex items-center px-4 py-2 bg-red-50 text-red-700 rounded-lg">
@@ -492,6 +429,17 @@ const ProductPage = ({ params }: ProductPageProps) => {
               )}
             </div>
 
+            {/* Guest cart nudge */}
+            {!isUserLoggedIn && isInCart && (
+              <div className="mb-4 px-4 py-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
+                🛒 Item saved to your local cart.{" "}
+                <Link href="/login" className="font-semibold underline hover:text-amber-900">
+                  Log in
+                </Link>{" "}
+                to save it permanently and sync across devices.
+              </div>
+            )}
+
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-3 mb-6">
               <button
@@ -504,7 +452,7 @@ const ProductPage = ({ params }: ProductPageProps) => {
                 }`}>
                 {isAddingToCart ? (
                   <>
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
                     Processing...
                   </>
                 ) : isInCart ? (
@@ -515,7 +463,7 @@ const ProductPage = ({ params }: ProductPageProps) => {
                 ) : (
                   <>
                     <FiShoppingCart />
-                    Add to Cart
+                    {isUserLoggedIn ? "Add to Cart" : "Add to Cart"}
                   </>
                 )}
               </button>
@@ -586,7 +534,7 @@ const ProductPage = ({ params }: ProductPageProps) => {
           </div>
         </div>
 
-        {/* Product Tabs */}
+        {/* Tabs */}
         {product.description && (
           <div className="mt-12">
             <ProductTabs product={product} />

@@ -1,16 +1,7 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 import { GrClose } from "react-icons/gr";
-import {
-  BsSearch,
-  BsCart4,
-  BsBellFill,
-  BsPersonCheck,
-  BsBoxSeam,
-  BsHeart,
-  BsX,
-  BsCheck,
-} from "react-icons/bs";
+import { BsSearch, BsCart4, BsBellFill, BsBoxSeam, BsHeart, BsX, BsCheck } from "react-icons/bs";
 import { FaUserAlt, FaUserTie, FaHome } from "react-icons/fa";
 import { IoLogoWechat } from "react-icons/io5";
 import Link from "next/link";
@@ -35,35 +26,40 @@ const MobileNav = () => {
   const [mounted, setMounted] = useState(false);
   const dispatch = useDispatch();
   const router = useRouter();
+
   const isMobileMenuOpen = useSelector(
     (state: RootState) => state.shopReducer?.isMobileMenuOpen ?? false,
   );
 
-  // Auth state
-  const { data: userData, isLoading: isLoadingUser } = useGetCurrentUserQuery(undefined, {
-    skip: !mounted, // Skip during SSR
-  });
+  // ── Auth ──────────────────────────────────────────────────────────────────
   const { user: localUser } = useSelector((store: RootState) => store.authSlice);
+
+  // FIX: Only call auth/me if localUser already exists in Redux.
+  // Same rule as NavBar — prevents 401 spam for guests.
+  const { data: userData } = useGetCurrentUserQuery(undefined, {
+    skip: !mounted || !localUser,
+  });
+
   const user = userData?.user || localUser;
   const isUserLoggedIn = !!user;
 
-  // Set mounted after hydration
+  const cartState = useSelector((store: RootState) => store.cartSlice);
+
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Search state
+  // ── Search ────────────────────────────────────────────────────────────────
   const [searchQuery, setSearchQuery] = useState("");
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const searchRef = useRef<HTMLDivElement>(null);
 
-  // Notification state
+  // ── Notifications ─────────────────────────────────────────────────────────
   const [showNotifications, setShowNotifications] = useState(false);
   const notificationRef = useRef<HTMLDivElement>(null);
 
-  // Fetch notifications and unread counts - skip during SSR
   const { data: unreadCountData, refetch: refetchUnreadCount } = useGetUnreadCountQuery(undefined, {
     skip: !mounted || !isUserLoggedIn,
   });
@@ -86,47 +82,33 @@ const MobileNav = () => {
   const unreadMessages = unreadMessagesData?.count || 0;
   const notifications = notificationsData?.notifications || [];
 
-  // Cart query - skip during SSR
+  // ── Cart ──────────────────────────────────────────────────────────────────
   const { data: cartData, isLoading: isLoadingCart } = useGetCartProductsQuery(undefined, {
     skip: !mounted || !isUserLoggedIn,
   });
 
-  // Cart state from Redux
-  const cartState = useSelector((store: RootState) => store.cartSlice);
-
-  // Search query - skip during SSR
+  // ── Search Query ──────────────────────────────────────────────────────────
   const { data: searchData, isFetching: isSearchFetching } = useGetApprovedProductsQuery(
-    {
-      name: searchQuery.trim(),
-      limit: 5,
-      page: 1,
-    },
-    {
-      skip: !mounted || !searchQuery.trim() || searchQuery.trim().length < 2,
-    },
+    { name: searchQuery.trim(), limit: 5, page: 1 },
+    { skip: !mounted || !searchQuery.trim() || searchQuery.trim().length < 2 },
   );
 
-  // Calculate cart items count
+  // Cart count: guest reads from Redux, logged-in reads from API
   const cartItemsCount = (() => {
-    if (!mounted) return 0; // Return 0 during SSR
-
-    if (!isUserLoggedIn) {
-      return cartState.itemCount || 0;
-    }
-
+    if (!mounted) return 0;
+    if (!isUserLoggedIn) return cartState.itemCount || 0;
     if (cartData?.data?.items) {
-      return cartData.data.items.reduce((total: number, item: any) => {
-        return total + (item.quantity || 1);
-      }, 0);
+      return cartData.data.items.reduce(
+        (total: number, item: any) => total + (item.quantity || 1),
+        0,
+      );
     }
-
     return cartState.itemCount || 0;
   })();
 
-  // Update search results
+  // ── Search Effects ────────────────────────────────────────────────────────
   useEffect(() => {
     if (!mounted) return;
-
     if (searchQuery.trim().length >= 2 && searchData?.products) {
       setSearchResults(searchData.products);
       setIsSearching(false);
@@ -136,20 +118,15 @@ const MobileNav = () => {
     }
   }, [searchData, searchQuery, mounted]);
 
-  // Set searching state
   useEffect(() => {
     if (!mounted) return;
-
-    if (searchQuery.trim().length >= 2 && isSearchFetching) {
-      setIsSearching(true);
-    }
+    if (searchQuery.trim().length >= 2 && isSearchFetching) setIsSearching(true);
   }, [isSearchFetching, searchQuery, mounted]);
 
-  // Close dropdowns when clicking outside
+  // ── Click Outside ─────────────────────────────────────────────────────────
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
-
       if (
         notificationRef.current &&
         !notificationRef.current.contains(target) &&
@@ -157,7 +134,6 @@ const MobileNav = () => {
       ) {
         setShowNotifications(false);
       }
-
       if (
         searchRef.current &&
         !searchRef.current.contains(target) &&
@@ -166,14 +142,12 @@ const MobileNav = () => {
         setShowSearchResults(false);
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [showNotifications]);
 
-  // Close sidebar
   const closeSidebar = () => {
     dispatch(openMobileMenu());
     setShowNotifications(false);
@@ -181,11 +155,10 @@ const MobileNav = () => {
     setSearchQuery("");
   };
 
-  // Search handlers
+  // ── Search Handlers ───────────────────────────────────────────────────────
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchQuery(value);
-
     if (value.trim().length >= 2) {
       setIsSearching(true);
       setShowSearchResults(true);
@@ -197,9 +170,9 @@ const MobileNav = () => {
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const trimmedQuery = searchQuery.trim();
-    if (trimmedQuery) {
-      router.push(`/products?search=${encodeURIComponent(trimmedQuery)}`);
+    const q = searchQuery.trim();
+    if (q) {
+      router.push(`/products?search=${encodeURIComponent(q)}`);
       closeSidebar();
     }
   };
@@ -215,15 +188,13 @@ const MobileNav = () => {
     setShowSearchResults(false);
   };
 
-  // Notification handlers
+  // ── Notification Handlers ─────────────────────────────────────────────────
   const handleMarkAsRead = async (notificationId: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     try {
       await markAsRead(notificationId).unwrap();
       refetchUnreadCount();
-    } catch (error) {
-      console.error("Failed to mark notification as read:", error);
-    }
+    } catch {}
   };
 
   const handleDeleteNotification = async (notificationId: string, e: React.MouseEvent) => {
@@ -232,155 +203,112 @@ const MobileNav = () => {
       await deleteNotification(notificationId).unwrap();
       refetchUnreadCount();
       refetchNotifications();
-    } catch (error) {
-      console.error("Failed to delete notification:", error);
-    }
+    } catch {}
   };
 
   const handleMarkAllAsRead = async () => {
-    if (notifications.length === 0 || unreadNotifications === 0) return;
-
+    if (!notifications.length || !unreadNotifications) return;
     try {
       await markAllAsRead().unwrap();
       refetchUnreadCount();
       refetchNotifications();
-    } catch (error) {
-      console.error("Failed to mark all as read:", error);
-    }
+    } catch {}
   };
 
   const handleNotificationClick = (notification: any) => {
-    if (!notification.read) {
-      handleMarkAsRead(notification._id);
-    }
-
-    // Navigate based on notification type
+    if (!notification.read) handleMarkAsRead(notification._id);
     switch (notification.type) {
       case "new_order":
       case "order_status_update":
       case "order_delivered":
       case "order_cancelled":
-        if (notification.data?.orderId) {
-          router.push(`/orders/${notification.data.orderId}`);
-        } else {
-          router.push("/orders");
-        }
+        router.push(
+          notification.data?.orderId ? `/orders/${notification.data.orderId}` : "/orders",
+        );
         break;
-
       case "product_approved":
       case "product_rejected":
       case "product_approval_request":
-        if (notification.data?.productId) {
-          router.push(`/products/${notification.data.productId}`);
-        } else if (user?.role === "stylist") {
-          router.push("/products/my-products");
-        } else if (user?.role === "admin") {
-          router.push("/admin/products");
-        }
+        if (notification.data?.productId) router.push(`/products/${notification.data.productId}`);
+        else router.push(user?.role === "admin" ? "/admin/products" : "/products/my-products");
         break;
-
       case "message_received":
         router.push("/chats");
         break;
-
       case "stylist_verification_request":
-        if (user?.role === "admin") {
-          router.push("/admin/stylists");
-        }
+        if (user?.role === "admin") router.push("/admin/stylists");
         break;
-
       case "stylist_approved":
       case "stylist_rejected":
       case "stylist_suspended":
       case "stylist_activated":
-        if (user?.role === "stylist") {
-          router.push("/stylist/profile");
-        } else if (user?.role === "admin") {
-          router.push("/admin/stylists");
-        }
+        router.push(user?.role === "stylist" ? "/stylist/profile" : "/admin/stylists");
         break;
-
       case "credit_wallet":
       case "debit_wallet":
         router.push("/wallet");
         break;
-
-      default:
-        break;
     }
-
     closeSidebar();
   };
 
   const getNotificationIcon = (type: string) => {
-    switch (type) {
-      case "new_order":
-      case "order_status_update":
-        return "🛍️";
-      case "product_approved":
-      case "product_approval_request":
-        return "📦";
-      case "product_rejected":
-        return "❌";
-      case "message_received":
-        return "💬";
-      case "credit_wallet":
-        return "💰";
-      case "stylist_approved":
-      case "stylist_verification_request":
-        return "✂️";
-      case "stylist_rejected":
-        return "⚠️";
-      case "system_alert":
-        return "🔔";
-      default:
-        return "📢";
-    }
+    const icons: Record<string, string> = {
+      new_order: "🛍️",
+      order_status_update: "🛍️",
+      product_approved: "📦",
+      product_approval_request: "📦",
+      product_rejected: "❌",
+      message_received: "💬",
+      credit_wallet: "💰",
+      stylist_approved: "✂️",
+      stylist_verification_request: "✂️",
+      stylist_rejected: "⚠️",
+      system_alert: "🔔",
+    };
+    return icons[type] || "📢";
   };
 
   const formatTime = (dateString: string) => {
-    if (!mounted) return ""; // Return empty during SSR
+    if (!mounted) return "";
     try {
       return formatDistanceToNow(new Date(dateString), { addSuffix: true });
-    } catch (error) {
+    } catch {
       return "Just now";
     }
   };
 
-  // During SSR and initial hydration, render a minimal placeholder
+  // Minimal SSR placeholder
   if (!mounted) {
     return (
       <div className="fixed inset-0 opacity-0 invisible bg-[#000000b8] backdrop-blur-[1px] z-50">
         <div className="transform translate-x-[-100%] bg-white z-50 w-[85%] sm:w-[75%] md:w-[65%] h-[100vh] relative overflow-y-auto">
           <div className="pt-16 px-6">
             <div className="mb-6">
-              <div className="h-12 bg-gray-200 rounded-lg animate-pulse"></div>
+              <div className="h-12 bg-gray-200 rounded-lg animate-pulse" />
             </div>
           </div>
         </div>
       </div>
     );
   }
+
   return (
     <div
       onClick={closeSidebar}
-      className={`fixed inset-0 transition-all duration-300 ${
-        isMobileMenuOpen ? "opacity-100 visible" : "opacity-0 invisible"
-      } bg-[#000000b8] backdrop-blur-[1px] z-50`}>
+      className={`fixed inset-0 transition-all duration-300 ${isMobileMenuOpen ? "opacity-100 visible" : "opacity-0 invisible"} bg-[#000000b8] backdrop-blur-[1px] z-50`}>
       <div
         onClick={(e) => e.stopPropagation()}
-        className={`transform transition-transform duration-300 ${
-          isMobileMenuOpen ? "translate-x-0" : "translate-x-[-100%]"
-        } bg-white z-50 w-[85%] sm:w-[75%] md:w-[65%] h-[100vh] relative overflow-y-auto`}>
-        {/* Close Button */}
+        className={`transform transition-transform duration-300 ${isMobileMenuOpen ? "translate-x-0" : "translate-x-[-100%]"} bg-white z-50 w-[85%] sm:w-[75%] md:w-[65%] h-[100vh] relative overflow-y-auto`}>
+        {/* Close */}
         <button
-          title="close slide-over menu"
+          title="close"
           onClick={closeSidebar}
           className="absolute top-5 right-5 w-10 h-10 rounded-full flex items-center justify-center bg-gray-100 hover:bg-gray-200 transition-colors">
           <GrClose fontSize={20} className="text-gray-600" />
         </button>
 
-        {/* User Profile Section */}
+        {/* User Profile */}
         <div className="pt-16 px-6">
           {isUserLoggedIn ? (
             <div className="flex items-center gap-4 mb-8">
@@ -411,7 +339,7 @@ const MobileNav = () => {
           )}
         </div>
 
-        {/* Quick Access Icons */}
+        {/* Quick Access */}
         <div className="flex justify-around px-6 py-5 border-t border-b border-gray-100 bg-gray-50">
           <Link href="/account" onClick={closeSidebar} className="flex flex-col items-center group">
             <div className="p-2 rounded-full group-hover:bg-blue-100 transition-colors">
@@ -452,7 +380,6 @@ const MobileNav = () => {
               )}
             </button>
 
-            {/* Notification Dropdown */}
             {isUserLoggedIn && showNotifications && (
               <div className="absolute bottom-full left-0 mb-2 w-72 bg-white rounded-lg shadow-xl py-2 z-50 border border-gray-200 max-h-96 overflow-y-auto">
                 <div className="px-4 py-3 border-b border-gray-200 bg-gray-50 rounded-t-lg flex justify-between items-center">
@@ -465,10 +392,9 @@ const MobileNav = () => {
                     </button>
                   )}
                 </div>
-
                 {isLoadingNotifications ? (
                   <div className="px-4 py-6 flex justify-center">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600" />
                   </div>
                 ) : notifications.length > 0 ? (
                   <div className="max-h-80 overflow-y-auto">
@@ -476,9 +402,7 @@ const MobileNav = () => {
                       <div
                         key={notification._id}
                         onClick={() => handleNotificationClick(notification)}
-                        className={`px-4 py-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0 group ${
-                          !notification.read ? "bg-blue-50" : ""
-                        }`}>
+                        className={`px-4 py-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0 group ${!notification.read ? "bg-blue-50" : ""}`}>
                         <div className="flex justify-between items-start">
                           <div className="flex items-start gap-3 flex-1">
                             <span className="text-lg mt-0.5 flex-shrink-0">
@@ -486,9 +410,7 @@ const MobileNav = () => {
                             </span>
                             <div className="flex-1 min-w-0">
                               <p
-                                className={`text-sm font-medium ${
-                                  !notification.read ? "text-gray-900" : "text-gray-700"
-                                }`}>
+                                className={`text-sm font-medium ${!notification.read ? "text-gray-900" : "text-gray-700"}`}>
                                 {notification.message}
                               </p>
                               <p className="text-xs text-gray-500 mt-1">
@@ -519,7 +441,6 @@ const MobileNav = () => {
                 ) : (
                   <div className="px-4 py-6 text-center text-gray-500">
                     <p>No notifications yet</p>
-                    <p className="text-sm mt-1">You're all caught up!</p>
                   </div>
                 )}
                 {notifications.length > 0 && (
@@ -536,6 +457,7 @@ const MobileNav = () => {
             )}
           </div>
 
+          {/* Cart / Orders */}
           <Link
             href={
               isUserLoggedIn
@@ -558,17 +480,16 @@ const MobileNav = () => {
                 ? "Orders"
                 : "Cart"}
             </span>
-            {!isUserLoggedIn || (user?.role !== "stylist" && user?.role !== "admin")
-              ? cartItemsCount > 0 && (
-                  <span className="absolute top-0 right-2 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
-                    {cartItemsCount > 9 ? "9+" : cartItemsCount}
-                  </span>
-                )
-              : null}
+            {(!isUserLoggedIn || (user?.role !== "stylist" && user?.role !== "admin")) &&
+              cartItemsCount > 0 && (
+                <span className="absolute top-0 right-2 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                  {cartItemsCount > 9 ? "9+" : cartItemsCount}
+                </span>
+              )}
           </Link>
         </div>
 
-        {/* Main Menu */}
+        {/* Menu Links */}
         <div className="px-6 py-5">
           <div className="mb-8">
             <h3 className="text-lg font-bold text-gray-800 mb-4">Menu</h3>
@@ -606,7 +527,7 @@ const MobileNav = () => {
             </div>
           </div>
 
-          {/* Account Section */}
+          {/* Account Links */}
           {isUserLoggedIn && (
             <div className="mb-8">
               <h3 className="text-lg font-bold text-gray-800 mb-4">My Account</h3>
@@ -641,7 +562,7 @@ const MobileNav = () => {
             </div>
           )}
 
-          {/* Search Section */}
+          {/* Search */}
           <div className="mb-6" ref={searchRef}>
             <h3 className="text-lg font-bold text-gray-800 mb-4">Search</h3>
             <form onSubmit={handleSearchSubmit} className="relative">
@@ -656,7 +577,7 @@ const MobileNav = () => {
                 />
                 {searchQuery && (
                   <button
-                    title="clear search"
+                    title="clear"
                     type="button"
                     onClick={handleClearSearch}
                     className="px-2 py-2.5 bg-gray-50 hover:bg-gray-100 transition-colors">
@@ -671,7 +592,6 @@ const MobileNav = () => {
                 </button>
               </div>
 
-              {/* Search Results Dropdown */}
               {showSearchResults && searchQuery.trim().length >= 2 && (
                 <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-lg py-2 z-50 border border-gray-200 max-h-80 overflow-y-auto">
                   <div className="px-4 py-2 border-b border-gray-200 bg-gray-50">
@@ -679,31 +599,24 @@ const MobileNav = () => {
                       {isSearching ? "Searching..." : "Search Results"}
                     </h3>
                   </div>
-
                   {isSearching ? (
                     <div className="px-4 py-6 flex justify-center">
-                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600" />
                     </div>
                   ) : searchResults.length > 0 ? (
                     <div>
                       {searchResults.slice(0, 5).map((product: any) => {
                         const productId = product.id || product._id;
-                        const productName = product.name || product.title || "Unnamed Product";
-                        const productPrice = product.price || product.priceInCents / 100 || 0;
-                        const productImage =
-                          product.mainImage || product.image || product.images?.[0];
-                        const productCategory = product.category || product.type || "Uncategorized";
-
                         return (
                           <button
                             key={productId}
                             onClick={() => handleResultClick(productId)}
                             className="w-full px-4 py-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0 flex items-center gap-3 text-left search-result-item">
                             <div className="flex-shrink-0 w-10 h-10 bg-gray-100 rounded overflow-hidden">
-                              {productImage ? (
+                              {product.mainImage ? (
                                 <img
-                                  src={productImage}
-                                  alt={productName}
+                                  src={product.mainImage}
+                                  alt={product.name}
                                   className="w-full h-full object-cover"
                                   onError={(e) => {
                                     (e.target as HTMLImageElement).src = "/placeholder-image.jpg";
@@ -717,10 +630,10 @@ const MobileNav = () => {
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium text-gray-800 truncate">
-                                {productName}
+                                {product.name}
                               </p>
                               <p className="text-xs text-gray-500 truncate">
-                                {productCategory} • ₦{productPrice?.toLocaleString()}
+                                {product.category} • ₦{product.price?.toLocaleString()}
                               </p>
                             </div>
                           </button>
@@ -739,7 +652,6 @@ const MobileNav = () => {
                   ) : (
                     <div className="px-4 py-6 text-center text-gray-500">
                       <p>No products found for "{searchQuery}"</p>
-                      <p className="text-sm mt-1">Try different keywords</p>
                     </div>
                   )}
                 </div>

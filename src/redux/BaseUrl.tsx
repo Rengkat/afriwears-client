@@ -12,7 +12,7 @@ const baseQuery = fetchBaseQuery({
 
 // --- Rate Limiting State ---
 let rateLimitUntil: number | null = null;
-const RATE_LIMIT_BACKOFF = 60000; // 60 seconds
+const RATE_LIMIT_BACKOFF = 60000;
 
 // --- Refresh Deduplication ---
 let isRefreshing = false;
@@ -31,17 +31,13 @@ const refreshToken = async (api: any, extraOptions: any) => {
   return refreshPromise;
 };
 
-// --- Main BaseQuery Wrapper ---
 const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError> = async (
   args,
   api,
   extraOptions,
 ) => {
-  // Check if we're currently rate limited
+  // --- Rate limit gate ---
   if (rateLimitUntil && Date.now() < rateLimitUntil) {
-    console.log(`⏳ Rate limited until ${new Date(rateLimitUntil).toLocaleTimeString()}`);
-
-    // For auth endpoints, return a special error
     const isAuthEndpoint =
       typeof args === "string" ? args.includes("auth/") : args.url?.includes("auth/");
 
@@ -60,50 +56,27 @@ const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQue
 
   let result = await baseQuery(args, api, extraOptions);
 
-  // Handle Rate Limiting (429)
+  // --- Handle 429 ---
   if (result.error?.status === 429) {
     console.warn("⏰ Rate limited (429) - backing off");
-
-    // Set rate limit cooldown
     rateLimitUntil = Date.now() + RATE_LIMIT_BACKOFF;
-
-    // Extract retry-after header if available
     const retryAfter = (result.error as any)?.headers?.get("retry-after");
     if (retryAfter) {
       const waitTime = parseInt(retryAfter) * 1000;
       rateLimitUntil = Date.now() + (isNaN(waitTime) ? RATE_LIMIT_BACKOFF : waitTime);
     }
-
-    // Don't attempt refresh for rate limiting
     return result;
   }
 
-  // Identify if current call is an auth endpoint
   const isAuthEndpoint =
     typeof args === "string" ? args.includes("auth/") : args.url?.includes("auth/");
 
-  // Get current state to check token
   const state = api.getState() as RootState;
-  const token = state.authSlice?.token;
+  const isLoggedIn = !!state.authSlice.user;
 
-  // Handle 403 Forbidden
-  if (result.error?.status === 403) {
-    const errorData = result.error.data as any;
-
-    if (token && isAuthError(errorData)) {
-      console.log("🔐 Auth error detected (invalid token), logging out...");
-      await handleAuthFailure(api);
-    } else if (!token) {
-      console.log("⚠️ 403 without token - not logging out");
-      return result;
-    } else {
-      console.warn("🚫 Permission denied (403):", errorData?.message);
-    }
-  }
-
-  // Handle 401 Unauthorized (expired/invalid token)
+  // --- Handle 401: Token expired → attempt refresh ---
   if (result.error?.status === 401 && !isAuthEndpoint) {
-    if (token) {
+    if (isLoggedIn) {
       console.log("🔄 Access token expired, attempting refresh...");
       try {
         const refreshResult = await refreshToken(api, extraOptions);
@@ -115,9 +88,6 @@ const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQue
             api.dispatch(setUser(refreshData.user));
           }
           result = await baseQuery(args, api, extraOptions);
-          if (result.data && (result.data as any).user) {
-            api.dispatch(setUser((result.data as any).user));
-          }
         } else {
           console.log("❌ Refresh failed, logging out...");
           await handleAuthFailure(api);
@@ -127,36 +97,48 @@ const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQue
         await handleAuthFailure(api);
       }
     } else {
-      console.log("⚠️ 401 received but no token - not attempting refresh");
+      console.log("⚠️ 401 received but user not in Redux - not attempting refresh");
+    }
+  }
+
+  // --- Handle 403 ---
+  // A plain 403 from a role-based guard (e.g. stylist hitting /cart) must NOT
+  // trigger logout — it's a permission issue, not an auth failure.
+  if (result.error?.status === 403) {
+    const errorData = result.error.data as any;
+
+    if (isLoggedIn && isTokenError(errorData)) {
+      // Backend explicitly says the token itself is bad → logout
+      console.log("🔐 Token error on 403, logging out...");
+      await handleAuthFailure(api);
+    } else {
+      // Role-based denial, guest access, or any other 403 → just warn, never logout
+      console.warn("🚫 403 Permission denied:", errorData?.message || "Access denied");
     }
   }
 
   return result;
 };
 
-// --- Helper Functions ---
-const isAuthError = (errorData: any): boolean => {
+// --- Strict token error detection ---
+// ONLY matches when the backend explicitly returns these error codes.
+// Does NOT match on message text — too broad, catches role-based errors.
+const isTokenError = (errorData: any): boolean => {
   if (!errorData) return false;
 
-  const message = errorData?.message?.toLowerCase() || "";
-  const errorCode = errorData?.error || "";
+  const errorCode = errorData?.error || errorData?.code || "";
 
-  const authIndicators = [
+  // Only these specific codes mean the TOKEN is bad (not just the role)
+  const tokenErrorCodes = [
     "INVALID_REFRESH_TOKEN",
     "SESSION_EXPIRED",
     "NO_TOKENS",
     "AUTH_ERROR",
-    "UNAUTHORIZED",
+    "TOKEN_EXPIRED",
+    "INVALID_TOKEN",
   ];
 
-  const isAuthMessage =
-    message.includes("token") ||
-    message.includes("session") ||
-    message.includes("auth") ||
-    message.includes("authenticate") ||
-    message.includes("unauthorized");
-
-  return authIndicators.includes(errorCode) || isAuthMessage;
+  return tokenErrorCodes.includes(errorCode);
 };
 
 const handleAuthFailure = async (api: any) => {
@@ -168,18 +150,9 @@ const handleAuthFailure = async (api: any) => {
         method: "POST",
         credentials: "include",
       });
-    } catch (err) {
-      console.log("Logout endpoint call failed");
+    } catch {
+      console.log("Logout endpoint call failed (safe to ignore)");
     }
-
-    // Clear cookies
-    document.cookie =
-      "accessToken=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=None; Secure";
-    document.cookie =
-      "refreshToken=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=None; Secure";
-
-    localStorage.removeItem("user");
-    sessionStorage.clear();
 
     if (!window.location.pathname.includes("/login")) {
       const currentPath = window.location.pathname + window.location.search;

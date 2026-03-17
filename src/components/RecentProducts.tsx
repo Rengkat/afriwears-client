@@ -54,7 +54,6 @@ const RecentProducts = () => {
 
   // Error state
   if (isError) {
-    console.error("Error loading products:", error);
     return (
       <section className="py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">

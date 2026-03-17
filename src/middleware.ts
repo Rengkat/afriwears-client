@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-// Public paths (accessible without authentication)
+// Public paths — accessible without any authentication
 const PUBLIC_PATHS = [
   "/",
   "/login",
@@ -21,7 +21,7 @@ const PUBLIC_PATHS = [
   "/api/auth/refresh-token",
 ];
 
-// Auth paths (should be blocked if user has valid tokens)
+// Auth pages — redirect away if user already has tokens
 const AUTH_PATHS = [
   "/login",
   "/register",
@@ -31,30 +31,15 @@ const AUTH_PATHS = [
   "/auth/verify-email",
 ];
 
-// Check if user is authenticated by calling your backend
-const isAuthenticated = async (req: NextRequest): Promise<boolean> => {
-  const apiUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
-  try {
-    const response = await fetch(`${apiUrl}/auth/validate-tokens`, {
-      method: "GET",
-      headers: {
-        Cookie: req.headers.get("cookie") || "",
-      },
-      credentials: "include",
-    });
-    if (response.ok) {
-      const data = await response.json();
-      return data.valid === true;
-    }
+// Strategy:
+//   - For ROUTING decisions: just check if the cookie EXISTS (optimistic)
+//   - For ACTUAL AUTH: the backend protect middleware handles verification
+//   - If backend returns 401, baseQueryWithReauth handles refresh + redirect
+// ────────────────────────────────────────────────────────────────────────────
 
-    return false;
-  } catch (error) {
-    console.error("Auth validation failed:", error);
-    return false;
-  }
-};
-
-// Check if user has any tokens (even if expired)
+/*
+ * Check if any auth cookie exists (does NOT verify — backend does that)
+ */
 const hasTokens = (req: NextRequest): boolean => {
   const accessToken = req.cookies.get("accessToken")?.value;
   const refreshToken = req.cookies.get("refreshToken")?.value;
@@ -64,31 +49,21 @@ const hasTokens = (req: NextRequest): boolean => {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // CRITICAL: Skip middleware for ALL static files
+  // Skip static files entirely
   const isStaticFile =
     pathname.startsWith("/_next") ||
     pathname.startsWith("/static") ||
     pathname === "/favicon.ico" ||
-    pathname.match(/\.(jpg|jpeg|png|gif|svg|webp|avif|ico|css|js|json|woff|woff2|ttf|eot)$/i); // All static file types
+    /\.(jpg|jpeg|png|gif|svg|webp|avif|ico|css|js|json|woff|woff2|ttf|eot)$/i.test(pathname);
 
-  if (isStaticFile) {
-    console.log(`[Middleware] Skipping static file: ${pathname}`);
-    return NextResponse.next();
-  }
+  if (isStaticFile) return NextResponse.next();
 
-  // Check if user has valid tokens by calling backend
-  const isAuth = await isAuthenticated(request);
   const hasAnyTokens = hasTokens(request);
 
-  console.log(
-    `[Middleware] Path: ${pathname}, Authenticated: ${isAuth}, HasTokens: ${hasAnyTokens}`,
-  );
-
-  // 🔒 If user is authenticated and tries to access auth pages, redirect to home
-  if (isAuth && AUTH_PATHS.some((path) => pathname.startsWith(path))) {
-    console.log(
-      `[Middleware] Authenticated user accessing auth page ${pathname}. Redirecting to home.`,
-    );
+  // 🔒 If tokens exist and user tries to access auth pages → redirect to home
+  // This is optimistic — if the token is actually expired, backend will 401
+  // and baseQueryWithReauth will handle refresh or redirect to login
+  if (hasAnyTokens && AUTH_PATHS.some((path) => pathname.startsWith(path))) {
     return NextResponse.redirect(new URL("/", request.url));
   }
 
@@ -97,17 +72,12 @@ export async function middleware(request: NextRequest) {
     (path) => pathname === path || pathname.startsWith(`${path}/`),
   );
 
-  if (isPublicPath) {
-    return NextResponse.next();
-  }
+  if (isPublicPath) return NextResponse.next();
 
-  // 🔒 Handle protected routes (both pages and API)
-  if (!isAuth) {
-    // User is not authenticated
-
-    // For API routes, return 401 JSON response
+  // 🔒 Protected routes — no tokens at all → redirect to login
+  if (!hasAnyTokens) {
+    // API routes → return 401 JSON
     if (pathname.startsWith("/api/")) {
-      console.log(`[Middleware] Unauthenticated API access to ${pathname}. Returning 401.`);
       return new NextResponse(
         JSON.stringify({
           error: "Unauthorized",
@@ -124,36 +94,18 @@ export async function middleware(request: NextRequest) {
       );
     }
 
-    // For page routes, redirect to login
+    // Page routes → redirect to login
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("callbackUrl", pathname);
-
-    // Add session=expired if user had tokens but they're invalid
-    if (hasAnyTokens && !isAuth) {
-      loginUrl.searchParams.set("session", "expired");
-      console.log(`[Middleware] Expired tokens for ${pathname}. Redirecting to login.`);
-    } else {
-      console.log(`[Middleware] No valid authentication for ${pathname}. Redirecting to login.`);
-    }
-
     return NextResponse.redirect(loginUrl);
   }
 
-  // ✅ Allow access for authenticated users
-  console.log(`[Middleware] Allowing authenticated access to: ${pathname}`);
+  // ✅ Token exists — let through, backend will verify
   return NextResponse.next();
 }
 
 export const config = {
-  // Update matcher to be more specific - exclude all static files
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - Any file with an extension (images, fonts, etc.)
-     */
     "/((?!_next/static|_next/image|favicon\\.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|avif|ico|css|js)$).*)",
   ],
 };

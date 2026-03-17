@@ -1,6 +1,9 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
 import { baseQueryWithReauth } from "../BaseUrl";
-import { setCredentials, setUser, logoutUser } from "../features/authSlice"; // Added setUser
+import { setUser, logoutUser } from "../features/authSlice";
+import { clearCart } from "../features/cartSlice";
+import { RootState } from "../Store";
+import { cartApi } from "./CartApiSlice";
 
 export const authApi = createApi({
   reducerPath: "authApi",
@@ -15,16 +18,6 @@ export const authApi = createApi({
         method: "POST",
         body: userData,
       }),
-      async onQueryStarted(arg, { dispatch, queryFulfilled }) {
-        try {
-          const { data } = await queryFulfilled;
-          if (data?.user && data?.token) {
-            dispatch(setCredentials({ user: data.user, token: data.token }));
-          }
-        } catch (error) {
-          console.error("Registration mutation failed:", error);
-        }
-      },
     }),
 
     login: builder.mutation({
@@ -33,14 +26,45 @@ export const authApi = createApi({
         method: "POST",
         body: credentials,
       }),
-      async onQueryStarted(arg, { dispatch, queryFulfilled }) {
+      async onQueryStarted(arg, { dispatch, queryFulfilled, getState }) {
         try {
           const { data } = await queryFulfilled;
-          if (data?.user && data?.token) {
-            dispatch(setCredentials({ user: data.user, token: data.token }));
+
+          // Backend sets httpOnly cookies automatically.
+          // We only store the user object in Redux/localStorage.
+          if (data?.user) {
+            dispatch(setUser(data.user));
+
+            // ─── Merge guest cart into DB ────────────────────────────────
+            // After login, check if there are items in the local (guest) cart
+            const state = getState() as RootState;
+            const guestItems = state.cartSlice.items;
+
+            if (guestItems.length > 0) {
+              console.log(`🛒 Merging ${guestItems.length} guest cart item(s) into DB...`);
+
+              try {
+                // Merge all guest items into the DB cart
+                await dispatch(
+                  cartApi.endpoints.mergeCart.initiate(
+                    guestItems.map((item) => ({
+                      productId: item.product,
+                      quantity: item.quantity,
+                    })),
+                  ),
+                ).unwrap();
+
+                // Clear the guest cart from Redux + localStorage
+                dispatch(clearCart());
+                console.log("✅ Guest cart merged successfully");
+              } catch (mergeError) {
+                console.error("❌ Guest cart merge failed:", mergeError);
+                // Don't block login if merge fails — user is still logged in
+              }
+            }
           }
         } catch (error) {
-          // console.error("Login mutation failed:", error);
+          // Login failed — don't dispatch anything
         }
       },
     }),
@@ -54,11 +78,11 @@ export const authApi = createApi({
       async onQueryStarted(args, { dispatch, queryFulfilled }) {
         try {
           await queryFulfilled;
-          dispatch(logoutUser());
-        } catch (error) {
-          console.error("Logout mutation failed:", error);
+        } catch {
           // Even if API call fails, logout locally
+        } finally {
           dispatch(logoutUser());
+          dispatch(clearCart());
         }
       },
     }),
@@ -73,18 +97,18 @@ export const authApi = createApi({
             dispatch(setUser(data.user));
           }
         } catch (error: any) {
-          // Don't log 429 errors to console
-          if (error?.status !== 429) {
-            // Only logout if it's an authentication error
-            if (error?.status === 401 || error?.error?.status === 401) {
-              dispatch(logoutUser());
-            }
-          } else {
+          if (error?.status === 429) {
             console.log("⚠️ Rate limited, skipping user fetch");
+            return;
+          }
+          // 401 means session is truly gone
+          if (error?.status === 401 || error?.error?.status === 401) {
+            dispatch(logoutUser());
           }
         }
       },
     }),
+
     verifyEmail: builder.mutation({
       query: ({ verificationToken, email }) => ({
         url: "auth/verify-email",
