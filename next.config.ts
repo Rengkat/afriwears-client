@@ -1,6 +1,14 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  async rewrites() {
+    return [
+      {
+        source: "/api/:path*",
+        destination: "https://afrikan-wears-backend.onrender.com/api/:path*",
+      },
+    ];
+  },
   images: {
     remotePatterns: [
       {
@@ -21,11 +29,9 @@ const nextConfig: NextConfig = {
         port: "5000",
       },
     ],
-    // Add these configurations to fix the quality warning
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     formats: ["image/avif", "image/webp"],
-
     qualities: [75, 100],
   },
 };
