@@ -48,6 +48,10 @@ const hasTokens = (req: NextRequest): boolean => {
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  // TEMP DEBUG — remove after fix
+  const allCookies = request.cookies.getAll();
+  console.log("MIDDLEWARE COOKIES:", JSON.stringify(allCookies));
+  console.log("ACCESS TOKEN:", request.cookies.get("accessToken")?.value?.substring(0, 20));
 
   // Skip static files entirely
   const isStaticFile =
